@@ -92,17 +92,27 @@ function splitItems(input: string): string[] {
   const items: string[] = [];
   let depth = 0;
   let current = '';
-  for (const char of input) {
+
+  for (let i = 0; i < input.length; i++) {
+    const char = input[i]!;
     if (char === '(' || char === '[') depth++;
     else if (char === ')' || char === ']') depth = Math.max(0, depth - 1);
 
-    if ((char === ',' || char === ';' || char === '\n') && depth === 0) {
+    const isSeparator = char === ',' || char === ';' || char === '\n';
+
+    // Une virgule encadree de chiffres appartient au nom de l'ingredient :
+    // « 1,2-hexanediol » et « acrylates/c10-30 » ne doivent pas etre coupes.
+    const isNumericComma =
+      char === ',' && /\d/.test(input[i - 1] ?? '') && /\d/.test(input[i + 1] ?? '');
+
+    if (isSeparator && depth === 0 && !isNumericComma) {
       items.push(current);
       current = '';
     } else {
       current += char;
     }
   }
+
   items.push(current);
   return items.map((i) => i.trim()).filter((i) => i.length > 0);
 }

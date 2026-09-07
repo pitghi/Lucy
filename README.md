@@ -50,20 +50,49 @@ Trois scores independants en decoulent, jamais moyennes entre eux :
 | Brique | Etat |
 | --- | --- |
 | Parsing des listes INCI | fonctionnel |
-| Referentiel ingredients | 108 entrees, perimetre soin visage |
+| Referentiel ingredients | 185 entrees, perimetre soin visage |
 | Estimation des concentrations | fonctionnel |
 | Score tolerance cutanee | fonctionnel |
 | Score environnement | fonctionnel, calibrage provisoire |
 | Score d'adequation au profil | fonctionnel |
 | Moteur de recommandation | fonctionnel (regles) |
 | Application mobile Expo | a faire |
-| Source de donnees produits | a faire — risque principal du projet |
+| Source de donnees produits | mesuree, voir ci-dessous |
+
+## Faisabilite mesuree
+
+Le risque principal du projet est la disponibilite des listes d'ingredients.
+Il a ete mesure sur un echantillon de 323 produits de soin visage
+d'Open Beauty Facts (`packages/engine/scripts/`) :
+
+| Indicateur | Valeur |
+| --- | --- |
+| Produits portant une liste d'ingredients | 64,7 % |
+| Liste exploitable (au moins 5 ingredients) | 58,2 % |
+| Ingredients resolus par le referentiel | 71,4 % |
+| Couverture medianne par produit | 70,4 % |
+| Produits scorables parmi les listes exploitables | 51,6 % |
+
+Deux enseignements :
+
+- **La base ouverte ne suffit pas seule.** Quatre produits sur dix n'ont pas de
+  liste exploitable. La lecture optique de la liste INCI et la contribution
+  utilisateur ne sont pas un repli mais une brique de premier plan.
+- **L'extension du referentiel se pilote par la mesure.** L'audit classe les
+  ingredients manquants par frequence reelle ; suivre ce classement a fait
+  passer la resolution de 51 % a 71 % en deux vagues d'ajout. C'est ce
+  classement, et non l'exhaustivite de CosIng, qui ordonne le travail.
+
+```bash
+./packages/engine/scripts/fetch-sample.sh /tmp/lucy-sample
+node --experimental-strip-types packages/engine/scripts/audit-coverage.ts /tmp/lucy-sample/sample.json
+```
 
 ## Utilisation
 
 ```bash
 npm install
-npm test --workspace @lucy/engine        # 58 tests
+npm test --workspace @lucy/engine        # 60 tests
 npm run typecheck --workspace @lucy/engine
 npm run demo --workspace @lucy/engine    # demonstration sur des formules types
 ```

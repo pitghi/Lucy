@@ -17,15 +17,29 @@ reglementes separement) qui justifierait son propre modele.
 
 ### Etape 1 — Moteur de scoring — **fait**
 
-Parsing INCI, referentiel de 108 ingredients, estimation des concentrations par
-ancrage, trois scores independants, moteur de recommandation. 58 tests.
+Parsing INCI, referentiel de 185 ingredients, estimation des concentrations par
+ancrage, trois scores independants, moteur de recommandation. 60 tests.
 
 Voir [`methodologie.md`](methodologie.md).
 
-### Etape 2 — Source de donnees produits — **le risque principal**
+### Etape 2 — Source de donnees produits — **mesuree**
 
-Sans base produits, l'application n'existe pas. C'est le poste a traiter avant
-tout developpement d'interface.
+Sans base produits, l'application n'existe pas. Ce poste a donc ete mesure
+avant tout developpement d'interface, sur 323 produits de soin visage
+d'Open Beauty Facts :
+
+| Indicateur | Valeur | Lecture |
+| --- | --- | --- |
+| Produits portant une liste d'ingredients | 64,7 % | le champ existe |
+| Liste exploitable (>= 5 ingredients) | 58,2 % | le reste est une mention de saisie incomplete |
+| Ingredients resolus par le referentiel | 71,4 % | pilote par l'audit de frequence |
+| Produits scorables parmi les exploitables | 51,6 % | indicateur de maturite du referentiel |
+
+**Verdict : le socle ouvert est necessaire mais insuffisant.** Le seuil de
+60 % de reconnaissance qui aurait permis de s'en contenter n'est pas atteint :
+quatre produits sur dix n'ont pas de liste exploitable. La lecture optique de
+la liste INCI et la contribution utilisateur passent donc du statut de repli a
+celui de brique de premier plan, ce qui modifie la priorite de l'etape 4.
 
 Architecture retenue :
 
@@ -39,19 +53,25 @@ Architecture retenue :
    base pour les suivants. C'est ce qui fait passer la couverture de partielle
    a suffisante, et c'est un actif qui s'accumule.
 
-**Mesure a faire en premier :** scanner 50 produits de soin visage en rayon et
-relever le taux de reconnaissance reel d'Open Beauty Facts. Ce chiffre
-conditionne l'architecture : au-dela de 60 %, le socle ouvert suffit ; en
-dessous, la lecture optique devient le chemin principal et non le repli.
+Reste a mesurer en rayon : le taux de **presence du code-barres** dans la base,
+distinct du taux de presence de la liste d'ingredients mesure ici. Un scan qui
+ne trouve pas le produit et un scan qui le trouve sans sa composition
+appellent deux traitements differents dans l'interface.
 
 ### Etape 3 — Extension du referentiel
 
-108 entrees couvrent les formules courantes. L'objectif est de 150 a 300 pour
-depasser 90 % de resolution sur un rayon reel.
+185 entrees resolvent 71 % des ingredients rencontres sur un echantillon reel.
+Atteindre 90 % demande environ 150 entrees supplementaires, la queue de
+distribution etant longue et plate.
 
-La priorite d'extension se deduit des donnees : les ingredients non resolus les
-plus frequemment rencontres lors de l'etape 2 sont ceux a renseigner. Inutile
-de viser les 30 000 entrees de CosIng.
+La priorite d'extension se deduit des donnees, et cette methode a ete validee :
+`scripts/audit-coverage.ts` classe les ingredients non resolus par frequence
+reelle, et suivre ce classement a fait passer la resolution de 51 % a 64 %
+puis 71 % en deux vagues. Inutile de viser les 30 000 entrees de CosIng.
+
+L'audit a egalement revele un defaut du parsing que seule la donnee reelle
+pouvait exposer : les noms chimiques comportant une virgule numerique
+(« 1,2-hexanediol ») etaient scindes en deux libelles irresolubles.
 
 Chaque entree doit porter ses sources. Une entree sans plage d'usage ni source
 degrade la confiance du score plus qu'elle ne l'ameliore.

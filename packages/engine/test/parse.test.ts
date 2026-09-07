@@ -60,3 +60,19 @@ test('tolere les separateurs point-virgule et retour ligne', () => {
   const parsed = parseInciList('Aqua;\nGlycerin;\nXanthan Gum');
   assert.equal(parsed.length, 3);
 });
+
+test('ne coupe pas les noms chimiques sur une virgule numerique', () => {
+  // Trouve par l'audit de couverture : « 1,2-hexanediol » etait scinde en
+  // « 1 » et « 2-hexanediol », deux libelles irresolubles.
+  const parsed = parseInciList('Aqua, 1,2-Hexanediol, Glycerin');
+  assert.deepEqual(
+    parsed.map((p) => p.normalized),
+    ['aqua', '1,2-hexanediol', 'glycerin'],
+  );
+});
+
+test('coupe en revanche sur une virgule suivie d\'un espace', () => {
+  const parsed = parseInciList('Aqua, 1,3-Propanediol, Ci 19140, Glycerin');
+  assert.equal(parsed.length, 4);
+  assert.equal(parsed[1]?.normalized, '1,3-propanediol');
+});
