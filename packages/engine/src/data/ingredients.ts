@@ -1,7 +1,7 @@
 import type { Ingredient } from '../types.ts';
 
 /**
- * Referentiel ingredients Lucy.
+ * Referentiel ingrédients Lucy.
  *
  * Perimetre MVP : soin visage. Une centaine d'entrees couvre l'essentiel des
  * formules du marche, l'ordre de grandeur utile etant de 150 a 300 entrees
@@ -9,24 +9,24 @@ import type { Ingredient } from '../types.ts';
  *
  * Trois champs portent la valeur du moteur :
  *  - `typicalRange` : plage d'usage reelle, base de l'estimation par ancrage
- *  - `isAnchor`     : marque les ingredients dont la plage est assez contrainte
+ *  - `isAnchor`     : marque les ingrédients dont la plage est assez contrainte
  *                     pour borner tout ce qui les suit dans la liste INCI
  *  - `skin.irritation.threshold` : concentration en dessous de laquelle l'effet
  *                     est negligeable, ce qui evite de penaliser les traces
  *
  * ATTENTION : les valeurs `regulatoryMax` doivent etre auditees contre les
  * textes consolides (EUR-Lex) avant toute mise en production. Elles sont
- * exactes a la connaissance de la redaction mais les Annexes du reglement
+ * exactes à la connaissance de la redaction mais les Annexes du règlement
  * 1223/2009 sont amendees plusieurs fois par an.
  */
 
-const SRC_ANNEX_V = 'Reglement (CE) 1223/2009, Annexe V (conservateurs autorises)';
-const SRC_ANNEX_III = 'Reglement (CE) 1223/2009, Annexe III (substances restreintes)';
-const SRC_ANNEX_VI = 'Reglement (CE) 1223/2009, Annexe VI (filtres UV autorises)';
-const SRC_2024_996 = 'Reglement (UE) 2024/996 (retinol, alpha-hydroxyacides)';
-const SRC_COSING = 'Base de donnees CosIng, Commission europeenne';
-const SRC_FORMULATION = "Plages d'usage courantes en formulation cosmetique";
-const SRC_REACH_MP = 'Reglement (UE) 2023/2055 (microplastiques, REACH Annexe XVII)';
+const SRC_ANNEX_V = 'Règlement (CE) 1223/2009, Annexe V (conservateurs autorises)';
+const SRC_ANNEX_III = 'Règlement (CE) 1223/2009, Annexe III (substances restreintes)';
+const SRC_ANNEX_VI = 'Règlement (CE) 1223/2009, Annexe VI (filtres UV autorises)';
+const SRC_2024_996 = 'Règlement (UE) 2024/996 (rétinol, alpha-hydroxyacides)';
+const SRC_COSING = 'Base de données CosIng, Commission européenne';
+const SRC_FORMULATION = "Plages d'usage courantes en formulation cosmétique";
+const SRC_REACH_MP = 'Règlement (UE) 2023/2055 (microplastiques, REACH Annexe XVII)';
 
 export const INGREDIENTS: Ingredient[] = [
   // ---------------------------------------------------------------------------
@@ -53,7 +53,7 @@ export const INGREDIENTS: Ingredient[] = [
     env: { biodegradability: 'good', aquaticToxicity: 0 },
     sources: [
       SRC_COSING,
-      "L'effet assechant de l'ethanol est dose-dependant et concerne surtout les peaux seches et reactives",
+      "L'effet asséchant de l'ethanol est dose-dependant et concerne surtout les peaux sèches et réactives",
     ],
   },
 
@@ -73,7 +73,7 @@ export const INGREDIENTS: Ingredient[] = [
       ],
     },
     env: { biodegradability: 'good', aquaticToxicity: 0 },
-    sources: [SRC_COSING, 'Humectant de reference, efficacite bien documentee des 3 %'],
+    sources: [SRC_COSING, 'Humectant de référence, efficacité bien documentée dès 3 %'],
   },
   {
     inci: 'butylene glycol',
@@ -90,7 +90,7 @@ export const INGREDIENTS: Ingredient[] = [
     env: { biodegradability: 'good', aquaticToxicity: 1 },
     sources: [
       SRC_COSING,
-      'Sensibilisant de contact rare, essentiellement au-dela de 5 % sur peau alteree',
+      'Sensibilisant de contact rare, essentiellement au-delà de 5 % sur peau altérée',
     ],
   },
   {
@@ -117,7 +117,7 @@ export const INGREDIENTS: Ingredient[] = [
       benefits: [{ concern: 'dryness', minEffective: 0.1, strength: 2, evidence: 'high' }],
     },
     env: { biodegradability: 'good', aquaticToxicity: 0 },
-    sources: [SRC_COSING, "Actif efficace des 0,1 % ; au-dela l'apport est surtout sensoriel"],
+    sources: [SRC_COSING, "Actif efficace dès 0,1 % ; au-delà l'apport est surtout sensoriel"],
   },
   {
     inci: 'panthenol',
@@ -131,7 +131,7 @@ export const INGREDIENTS: Ingredient[] = [
         { concern: 'redness', minEffective: 1, strength: 2, evidence: 'medium' },
       ],
     },
-    sources: [SRC_COSING, 'Effet apaisant et reparateur documente entre 1 et 5 %'],
+    sources: [SRC_COSING, 'Effet apaisant et reparateur documenté entre 1 et 5 %'],
   },
   {
     inci: 'urea',
@@ -141,7 +141,7 @@ export const INGREDIENTS: Ingredient[] = [
       benefits: [{ concern: 'dryness', minEffective: 5, strength: 3, evidence: 'high' }],
       irritation: { severity: 1, threshold: 10, onlyForTypes: ['sensitive'] },
     },
-    sources: [SRC_COSING, 'Keratolytique des 10 %, hydratant en dessous'],
+    sources: [SRC_COSING, 'Kératolytique dès 10 %, hydratant en dessous'],
   },
   {
     inci: 'betaine',
@@ -170,7 +170,7 @@ export const INGREDIENTS: Ingredient[] = [
     env: { biodegradability: 'poor', aquaticToxicity: 1, persistent: true },
     sources: [
       SRC_COSING,
-      'Silicone lineaire : tres bien tolere par la peau mais faiblement biodegradable',
+      'Silicone linéaire : très bien toléré par la peau mais faiblement biodégradable',
     ],
   },
   {
@@ -180,7 +180,7 @@ export const INGREDIENTS: Ingredient[] = [
     typicalRange: [1, 15],
     env: { biodegradability: 'poor', aquaticToxicity: 2, persistent: true },
     sources: [
-      'Substance identifiee vPvB (tres persistante, tres bioaccumulable) par l\'ECHA',
+      'Substance identifiée vPvB (très persistante, très bioaccumulable) par l\'ECHA',
       'Restrictions REACH progressives sur les siloxanes cycliques D4/D5/D6',
     ],
   },
@@ -199,7 +199,7 @@ export const INGREDIENTS: Ingredient[] = [
     typicalRange: [1, 20],
     skin: { comedogenic: 0 },
     env: { biodegradability: 'good' },
-    sources: [SRC_COSING, 'Emollient tres bien tolere, non comedogene'],
+    sources: [SRC_COSING, 'Émollient très bien toléré, non comédogène'],
   },
   {
     inci: 'cetearyl alcohol',
@@ -208,7 +208,7 @@ export const INGREDIENTS: Ingredient[] = [
     isAnchor: true,
     skin: { comedogenic: 2 },
     env: { biodegradability: 'good' },
-    sources: [SRC_COSING, 'Alcool gras : emollient, sans rapport avec l\'ethanol assechant'],
+    sources: [SRC_COSING, 'Alcool gras : émollient, sans rapport avec l\'ethanol asséchant'],
   },
   {
     inci: 'cetyl alcohol',
@@ -239,7 +239,7 @@ export const INGREDIENTS: Ingredient[] = [
     env: { biodegradability: 'good' },
     sources: [
       SRC_COSING,
-      'Reputee comedogene : donnee issue de tests sur oreille de lapin, transposition humaine incertaine',
+      'Réputée comédogène : donnee issue de tests sur oreille de lapin, transposition humaine incertaine',
     ],
   },
   {
@@ -261,7 +261,7 @@ export const INGREDIENTS: Ingredient[] = [
     },
     sources: [
       SRC_COSING,
-      'Ester a fort potentiel comedogene dans les modeles disponibles ; a considerer avec prudence',
+      'Ester à fort potentiel comédogène dans les modeles disponibles ; à considérer avec prudence',
     ],
   },
   {
@@ -273,7 +273,7 @@ export const INGREDIENTS: Ingredient[] = [
     env: { biodegradability: 'poor', petrochemical: true },
     sources: [
       SRC_COSING,
-      'Occlusif tres bien tolere par la peau ; origine petrochimique et faible biodegradabilite',
+      'Occlusif très bien toléré par la peau ; origine pétrochimique et faible biodégradabilité',
     ],
   },
   {
@@ -334,7 +334,7 @@ export const INGREDIENTS: Ingredient[] = [
     typicalRange: [2, 15],
     skin: { stripping: { severity: 2, threshold: 5 } },
     env: { biodegradability: 'good', aquaticToxicity: 2 },
-    sources: [SRC_COSING, 'Tensioactif anionique : effet degraissant dose-dependant'],
+    sources: [SRC_COSING, 'Tensioactif ànionique : effet dégraissant dose-dependant'],
   },
   {
     inci: 'sodium lauryl sulfate',
@@ -348,7 +348,7 @@ export const INGREDIENTS: Ingredient[] = [
     env: { biodegradability: 'good', aquaticToxicity: 2 },
     sources: [
       SRC_COSING,
-      'Utilise comme irritant de reference dans les tests dermatologiques : effet marque des 1 a 2 %',
+      'Utilisé comme irritant de référence dans les tests dermatologiques : effet marqué dès 1 a 2 %',
     ],
   },
   {
@@ -362,7 +362,7 @@ export const INGREDIENTS: Ingredient[] = [
     env: { biodegradability: 'good', aquaticToxicity: 2 },
     sources: [
       SRC_COSING,
-      'Tensioactif doux mais sensibilisant de contact reconnu (impuretes amidoamine)',
+      'Tensioactif doux mais sensibilisant de contact reconnu (impuretés amidoamine)',
     ],
   },
   {
@@ -371,14 +371,14 @@ export const INGREDIENTS: Ingredient[] = [
     functions: ['surfactant'],
     typicalRange: [1, 10],
     env: { biodegradability: 'good', aquaticToxicity: 1 },
-    sources: [SRC_COSING, 'Tensioactif non ionique doux, bien tolere'],
+    sources: [SRC_COSING, 'Tensioactif non ionique doux, bien toléré'],
   },
   {
     inci: 'sodium cocoyl isethionate',
     functions: ['surfactant'],
     typicalRange: [1, 10],
     env: { biodegradability: 'good' },
-    sources: [SRC_COSING, 'Tensioactif doux, bonne tolerance cutanee'],
+    sources: [SRC_COSING, 'Tensioactif doux, bonne tolérance cutanée'],
   },
 
   // ---------------------------------------------------------------------------
@@ -386,7 +386,7 @@ export const INGREDIENTS: Ingredient[] = [
   //
   // Ce sont les ancres les plus utiles du moteur : leurs limites legales sont
   // basses et strictes, donc tout ce qui les suit dans une liste INCI est
-  // necessairement present a une concentration inferieure.
+  // necessairement present à une concentration inférieure.
   // ---------------------------------------------------------------------------
   {
     inci: 'phenoxyethanol',
@@ -398,7 +398,7 @@ export const INGREDIENTS: Ingredient[] = [
     env: { biodegradability: 'moderate', aquaticToxicity: 1 },
     sources: [
       SRC_ANNEX_V,
-      "Plafonne a 1 % : ancre de reference pour borner la fin d'une liste INCI",
+      "Plafonné à 1 % : ancre de référence pour borner la fin d'une liste INCI",
     ],
   },
   {
@@ -419,14 +419,14 @@ export const INGREDIENTS: Ingredient[] = [
     inci: 'sodium benzoate',
     functions: ['preservative'],
     // Plage tous produits confondus : c'est la limite legale par categorie
-    // qui la resserre ensuite (0,5 % sans rincage, 2,5 % en rincage).
+    // qui la resserre ensuite (0,5 % sans rinçage, 2,5 % en rinçage).
     typicalRange: [0.1, 1],
     regulatoryMax: { leave_on_face: 0.5, leave_on_body: 0.5, rinse_off_face: 2.5 },
     isAnchor: true,
     env: { biodegradability: 'good', aquaticToxicity: 1 },
     sources: [
       SRC_ANNEX_V,
-      'Limite exprimee en acide benzoique : 0,5 % en produit sans rincage',
+      'Limite exprimée en acide benzoique : 0,5 % en produit sans rinçage',
     ],
   },
   {
@@ -436,7 +436,7 @@ export const INGREDIENTS: Ingredient[] = [
     regulatoryMax: { leave_on_face: 0.6, rinse_off_face: 0.6, leave_on_body: 0.6 },
     isAnchor: true,
     env: { biodegradability: 'good' },
-    sources: [SRC_ANNEX_V, 'Limite exprimee en acide sorbique : 0,6 %'],
+    sources: [SRC_ANNEX_V, 'Limite exprimée en acide sorbique : 0,6 %'],
   },
   {
     inci: 'benzyl alcohol',
@@ -448,7 +448,7 @@ export const INGREDIENTS: Ingredient[] = [
     sources: [
       SRC_ANNEX_V,
       SRC_ANNEX_III,
-      "Conservateur plafonne a 1 %, egalement allergene de parfum a declaration obligatoire",
+      "Conservateur plafonné à 1 %, egalement allergène de parfum à déclaration obligatoire",
     ],
   },
   {
@@ -478,7 +478,7 @@ export const INGREDIENTS: Ingredient[] = [
     skin: { allergen: 'known_sensitizer', irritation: { severity: 3, threshold: 0.0001 } },
     sources: [
       SRC_ANNEX_V,
-      'Interdit en produit sans rincage depuis 2017 ; sensibilisant de contact majeur, actif a l\'etat de trace',
+      'Interdit en produit sans rinçage depuis 2017 ; sensibilisant de contact majeur, actif à l\'etat de trace',
     ],
   },
   {
@@ -489,7 +489,7 @@ export const INGREDIENTS: Ingredient[] = [
     regulatoryMax: { rinse_off_face: 0.0015 },
     isAnchor: true,
     skin: { allergen: 'known_sensitizer', irritation: { severity: 3, threshold: 0.0001 } },
-    sources: [SRC_ANNEX_V, 'Autorise en rincage uniquement, en melange 3:1 avec la MIT'],
+    sources: [SRC_ANNEX_V, 'Autorisé en rinçage uniquement, en mélange 3:1 avec la MIT'],
   },
   {
     inci: 'dmdm hydantoin',
@@ -500,7 +500,7 @@ export const INGREDIENTS: Ingredient[] = [
     skin: { allergen: 'known_sensitizer', irritation: { severity: 2, threshold: 0.1 } },
     sources: [
       SRC_ANNEX_V,
-      'Liberateur de formaldehyde : etiquetage "liberateur de formaldehyde" obligatoire au-dela de 0,001 %',
+      'Libérateur de formaldéhyde : étiquetage "liberateur de formaldéhyde" obligatoire au-delà de 0,001 %',
     ],
   },
   {
@@ -511,7 +511,7 @@ export const INGREDIENTS: Ingredient[] = [
     regulatoryMax: { leave_on_face: 0.5, rinse_off_face: 0.5, leave_on_body: 0.5 },
     isAnchor: true,
     skin: { allergen: 'known_sensitizer', irritation: { severity: 2, threshold: 0.1 } },
-    sources: [SRC_ANNEX_V, 'Liberateur de formaldehyde'],
+    sources: [SRC_ANNEX_V, 'Libérateur de formaldéhyde'],
   },
   {
     inci: 'methylparaben',
@@ -522,7 +522,7 @@ export const INGREDIENTS: Ingredient[] = [
     env: { biodegradability: 'good', aquaticToxicity: 1 },
     sources: [
       SRC_ANNEX_V,
-      'Autorise a 0,4 % seul, 0,8 % en melange de parabens ; juge sur par le SCCS aux doses autorisees',
+      'Autorisé à 0,4 % seul, 0,8 % en mélange de parabens ; jugé sûr par le SCCS aux doses autorisees',
     ],
   },
   {
@@ -535,12 +535,12 @@ export const INGREDIENTS: Ingredient[] = [
     env: { aquaticToxicity: 2 },
     sources: [
       SRC_ANNEX_V,
-      'Limite abaissee a 0,14 % en 2014 suite a l\'avis du SCCS sur l\'activite endocrinienne',
+      'Limite abaissée à 0,14 % en 2014 suite à l\'avis du SCCS sur l\'activité endocrinienne',
     ],
   },
 
   // ---------------------------------------------------------------------------
-  // Chelateurs et ajusteurs de pH — ancres tres fiables
+  // Chelateurs et ajusteurs de pH — ancres très fiables
   // ---------------------------------------------------------------------------
   {
     inci: 'disodium edta',
@@ -551,7 +551,7 @@ export const INGREDIENTS: Ingredient[] = [
     env: { biodegradability: 'poor', aquaticToxicity: 1, persistent: true },
     sources: [
       SRC_COSING,
-      "Chelateur utilise a tres faible dose ; faiblement biodegradable et mobilise les metaux en milieu aquatique",
+      "Chélateur utilise à très faible dose ; faiblement biodégradable et mobilise les métaux en milieu aquatique",
     ],
   },
   {
@@ -567,7 +567,7 @@ export const INGREDIENTS: Ingredient[] = [
     functions: ['ph_adjuster'],
     typicalRange: [0.05, 0.5],
     isAnchor: true,
-    sources: [SRC_COSING, 'Neutralisant, present en quantite stoechiometrique tres faible'],
+    sources: [SRC_COSING, 'Neutralisant, présent en quantité stœchiométrique très faible'],
   },
   {
     inci: 'sodium citrate',
@@ -584,7 +584,7 @@ export const INGREDIENTS: Ingredient[] = [
     typicalRange: [0.05, 0.3],
     isAnchor: true,
     env: { biodegradability: 'good' },
-    sources: [SRC_COSING, "Alternative biodegradable a l'EDTA"],
+    sources: [SRC_COSING, "Alternative biodégradable à l'EDTA"],
   },
 
   // ---------------------------------------------------------------------------
@@ -596,7 +596,7 @@ export const INGREDIENTS: Ingredient[] = [
     typicalRange: [0.1, 1],
     isAnchor: true,
     env: { biodegradability: 'good', aquaticToxicity: 0 },
-    sources: [SRC_COSING, "Gelifiant efficace des 0,1 % ; rarement au-dela de 1 %"],
+    sources: [SRC_COSING, "Gélifiant efficace dès 0,1 % ; rarement au-delà de 1 %"],
   },
   {
     inci: 'carbomer',
@@ -604,7 +604,7 @@ export const INGREDIENTS: Ingredient[] = [
     typicalRange: [0.1, 1],
     isAnchor: true,
     env: { biodegradability: 'poor', petrochemical: true },
-    sources: [SRC_COSING, "Polymere acrylique : gelifiant a tres faible dose"],
+    sources: [SRC_COSING, "Polymère acrylique : gelifiant à très faible dose"],
   },
   {
     inci: 'acrylates/c10-30 alkyl acrylate crosspolymer',
@@ -637,7 +637,7 @@ export const INGREDIENTS: Ingredient[] = [
       benefits: [{ concern: 'aging', minEffective: 0.1, strength: 1, evidence: 'medium' }],
     },
     env: { biodegradability: 'good' },
-    sources: [SRC_COSING, "Antioxydant de formule, dose usuelle inferieure a 0,5 %"],
+    sources: [SRC_COSING, "Antioxydant de formule, dose usuelle inférieure à 0,5 %"],
   },
   {
     inci: 'tocopheryl acetate',
@@ -654,7 +654,7 @@ export const INGREDIENTS: Ingredient[] = [
     regulatoryMax: { leave_on_face: 0.8, rinse_off_face: 0.8, leave_on_body: 0.8 },
     isAnchor: true,
     env: { biodegradability: 'poor', aquaticToxicity: 2, persistent: true },
-    sources: [SRC_ANNEX_III, 'Antioxydant de synthese, persistant en milieu aquatique'],
+    sources: [SRC_ANNEX_III, 'Antioxydant de synthèse, persistant en milieu aquatique'],
   },
 
   // ---------------------------------------------------------------------------
@@ -681,8 +681,8 @@ export const INGREDIENTS: Ingredient[] = [
     },
     sources: [
       SRC_COSING,
-      "Efficacite sebo-regulatrice documentee des 2 %, depigmentante des 4 %",
-      'Tolerance decroissante au-dela de 10 % sur peau reactive',
+      "Efficacité sébo-régulatrice documentée dès 2 %, dépigmentante dès 4 %",
+      'Tolérance decroissante au-delà de 10 % sur peau réactive',
     ],
   },
   {
@@ -700,8 +700,8 @@ export const INGREDIENTS: Ingredient[] = [
     },
     sources: [
       SRC_COSING,
-      "Penetration cutanee documentee entre 8 et 20 % a pH acide",
-      'Le pH bas necessaire a la stabilite explique la mauvaise tolerance sur peau reactive',
+      "Penetration cutanée documentée entre 8 et 20 % a pH acide",
+      'Le pH bas nécessaire à la stabilité explique la mauvaise tolérance sur peau réactive',
     ],
   },
   {
@@ -714,7 +714,7 @@ export const INGREDIENTS: Ingredient[] = [
     },
     sources: [
       SRC_COSING,
-      'Derive stabilise de vitamine C : mieux tolere mais efficacite moindre a dose egale',
+      'Dérivé stabilise de vitamine C : mieux toléré mais efficacité moindre à dose egale',
     ],
   },
   {
@@ -732,8 +732,8 @@ export const INGREDIENTS: Ingredient[] = [
     },
     sources: [
       SRC_2024_996,
-      'Plafonne a 0,3 % (equivalent retinol) sur le visage, 0,05 % sur le corps',
-      "Efficacite et irritation sont indissociables et apparaissent au meme seuil",
+      'Plafonné à 0,3 % (équivalent rétinol) sur le visage, 0,05 % sur le corps',
+      "Efficacité et irritation sont indissociables et apparaissent au meme seuil",
     ],
   },
   {
@@ -745,7 +745,7 @@ export const INGREDIENTS: Ingredient[] = [
     },
     sources: [
       SRC_2024_996,
-      'Ester de retinol : conversion cutanee faible, efficacite tres inferieure au retinol libre',
+      'Ester de rétinol : conversion cutanée faible, efficacité très inférieure au rétinol libre',
     ],
   },
   {
@@ -761,8 +761,8 @@ export const INGREDIENTS: Ingredient[] = [
     },
     sources: [
       SRC_ANNEX_III,
-      'Plafonne a 2 % hors usage conservateur (0,5 %)',
-      'Keratolytique efficace des 0,5 %',
+      'Plafonné à 2 % hors usage conservateur (0,5 %)',
+      'Kératolytique efficace dès 0,5 %',
     ],
   },
   {
@@ -781,7 +781,7 @@ export const INGREDIENTS: Ingredient[] = [
     },
     sources: [
       SRC_2024_996,
-      'Restreint a 4 % pour le grand public, pH minimal impose',
+      'Restreint à 4 % pour le grand public, pH minimal imposé',
     ],
   },
   {
@@ -798,7 +798,7 @@ export const INGREDIENTS: Ingredient[] = [
     },
     sources: [
       SRC_2024_996,
-      'AHA mieux tolere que l\'acide glycolique a dose egale (poids moleculaire superieur)',
+      'AHA mieux toléré que l\'acide glycolique à dose egale (poids moléculaire supérieur)',
     ],
   },
   {
@@ -814,7 +814,7 @@ export const INGREDIENTS: Ingredient[] = [
     },
     sources: [
       SRC_COSING,
-      'Efficacite sur la rosacee et les imperfections documentee a partir de 5 a 10 %',
+      'Efficacité sur la rosacée et les imperfections documentée à partir de 5 a 10 %',
     ],
   },
   {
@@ -827,7 +827,7 @@ export const INGREDIENTS: Ingredient[] = [
     skin: {
       benefits: [{ concern: 'pigmentation', minEffective: 0.5, strength: 2, evidence: 'medium' }],
     },
-    sources: [SRC_ANNEX_III, 'Restreint a 2 % en creme visage suite a l\'avis du SCCS'],
+    sources: [SRC_ANNEX_III, 'Restreint à 2 % en creme visage suite à l\'avis du SCCS'],
   },
   {
     inci: 'ceramide np',
@@ -841,7 +841,7 @@ export const INGREDIENTS: Ingredient[] = [
         { concern: 'dryness', minEffective: 0.1, strength: 2, evidence: 'medium' },
       ],
     },
-    sources: [SRC_COSING, "Lipide de la barriere cutanee, actif a tres faible dose"],
+    sources: [SRC_COSING, "Lipide de la barrière cutanée, actif à très faible dose"],
   },
   {
     inci: 'allantoin',
@@ -861,7 +861,7 @@ export const INGREDIENTS: Ingredient[] = [
     skin: {
       benefits: [{ concern: 'redness', minEffective: 0.2, strength: 2, evidence: 'medium' }],
     },
-    sources: [SRC_COSING, 'Anti-inflammatoire issu de la camomille, actif des 0,2 %'],
+    sources: [SRC_COSING, 'Anti-inflammatoire issu de la camomille, actif dès 0,2 %'],
   },
   {
     inci: 'centella asiatica extract',
@@ -874,7 +874,7 @@ export const INGREDIENTS: Ingredient[] = [
         { concern: 'barrier', minEffective: 0.5, strength: 1, evidence: 'medium' },
       ],
     },
-    sources: [SRC_COSING, 'Effet apaisant et cicatrisant documente sur extraits titres'],
+    sources: [SRC_COSING, 'Effet apaisant et cicatrisant documenté sur extraits titrés'],
   },
   {
     inci: 'zinc pca',
@@ -920,8 +920,8 @@ export const INGREDIENTS: Ingredient[] = [
     env: { aquaticToxicity: 1 },
     sources: [
       SRC_COSING,
-      "Melange non detaille : premiere cause de dermatite allergique de contact d'origine cosmetique",
-      "Dose usuelle en soin visage inferieure a 1 %",
+      "Mélange non détaillé : premiere cause de dermatite allergique de contact d'origine cosmétique",
+      "Dose usuelle en soin visage inférieure à 1 %",
     ],
   },
 
@@ -939,7 +939,7 @@ export const INGREDIENTS: Ingredient[] = [
     env: { aquaticToxicity: 3, biodegradability: 'poor' },
     sources: [
       SRC_ANNEX_VI,
-      'Toxicite documentee sur les coraux et les organismes aquatiques',
+      'Toxicite documentée sur les coraux et les organismes aquatiques',
     ],
   },
   {
@@ -949,7 +949,7 @@ export const INGREDIENTS: Ingredient[] = [
     regulatoryMax: { leave_on_face: 10, leave_on_body: 10 },
     isAnchor: true,
     env: { aquaticToxicity: 2, biodegradability: 'poor' },
-    sources: [SRC_ANNEX_VI, "Persistance et ecotoxicite aquatique documentees"],
+    sources: [SRC_ANNEX_VI, "Persistance et écotoxicité aquatique documentees"],
   },
   {
     inci: 'butyl methoxydibenzoylmethane',
@@ -968,7 +968,7 @@ export const INGREDIENTS: Ingredient[] = [
     typicalRange: [1, 25],
     regulatoryMax: { leave_on_face: 25, leave_on_body: 25 },
     env: { aquaticToxicity: 1 },
-    sources: [SRC_ANNEX_VI, 'Filtre mineral, bonne tolerance cutanee'],
+    sources: [SRC_ANNEX_VI, 'Filtre minéral, bonne tolérance cutanée'],
   },
   {
     inci: 'zinc oxide',
@@ -976,7 +976,7 @@ export const INGREDIENTS: Ingredient[] = [
     typicalRange: [1, 25],
     regulatoryMax: { leave_on_face: 25, leave_on_body: 25 },
     env: { aquaticToxicity: 2 },
-    sources: [SRC_ANNEX_VI, 'Filtre mineral ; ecotoxicite aquatique sous forme nanometrique'],
+    sources: [SRC_ANNEX_VI, 'Filtre minéral ; écotoxicité aquatique sous forme nanometrique'],
   },
   {
     inci: 'homosalate',
@@ -987,19 +987,19 @@ export const INGREDIENTS: Ingredient[] = [
     env: { aquaticToxicity: 2 },
     sources: [
       SRC_ANNEX_VI,
-      'Limite abaissee a 7,34 % pour le visage en 2022 (avis SCCS sur la perturbation endocrinienne)',
+      'Limite abaissée à 7,34 % pour le visage en 2022 (avis SCCS sur la perturbation endocrinienne)',
     ],
   },
 
   // ---------------------------------------------------------------------------
-  // Microplastiques et polymeres de synthese
+  // Microplastiques et polymeres de synthèse
   // ---------------------------------------------------------------------------
   {
     inci: 'polyethylene',
     functions: ['film_former', 'thickener'],
     typicalRange: [0.5, 10],
     env: { microplastic: true, biodegradability: 'poor', persistent: true, petrochemical: true },
-    sources: [SRC_REACH_MP, 'Microparticule de polymere de synthese, interdiction progressive'],
+    sources: [SRC_REACH_MP, 'Microparticule de polymère de synthèse, interdiction progressive'],
   },
   {
     inci: 'nylon-12',
@@ -1018,7 +1018,7 @@ export const INGREDIENTS: Ingredient[] = [
     env: { aquaticToxicity: 3, biodegradability: 'poor', persistent: true },
     sources: [
       SRC_ANNEX_V,
-      'Tres toxique pour les organismes aquatiques ; contribue a la resistance bacterienne',
+      'Très toxique pour les organismes aquatiques ; contribue à la résistance bactérienne',
     ],
   },
 
@@ -1028,7 +1028,7 @@ export const INGREDIENTS: Ingredient[] = [
   // Les entrees ci-dessous ont ete ajoutees dans l'ordre de frequence
   // constatee sur un echantillon de produits reels (voir
   // scripts/audit-coverage.ts). Cet ordre est le bon critere d'extension :
-  // viser les ingredients effectivement rencontres, non l'exhaustivite de
+  // viser les ingrédients effectivement rencontres, non l'exhaustivite de
   // CosIng.
   // ---------------------------------------------------------------------------
 
@@ -1039,7 +1039,7 @@ export const INGREDIENTS: Ingredient[] = [
     functions: ['humectant', 'solvent'],
     typicalRange: [1, 10],
     env: { biodegradability: 'good' },
-    sources: [SRC_COSING, "Alternative d'origine vegetale au propylene glycol"],
+    sources: [SRC_COSING, "Alternative d'origine végétale au propylene glycol"],
   },
   {
     inci: '1,2-hexanediol',
@@ -1099,7 +1099,7 @@ export const INGREDIENTS: Ingredient[] = [
     typicalRange: [1, 5],
     isAnchor: true,
     env: { biodegradability: 'good' },
-    sources: [SRC_COSING, 'Alcool gras epaississant, sans effet assechant'],
+    sources: [SRC_COSING, 'Alcool gras epaississant, sans effet asséchant'],
   },
   {
     inci: 'stearyl alcohol',
@@ -1164,7 +1164,7 @@ export const INGREDIENTS: Ingredient[] = [
     skin: { comedogenic: 4 },
     sources: [
       SRC_COSING,
-      'Ester a potentiel comedogene dans les modeles disponibles ; donnee de faible robustesse',
+      'Ester à potentiel comédogène dans les modeles disponibles ; donnee de faible robustesse',
     ],
   },
 
@@ -1179,7 +1179,7 @@ export const INGREDIENTS: Ingredient[] = [
       benefits: [{ concern: 'barrier', minEffective: 2, strength: 2, evidence: 'medium' }],
     },
     env: { biodegradability: 'good' },
-    sources: [SRC_COSING, 'Riche en acide linoleique, bien tolere y compris sur peau alteree'],
+    sources: [SRC_COSING, 'Riche en acide linoléique, bien toléré y compris sur peau altérée'],
   },
   {
     inci: 'prunus amygdalus dulcis oil',
@@ -1233,7 +1233,7 @@ export const INGREDIENTS: Ingredient[] = [
     typicalRange: [0.5, 3],
     isAnchor: true,
     env: { biodegradability: 'good' },
-    sources: [SRC_COSING, 'Emulsifiant doux d\'origine vegetale'],
+    sources: [SRC_COSING, 'Émulsifiant doux d\'origine végétale'],
   },
   {
     inci: 'cetearyl glucoside',
@@ -1265,7 +1265,7 @@ export const INGREDIENTS: Ingredient[] = [
     typicalRange: [0.5, 3],
     isAnchor: true,
     env: { biodegradability: 'moderate', petrochemical: true },
-    sources: [SRC_COSING, 'Emulsifiant ethoxyle, biodegradabilite moderee'],
+    sources: [SRC_COSING, 'Émulsifiant ethoxyle, biodégradabilité moderee'],
   },
   {
     inci: 'potassium cetyl phosphate',
@@ -1281,7 +1281,7 @@ export const INGREDIENTS: Ingredient[] = [
     typicalRange: [0.5, 3],
     isAnchor: true,
     env: { biodegradability: 'good' },
-    sources: [SRC_COSING, 'Ester de sucre, emulsifiant doux'],
+    sources: [SRC_COSING, 'Ester de sucre, émulsifiant doux'],
   },
 
   // --- Polymeres et epaississants ---
@@ -1291,7 +1291,7 @@ export const INGREDIENTS: Ingredient[] = [
     typicalRange: [0.1, 2],
     isAnchor: true,
     env: { biodegradability: 'poor', petrochemical: true },
-    sources: [SRC_COSING, 'Polymere acrylique de synthese'],
+    sources: [SRC_COSING, 'Polymère acrylique de synthèse'],
   },
   {
     inci: 'ammonium acryloyldimethyltaurate/vp copolymer',
@@ -1317,7 +1317,7 @@ export const INGREDIENTS: Ingredient[] = [
     functions: ['thickener', 'film_former'],
     typicalRange: [0.5, 10],
     env: { aquaticToxicity: 0 },
-    sources: [SRC_COSING, 'Charge minerale inerte'],
+    sources: [SRC_COSING, 'Charge minérale inerte'],
   },
   {
     inci: 'mica',
@@ -1333,7 +1333,7 @@ export const INGREDIENTS: Ingredient[] = [
     typicalRange: [0.5, 5],
     isAnchor: true,
     env: { biodegradability: 'good' },
-    sources: [SRC_COSING, 'Amidon vegetal, agent de toucher'],
+    sources: [SRC_COSING, 'Amidon végétal, agent de toucher'],
   },
   {
     inci: 'kaolin',
@@ -1349,7 +1349,7 @@ export const INGREDIENTS: Ingredient[] = [
     functions: ['antioxidant'],
     typicalRange: [0.05, 0.5],
     isAnchor: true,
-    sources: [SRC_COSING, 'Derive liposoluble de vitamine C, antioxydant de formule'],
+    sources: [SRC_COSING, 'Dérivé liposoluble de vitamine C, antioxydant de formule'],
   },
   {
     inci: 'ubiquinone',
@@ -1358,7 +1358,7 @@ export const INGREDIENTS: Ingredient[] = [
     typicalRange: [0.05, 1],
     isAnchor: true,
     skin: { benefits: [{ concern: 'aging', minEffective: 0.1, strength: 1, evidence: 'low' }] },
-    sources: [SRC_COSING, 'Antioxydant ; efficacite cutanee peu documentee en application topique'],
+    sources: [SRC_COSING, 'Antioxydant ; efficacité cutanée peu documentée en application topique'],
   },
 
   // --- Conservation et pH ---
@@ -1378,7 +1378,7 @@ export const INGREDIENTS: Ingredient[] = [
     isAnchor: true,
     skin: { irritation: { severity: 1, threshold: 2, onlyForTypes: ['sensitive'] } },
     env: { aquaticToxicity: 1 },
-    sources: [SRC_ANNEX_III, 'Neutralisant restreint a 2,5 % en produit sans rincage'],
+    sources: [SRC_ANNEX_III, 'Neutralisant restreint à 2,5 % en produit sans rinçage'],
   },
   {
     inci: 'sodium chloride',
@@ -1395,7 +1395,7 @@ export const INGREDIENTS: Ingredient[] = [
     typicalRange: [0.05, 0.5],
     isAnchor: true,
     env: { biodegradability: 'good' },
-    sources: [SRC_COSING, "Chelateur biodegradable, alternative a l'EDTA"],
+    sources: [SRC_COSING, "Chélateur biodégradable, alternative à l'EDTA"],
   },
   {
     inci: 'sodium levulinate',
@@ -1404,7 +1404,7 @@ export const INGREDIENTS: Ingredient[] = [
     typicalRange: [0.2, 1],
     isAnchor: true,
     env: { biodegradability: 'good' },
-    sources: [SRC_COSING, 'Conservateur agree en cosmetique biologique'],
+    sources: [SRC_COSING, 'Conservateur agréé en cosmétique biologique'],
   },
 
   // --- Filtres UV complementaires ---
@@ -1415,7 +1415,7 @@ export const INGREDIENTS: Ingredient[] = [
     regulatoryMax: { leave_on_face: 5, leave_on_body: 5 },
     isAnchor: true,
     env: { aquaticToxicity: 1, biodegradability: 'poor' },
-    sources: [SRC_ANNEX_VI, 'Filtre UVB photostable, faible penetration cutanee'],
+    sources: [SRC_ANNEX_VI, 'Filtre UVB photostable, faible pénétration cutanée'],
   },
   {
     inci: 'diethylamino hydroxybenzoyl hexyl benzoate',
@@ -1475,7 +1475,7 @@ export const INGREDIENTS: Ingredient[] = [
     typicalRange: [0.1, 10],
     skin: { benefits: [{ concern: 'redness', minEffective: 1, strength: 1, evidence: 'low' }] },
     env: { biodegradability: 'good' },
-    sources: [SRC_COSING, 'Apaisant traditionnel ; niveau de preuve clinique limite'],
+    sources: [SRC_COSING, 'Apaisant traditionnel ; niveau de preuve clinique limité'],
   },
   {
     inci: 'camellia sinensis leaf extract',
@@ -1484,7 +1484,7 @@ export const INGREDIENTS: Ingredient[] = [
     typicalRange: [0.1, 5],
     skin: { benefits: [{ concern: 'redness', minEffective: 0.5, strength: 1, evidence: 'medium' }] },
     env: { biodegradability: 'good' },
-    sources: [SRC_COSING, 'Polyphenols antioxydants'],
+    sources: [SRC_COSING, 'Polyphénols antioxydants'],
   },
   {
     inci: 'glycyrrhiza glabra root extract',
@@ -1498,7 +1498,7 @@ export const INGREDIENTS: Ingredient[] = [
         { concern: 'redness', minEffective: 0.5, strength: 1, evidence: 'medium' },
       ],
     },
-    sources: [SRC_COSING, 'Extrait de reglisse, effet depigmentant et apaisant'],
+    sources: [SRC_COSING, 'Extrait de réglisse, effet dépigmentant et apaisant'],
   },
 
   // --- Seconde vague d'extension, meme methode ---
@@ -1509,7 +1509,7 @@ export const INGREDIENTS: Ingredient[] = [
     typicalRange: [0.3, 1],
     isAnchor: true,
     env: { biodegradability: 'good' },
-    sources: [SRC_COSING, 'Booster de conservation d\'origine vegetale'],
+    sources: [SRC_COSING, 'Booster de conservation d\'origine végétale'],
   },
   {
     inci: 'benzoic acid',
@@ -1526,7 +1526,7 @@ export const INGREDIENTS: Ingredient[] = [
     typicalRange: [0.1, 2],
     isAnchor: true,
     env: { biodegradability: 'good' },
-    sources: [SRC_COSING, 'Acide amine, neutralisant doux'],
+    sources: [SRC_COSING, 'Acide aminé, neutralisant doux'],
   },
   {
     inci: 'methylpropanediol',
@@ -1583,7 +1583,7 @@ export const INGREDIENTS: Ingredient[] = [
     functions: ['emollient', 'solvent'],
     typicalRange: [1, 15],
     env: { biodegradability: 'poor', petrochemical: true },
-    sources: [SRC_COSING, 'Hydrocarbure de synthese, faiblement biodegradable'],
+    sources: [SRC_COSING, 'Hydrocarbure de synthèse, faiblement biodégradable'],
   },
   {
     inci: 'cera microcristallina',
@@ -1591,7 +1591,7 @@ export const INGREDIENTS: Ingredient[] = [
     functions: ['thickener', 'film_former'],
     typicalRange: [1, 10],
     env: { biodegradability: 'poor', petrochemical: true },
-    sources: [SRC_COSING, 'Cire de structure ; origine petrochimique pour la forme microcristalline'],
+    sources: [SRC_COSING, 'Cire de structure ; origine pétrochimique pour la forme microcristalline'],
   },
   {
     inci: 'vitis vinifera seed oil',
@@ -1638,7 +1638,7 @@ export const INGREDIENTS: Ingredient[] = [
     env: { biodegradability: 'poor', persistent: true, petrochemical: true },
     sources: [
       SRC_COSING,
-      'Polymere de synthese non biodegradable ; residus d\'acrylamide surveilles',
+      'Polymère de synthèse non biodégradable ; residus d\'acrylamide surveillés',
     ],
   },
   {
@@ -1647,7 +1647,7 @@ export const INGREDIENTS: Ingredient[] = [
     functions: ['film_former', 'emollient'],
     typicalRange: [0.5, 5],
     env: { biodegradability: 'poor', persistent: true },
-    sources: [SRC_COSING, 'Silicone reticule, faiblement biodegradable'],
+    sources: [SRC_COSING, 'Silicone réticulé, faiblement biodégradable'],
   },
   {
     inci: 'aluminum starch octenylsuccinate',
@@ -1655,7 +1655,7 @@ export const INGREDIENTS: Ingredient[] = [
     typicalRange: [0.5, 5],
     isAnchor: true,
     env: { biodegradability: 'moderate' },
-    sources: [SRC_COSING, 'Amidon modifie, agent matifiant'],
+    sources: [SRC_COSING, 'Amidon modifié, agent matifiant'],
   },
   {
     inci: 'biosaccharide gum-1',
@@ -1678,7 +1678,7 @@ export const INGREDIENTS: Ingredient[] = [
       benefits: [{ concern: 'acne', minEffective: 0.3, strength: 2, evidence: 'medium' }],
       irritation: { severity: 1, threshold: 1, onlyForTypes: ['sensitive'] },
     },
-    sources: [SRC_ANNEX_III, 'Derive lipophile de l\'acide salicylique, mieux tolere'],
+    sources: [SRC_ANNEX_III, 'Dérivé lipophile de l\'acide salicylique, mieux toléré'],
   },
   {
     inci: 'tetrasodium glutamate diacetate',
@@ -1686,7 +1686,7 @@ export const INGREDIENTS: Ingredient[] = [
     typicalRange: [0.05, 0.5],
     isAnchor: true,
     env: { biodegradability: 'good' },
-    sources: [SRC_COSING, "Chelateur biodegradable, alternative a l'EDTA"],
+    sources: [SRC_COSING, "Chélateur biodégradable, alternative à l'EDTA"],
   },
   {
     inci: 'tromethamine',
@@ -1703,7 +1703,7 @@ export const INGREDIENTS: Ingredient[] = [
     typicalRange: [0.05, 1],
     isAnchor: true,
     env: { aquaticToxicity: 0 },
-    sources: [SRC_COSING, 'Sel tampon, usage a tres faible dose'],
+    sources: [SRC_COSING, 'Sel tampon, usage à très faible dose'],
   },
   {
     inci: 'myristyl alcohol',
@@ -1721,20 +1721,20 @@ export const INGREDIENTS: Ingredient[] = [
     typicalRange: [0.0001, 0.1],
     isAnchor: true,
     sources: [
-      'Reglement (CE) 1223/2009, Annexe IV (colorants autorises)',
-      'Colorants employes a tres faible dose',
+      'Règlement (CE) 1223/2009, Annexe IV (colorants autorises)',
+      'Colorants employés à très faible dose',
     ],
   },
 ];
 
 /**
- * Les 23 allergenes de parfum a declaration obligatoire les plus rencontres
- * (Annexe III du reglement 1223/2009). Leur declaration est requise des
- * 0,001 % en produit sans rincage, ce qui plafonne de fait leur presence
+ * Les 23 allergènes de parfum à déclaration obligatoire les plus rencontres
+ * (Annexe III du règlement 1223/2009). Leur declaration est requise des
+ * 0,001 % en produit sans rinçage, ce qui plafonné de fait leur presence
  * connue a des doses faibles : c'est la raison pour laquelle le moteur leur
  * applique une penalite proportionnee et non forfaitaire.
  *
- * Le reglement (UE) 2023/1545 porte cette liste a plus de 80 substances ;
+ * Le règlement (UE) 2023/1545 porte cette liste a plus de 80 substances ;
  * l'extension du referentiel suit la meme structure.
  */
 const DECLARABLE_FRAGRANCE_ALLERGENS: Array<[string, 1 | 2 | 3]> = [
@@ -1776,7 +1776,7 @@ const FRAGRANCE_ALLERGEN_ENTRIES: Ingredient[] = DECLARABLE_FRAGRANCE_ALLERGENS.
     env: { aquaticToxicity: 1 },
     sources: [
       SRC_ANNEX_III,
-      'Allergene de parfum a declaration obligatoire des 0,001 % en produit sans rincage',
+      'Allergène de parfum à déclaration obligatoire dès 0,001 % en produit sans rinçage',
     ],
   }),
 );

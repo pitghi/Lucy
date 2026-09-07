@@ -20,7 +20,7 @@ import { formatRange } from './dose.ts';
 /** Penalite appliquee quand l'utilisateur souhaite eviter tout parfum. */
 const FRAGRANCE_AVOIDANCE_PENALTY = 30;
 
-/** Les ingredients non toleres declares par l'utilisateur, presents dans la formule. */
+/** Les ingrédients non toleres déclarés par l'utilisateur, presents dans la formule. */
 function findBlockers(parsed: ParsedIngredient[], profile: SkinProfile): string[] {
   const avoided = new Set(profile.notTolerated.map((i) => i.toLowerCase().trim()));
   if (avoided.size === 0) return [];
@@ -35,7 +35,7 @@ function findBlockers(parsed: ParsedIngredient[], profile: SkinProfile): string[
 
 /**
  * Applique les preferences declarees qui ne relevent pas d'une donnee
- * d'ingredient mais d'un choix de l'utilisateur.
+ * d'ingrédient mais d'un choix de l'utilisateur.
  */
 function applyPreferences(
   score: ScoreResult,
@@ -58,10 +58,10 @@ function applyPreferences(
       {
         inci: fragrance.ingredient.inci,
         impact: -FRAGRANCE_AVOIDANCE_PENALTY,
-        label: 'Vous avez choisi d\'eviter les produits parfumes',
+        label: 'Vous avez choisi d\'eviter les produits parfumés',
         concentration: { min: 0, max: 0 },
         confidence: 'high',
-        sources: ['Preference declaree dans votre profil'],
+        sources: ['Préférence déclarée dans votre profil'],
       },
       ...score.reasons,
     ],
@@ -71,10 +71,10 @@ function applyPreferences(
 /**
  * Evalue un produit, avec ou sans profil utilisateur.
  *
- * Sans profil, `personalized` vaut null et les scores refletent une tolerance
- * moyenne. Avec profil, les effets propres a un type de peau sont soit
- * retenus a plein poids, soit ecartes, et seuls les actifs repondant aux
- * preoccupations declarees rapportent des points.
+ * Sans profil, `personalized` vaut null et les scores refletent une tolérance
+ * moyenne. Avec profil, les effets propres à un type de peau sont soit
+ * retenus a plein poids, soit écartés, et seuls les actifs repondant aux
+ * préoccupations declarees rapportent des points.
  */
 export function assessProduct(
   product: Product,
@@ -101,8 +101,8 @@ export function assessProduct(
     profile,
   );
 
-  // Un ingredient que l'utilisateur ne tolere pas rend le produit
-  // inadapte, quelle que soit la qualite du reste de la formule.
+  // Un ingrédient que l'utilisateur ne toléré pas rend le produit
+  // inadapte, quelle que soit la qualité du reste de la formule.
   if (blockers.length > 0) {
     personalized = {
       ...personalized,
@@ -111,7 +111,7 @@ export function assessProduct(
         ...blockers.map((inci) => ({
           inci,
           impact: -100,
-          label: 'Vous avez declare ne pas tolerer cet ingredient',
+          label: 'Vous avez déclaré ne pas tolérer cet ingrédient',
           concentration: { min: 0, max: 0 },
           confidence: 'high' as const,
           sources: ['Profil utilisateur'],
@@ -130,12 +130,12 @@ export function assessProduct(
  */
 export function summarize(assessment: ProductAssessment): string {
   if (assessment.blockers.length > 0) {
-    return `Contient ${assessment.blockers.join(', ')}, que vous ne tolerez pas`;
+    return `Contient ${assessment.blockers.join(', ')}, que vous ne tolérez pas`;
   }
   const worst = (assessment.personalized ?? assessment.skin).reasons.find(
     (r) => r.impact < 0,
   );
-  if (!worst) return 'Aucun point de vigilance identifie sur cette formule';
+  if (!worst) return 'Aucun point de vigilance identifié sur cette formule';
   return `${worst.inci} : ${worst.label}`;
 }
 

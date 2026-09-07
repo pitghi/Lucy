@@ -6,7 +6,7 @@ import type { ParsedIngredient } from '../types.ts';
  * Les listes reelles sont bruitees : casse variable, separateurs multiples,
  * synonymes multilingues accoles par des slashs, mentions "peut contenir",
  * asterisques signalant l'origine biologique, OCR imparfait. Ce module
- * ramene tout cela a une sequence ordonnee de libelles normalises.
+ * ramene tout cela à une sequence ordonnee de libelles normalises.
  */
 
 const LIST_PREFIXES = [
@@ -72,9 +72,9 @@ function splitMayContain(input: string): { main: string; optional: string } {
 
 /**
  * Un libelle contenant des slashs peut etre :
- *   - un ingredient unique decline en plusieurs langues ("AQUA/WATER/EAU")
+ *   - un ingrédient unique decline en plusieurs langues ("AQUA/WATER/EAU")
  *   - plusieurs colorants distincts ("CI 19140/CI 15985")
- * On ne separe que le second cas, identifie par le prefixe "ci " des index
+ * On ne separe que le second cas, identifié par le prefixe "ci " des index
  * de couleur.
  */
 function expandSlashes(label: string): string[] {
@@ -100,7 +100,7 @@ function splitItems(input: string): string[] {
 
     const isSeparator = char === ',' || char === ';' || char === '\n';
 
-    // Une virgule encadree de chiffres appartient au nom de l'ingredient :
+    // Une virgule encadrée de chiffres appartient au nom de l'ingrédient :
     // « 1,2-hexanediol » et « acrylates/c10-30 » ne doivent pas etre coupes.
     const isNumericComma =
       char === ',' && /\d/.test(input[i - 1] ?? '') && /\d/.test(input[i + 1] ?? '');
@@ -118,9 +118,9 @@ function splitItems(input: string): string[] {
 }
 
 /**
- * Parse une liste INCI en sequence ordonnee d'ingredients.
+ * Parse une liste INCI en sequence ordonnee d'ingrédients.
  *
- * L'ordre est significatif : le reglement CE 1223/2009 impose un classement
+ * L'ordre est significatif : le règlement CE 1223/2009 imposé un classement
  * par poids decroissant, ce qui fonde toute l'estimation de concentration.
  */
 export function parseInciList(inciList: string): ParsedIngredient[] {

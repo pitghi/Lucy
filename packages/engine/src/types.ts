@@ -3,12 +3,12 @@
  *
  * Principe directeur : on ne fusionne jamais le score peau et le score
  * environnement, et aucune penalite n'est appliquee sans passer par la
- * concentration estimee de l'ingredient.
+ * concentration estimée de l'ingrédient.
  */
 
 export type SkinType = 'dry' | 'oily' | 'combination' | 'normal' | 'sensitive';
 
-/** Preoccupations declarees par l'utilisateur dans son profil. */
+/** Préoccupations declarees par l'utilisateur dans son profil. */
 export type Concern =
   | 'acne'
   | 'redness'
@@ -18,10 +18,10 @@ export type Concern =
   | 'dullness'
   | 'barrier';
 
-/** Type de produit : conditionne les limites reglementaires applicables. */
+/** Type de produit : conditionne les limites réglementaires applicables. */
 export type ProductCategory = 'leave_on_face' | 'rinse_off_face' | 'leave_on_body';
 
-/** Fonction technique de l'ingredient dans la formule. */
+/** Fonction technique de l'ingrédient dans la formule. */
 export type IngredientFunction =
   | 'solvent'
   | 'humectant'
@@ -39,16 +39,16 @@ export type IngredientFunction =
   | 'film_former'
   | 'uv_filter';
 
-/** Niveau de confiance attache a une estimation ou a une penalite. */
+/** Niveau de confiance attache à une estimation ou à une penalite. */
 export type Confidence = 'high' | 'medium' | 'low';
 
 /** Effet irritant potentiel, avec le seuil en dessous duquel il est negligeable. */
 export interface IrritationProfile {
-  /** 0 = aucun, 1 = leger, 2 = modere, 3 = fort. */
+  /** 0 = aucun, 1 = leger, 2 = modéré, 3 = fort. */
   severity: 1 | 2 | 3;
   /**
    * Concentration (%) en dessous de laquelle l'effet est considere negligeable.
-   * C'est ce seuil qui permet de ne pas penaliser un irritant present a l'etat
+   * C'est ce seuil qui permet de ne pas penaliser un irritant present à l'etat
    * de trace, contrairement aux notations binaires du marche.
    */
   threshold: number;
@@ -59,7 +59,7 @@ export interface IrritationProfile {
 /** Benefice attendu d'un actif, a partir d'une concentration efficace. */
 export interface BenefitProfile {
   concern: Concern;
-  /** Concentration (%) minimale a partir de laquelle l'effet est documente. */
+  /** Concentration (%) minimale à partir de laquelle l'effet est documenté. */
   minEffective: number;
   /** 1 = benefice mineur, 2 = notable, 3 = bien etabli. */
   strength: 1 | 2 | 3;
@@ -69,31 +69,31 @@ export interface BenefitProfile {
 export interface SkinData {
   irritation?: IrritationProfile;
   /**
-   * Indice comedogene 0-5. Les donnees publiques proviennent de tests sur
-   * oreille de lapin (annees 70) et sont faiblement transposables a l'humain :
+   * Indice comédogène 0-5. Les donnees publiques proviennent de tests sur
+   * oreille de lapin (annees 70) et sont faiblement transposables à l'humain :
    * le scoring leur applique volontairement un poids reduit.
    */
   comedogenic?: number;
-  /** Allergene de parfum a declaration obligatoire (Annexe III UE) ou sensibilisant connu. */
+  /** Allergène de parfum à déclaration obligatoire (Annexe III UE) ou sensibilisant connu. */
   allergen?: 'declarable_fragrance' | 'known_sensitizer';
-  /** Effet assechant / degraissant marque (surfactants notamment). */
+  /** Effet asséchant / dégraissant marque (surfactants notamment). */
   stripping?: IrritationProfile;
   benefits?: BenefitProfile[];
 }
 
 export interface EnvData {
   biodegradability?: 'good' | 'moderate' | 'poor';
-  /** 0 = non concerne, 1 = faible, 2 = modere, 3 = elevee. */
+  /** 0 = non concerne, 1 = faible, 2 = modéré, 3 = élevée. */
   aquaticToxicity?: 0 | 1 | 2 | 3;
-  /** Microplastique au sens du reglement REACH 2023/2055. */
+  /** Microplastique au sens du règlement REACH 2023/2055. */
   microplastic?: boolean;
   /** Persistant / bioaccumulable (PBT ou vPvB). */
   persistent?: boolean;
-  /** Origine petrochimique (information, non penalisante en soi). */
+  /** Origine pétrochimique (information, non penalisante en soi). */
   petrochemical?: boolean;
 }
 
-/** Une entree du referentiel ingredients. */
+/** Une entree du referentiel ingrédients. */
 export interface Ingredient {
   /** Nom INCI canonique, en minuscules. */
   inci: string;
@@ -105,20 +105,20 @@ export interface Ingredient {
    * de concentration par ancrage.
    */
   typicalRange?: [number, number];
-  /** Limite reglementaire (%) par categorie de produit (Annexes UE 1223/2009). */
+  /** Limite réglementaire (%) par categorie de produit (Annexes UE 1223/2009). */
   regulatoryMax?: Partial<Record<ProductCategory, number>>;
   /**
-   * true si la plage d'usage de cet ingredient est suffisamment contrainte
+   * true si la plage d'usage de cet ingrédient est suffisamment contrainte
    * pour l'utiliser comme marqueur de seuil dans une liste INCI.
    */
   isAnchor?: boolean;
   skin?: SkinData;
   env?: EnvData;
-  /** References documentaires, affichees a l'utilisateur. */
+  /** References documentaires, affichees à l'utilisateur. */
   sources: string[];
 }
 
-/** Un ingredient tel que lu sur l'emballage, apres parsing. */
+/** Un ingrédient tel que lu sur l'emballage, apres parsing. */
 export interface ParsedIngredient {
   /** Position dans la liste (0 = premier). */
   position: number;
@@ -128,22 +128,22 @@ export interface ParsedIngredient {
   normalized: string;
   /** Entree du referentiel, si resolue. */
   ingredient?: Ingredient;
-  /** Ingredient issu de l'agriculture biologique (astérisque sur l'emballage). */
+  /** Ingrédient issu de l'agriculture biologique (astérisque sur l'emballage). */
   organic?: boolean;
   /**
-   * true si l'ingredient provient d'une mention "peut contenir" (colorants
+   * true si l'ingrédient provient d'une mention "peut contenir" (colorants
    * alternatifs) : sa presence n'est pas garantie.
    */
   mayContain?: boolean;
 }
 
-/** Concentration estimee d'un ingredient dans le produit. */
+/** Concentration estimée d'un ingrédient dans le produit. */
 export interface ConcentrationEstimate {
   position: number;
   inci: string;
-  /** Borne basse (%) de l'intervalle estime. */
+  /** Borne basse (%) de l'intervalle estimé. */
   min: number;
-  /** Borne haute (%) de l'intervalle estime. */
+  /** Borne haute (%) de l'intervalle estimé. */
   max: number;
   confidence: Confidence;
   /** Comment l'estimation a ete obtenue, pour l'affichage de la methode. */
@@ -163,13 +163,13 @@ export interface BrandClaim {
   percent: number;
 }
 
-/** Profil utilisateur : ce que l'app collecte a l'onboarding puis affine. */
+/** Profil utilisateur : ce que l'app collecte à l'onboarding puis affine. */
 export interface SkinProfile {
   skinType: SkinType;
   concerns: Concern[];
-  /** INCI que l'utilisateur declare bien tolerer : neutralise les penalites. */
+  /** INCI que l'utilisateur déclaré bien tolérer : neutralise les penalites. */
   tolerated: string[];
-  /** INCI que l'utilisateur ne tolere pas : exclusion du produit. */
+  /** INCI que l'utilisateur ne toléré pas : exclusion du produit. */
   notTolerated: string[];
   /** L'utilisateur souhaite eviter tout parfum. */
   avoidFragrance?: boolean;
@@ -182,14 +182,14 @@ export interface ScoreReason {
   impact: number;
   /** Explication en langage utilisateur. */
   label: string;
-  /** Concentration estimee retenue pour ce calcul. */
+  /** Concentration estimée retenue pour ce calcul. */
   concentration: { min: number; max: number };
   confidence: Confidence;
   sources: string[];
   /**
    * true si la ligne est affichee a titre d'information sans peser sur la
-   * valeur du score. Le score de tolerance liste ainsi les actifs presents
-   * a dose efficace sans les crediter : la tolerance et l'efficacite sont
+   * valeur du score. Le score de tolérance liste ainsi les actifs presents
+   * a dose efficace sans les crediter : la tolérance et l'efficacité sont
    * deux questions distinctes.
    */
   informational?: boolean;
@@ -205,21 +205,21 @@ export interface ScoreResult {
 
 export interface ProductAssessment {
   /**
-   * Tolerance cutanee de la formule, independamment de tout profil : risque
-   * d'irritation, d'allergie et d'effet degraissant, pondere par la dose.
-   * Part de 100 et ne descend qu'en presence d'un motif identifie.
+   * Tolérance cutanée de la formule, independamment de tout profil : risque
+   * d'irritation, d'allergie et d'effet dégraissant, pondere par la dose.
+   * Part de 100 et ne descend qu'en presence d'un motif identifié.
    */
   skin: ScoreResult;
-  /** Impact environnemental, calcule separement et jamais moyenne avec le precedent. */
+  /** Impact environnemental, calcule séparément et jamais moyenne avec le precedent. */
   env: ScoreResult;
   /**
-   * Adequation au profil de l'utilisateur (null si aucun profil fourni).
+   * Adéquation au profil de l'utilisateur (null si aucun profil fourni).
    * Part d'une base neutre : un produit inoffensif mais sans interet pour le
    * profil reste au milieu de l'echelle, un produit dont les actifs repondent
-   * aux preoccupations declarees monte, un produit mal tolere descend.
+   * aux préoccupations declarees monte, un produit mal toléré descend.
    */
   personalized: ScoreResult | null;
-  /** Ingredients declares non toleres par l'utilisateur et presents. */
+  /** Ingrédients déclarés non toleres par l'utilisateur et presents. */
   blockers: string[];
   concentrations: ConcentrationEstimate[];
 }

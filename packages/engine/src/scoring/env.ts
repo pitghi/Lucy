@@ -4,23 +4,23 @@ import type {
   ScoreReason,
   ScoreResult,
 } from '../types.ts';
-import { CONFIDENCE_WEIGHT, formatRange, midpoint } from './dose.ts';
+import { CONFIDENCE_WEIGHT, formatEstimatedAt, midpoint } from './dose.ts';
 
 /**
  * Score environnement, calcule independamment du score peau.
  *
- * Ici aussi la dose compte, mais differemment : la ou une irritation cutanee
- * repond a un seuil d'effet, l'impact environnemental est a peu pres
- * proportionnel a la masse rejetee. Un tensioactif persistant a 15 % pese
- * cent fois plus qu'un chelateur a 0,15 %, ce qu'une notation par simple
- * presence de l'ingredient ne traduit pas.
+ * Ici aussi la dose compte, mais differemment : la ou une irritation cutanée
+ * repond à un seuil d'effet, l'impact environnemental est a peu pres
+ * proportionnel à la masse rejetee. Un tensioactif persistant à 15 % pese
+ * cent fois plus qu'un chélateur à 0,15 %, ce qu'une notation par simple
+ * presence de l'ingrédient ne traduit pas.
  */
 
 /**
  * Les poids ci-dessous s'expriment en points de penalite par pourcent de la
  * formule. Ils sont volontairement directs, sans coefficient correctif cache :
- * le score environnement doit rester recalculable a la main a partir des
- * lignes affichees a l'utilisateur.
+ * le score environnement doit rester recalculable à la main à partir des
+ * lignes affichees à l'utilisateur.
  *
  * CALIBRAGE PROVISOIRE. Ces valeurs produisent une echelle discriminante sur
  * les formules types du marche, mais elles ne sont pas issues d'une analyse de
@@ -31,10 +31,10 @@ import { CONFIDENCE_WEIGHT, formatRange, midpoint } from './dose.ts';
 /** Penalite par point de toxicite aquatique, par pourcent de formule. */
 const AQUATIC_TOXICITY_WEIGHT = 1;
 
-/** Penalite de faible biodegradabilite, par pourcent de formule. */
+/** Penalite de faible biodégradabilité, par pourcent de formule. */
 const POOR_BIODEGRADABILITY_WEIGHT = 2;
 
-/** Penalite de biodegradabilite moderee, par pourcent de formule. */
+/** Penalite de biodégradabilité moderee, par pourcent de formule. */
 const MODERATE_BIODEGRADABILITY_WEIGHT = 0.6;
 
 /** Penalite de persistance ou de bioaccumulation, par pourcent de formule. */
@@ -42,21 +42,21 @@ const PERSISTENCE_WEIGHT = 2;
 
 /**
  * Penalite forfaitaire pour la presence d'un microplastique intentionnel.
- * Contrairement aux autres criteres, celui-ci n'est pas proportionne : le
+ * Contrairement aux autres critères, celui-ci n'est pas proportionne : le
  * rejet est definitif quelle que soit la quantite, et la substance fait
  * l'objet d'une interdiction progressive dans l'Union.
  */
 const MICROPLASTIC_FLAT_PENALTY = 25;
 
 /**
- * Masse au-dela de laquelle la penalite d'un ingredient sature. Sans ce
- * plafond, un ingredient present a 60 % ecraserait tout le reste du calcul.
+ * Masse au-delà de laquelle la penalite d'un ingrédient sature. Sans ce
+ * plafond, un ingrédient present à 60 % ecraserait tout le reste du calcul.
  */
 const MASS_SATURATION = 20;
 
 /**
- * Contribution massique effective d'un ingredient, en « pourcents ponderes ».
- * La saturation evite qu'un seul ingredient majoritaire ne monopolise le score.
+ * Contribution massique effective d'un ingrédient, en « pourcents ponderes ».
+ * La saturation evite qu'un seul ingrédient majoritaire ne monopolise le score.
  */
 function massContribution(concentration: number): number {
   return Math.min(concentration, MASS_SATURATION);
@@ -108,7 +108,7 @@ export function scoreEnv(
         penalties += impact;
         addReason(
           impact,
-          `Ecotoxicite aquatique (niveau ${env.aquaticToxicity}/3) ; estime a ${formatRange(estimate)} de la formule`,
+          `Écotoxicité aquatique (niveau ${env.aquaticToxicity}/3) ; ${formatEstimatedAt(estimate)} de la formule`,
         );
       }
     }
@@ -124,8 +124,8 @@ export function scoreEnv(
         addReason(
           impact,
           env.biodegradability === 'poor'
-            ? `Faiblement biodegradable ; estime a ${formatRange(estimate)} de la formule`
-            : `Biodegradabilite moderee ; estime a ${formatRange(estimate)} de la formule`,
+            ? `Faiblement biodégradable ; ${formatEstimatedAt(estimate)} de la formule`
+            : `Biodégradabilité modérée ; ${formatEstimatedAt(estimate)} de la formule`,
         );
       }
     }
@@ -136,7 +136,7 @@ export function scoreEnv(
         penalties += impact;
         addReason(
           impact,
-          `Substance persistante ou bioaccumulable ; estime a ${formatRange(estimate)} de la formule`,
+          `Substance persistante ou bioaccumulable ; ${formatEstimatedAt(estimate)} de la formule`,
         );
       }
     }

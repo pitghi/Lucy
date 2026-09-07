@@ -1,7 +1,7 @@
 import type { Concern, Confidence, IngredientFunction, SkinType } from '../types.ts';
 
 /**
- * Libelles francais destines a l'affichage.
+ * Libelles francais destines à l'affichage.
  *
  * Le moteur travaille sur des identifiants stables ; toute chaine vue par
  * l'utilisateur passe par ici. Les explications de score etant le produit
@@ -10,25 +10,38 @@ import type { Concern, Confidence, IngredientFunction, SkinType } from '../types
  */
 
 export const SKIN_TYPE_LABELS: Record<SkinType, string> = {
-  dry: 'seche',
+  dry: 'sèche',
   oily: 'grasse',
   combination: 'mixte',
   normal: 'normale',
   sensitive: 'sensible',
 };
 
+/**
+ * Formes plurielles, requises par les explications de score : celles-ci
+ * mentionnent une categorie de peaux (« peaux sensibles »), non la peau d'un
+ * utilisateur donne. Accorder au singulier produisait « peaux sensible ».
+ */
+export const SKIN_TYPE_LABELS_PLURAL: Record<SkinType, string> = {
+  dry: 'sèches',
+  oily: 'grasses',
+  combination: 'mixtes',
+  normal: 'normales',
+  sensitive: 'sensibles',
+};
+
 export const CONCERN_LABELS: Record<Concern, string> = {
   acne: 'imperfections',
   redness: 'rougeurs',
-  dryness: 'secheresse',
-  aging: 'signes de l\'age',
+  dryness: 'sécheresse',
+  aging: 'signes de l\'âge',
   pigmentation: 'taches pigmentaires',
   dullness: 'teint terne',
-  barrier: 'barriere cutanee',
+  barrier: 'barrière cutanée',
 };
 
 export const CONFIDENCE_LABELS: Record<Confidence, string> = {
-  high: 'elevee',
+  high: 'élevée',
   medium: 'moyenne',
   low: 'faible',
 };
@@ -36,13 +49,13 @@ export const CONFIDENCE_LABELS: Record<Confidence, string> = {
 export const FUNCTION_LABELS: Record<IngredientFunction, string> = {
   solvent: 'solvant',
   humectant: 'humectant',
-  emollient: 'emollient',
-  emulsifier: 'emulsifiant',
+  emollient: 'émollient',
+  emulsifier: 'émulsifiant',
   surfactant: 'tensioactif',
   preservative: 'conservateur',
-  thickener: 'epaississant',
+  thickener: 'épaississant',
   ph_adjuster: 'ajusteur de pH',
-  chelator: 'chelateur',
+  chelator: 'chélateur',
   antioxidant: 'antioxydant',
   fragrance: 'parfum',
   colorant: 'colorant',
@@ -52,10 +65,10 @@ export const FUNCTION_LABELS: Record<IngredientFunction, string> = {
 };
 
 /**
- * Formate un pourcentage a la francaise, sans notation scientifique.
+ * Formate un pourcentage à la francaise, sans notation scientifique.
  *
- * Les concentrations utiles s'etendent de 0,001 % (allergene de parfum) a
- * 90 % (phase aqueuse) : le nombre de decimales s'adapte a l'ordre de
+ * Les concentrations utiles s'etendent de 0,001 % (allergène de parfum) a
+ * 90 % (phase aqueuse) : le nombre de decimales s'adapté à l'ordre de
  * grandeur pour rester lisible aux deux extremites.
  */
 export function formatPercent(value: number): string {
@@ -79,7 +92,13 @@ function round(value: number, decimals: number): string {
   return trimmed.replace('.', ',');
 }
 
-/** Liste des types de peau concernes, en francais. */
+/**
+ * Liste des types de peau concernes, au pluriel.
+ *
+ * Employee dans les explications de score, qui designent une categorie de
+ * peaux et non celle d'un utilisateur : « peaux sensibles », pas
+ * « peaux sensible ».
+ */
 export function formatSkinTypes(types: SkinType[]): string {
-  return types.map((t) => SKIN_TYPE_LABELS[t]).join(', ');
+  return types.map((t) => SKIN_TYPE_LABELS_PLURAL[t]).join(', ');
 }

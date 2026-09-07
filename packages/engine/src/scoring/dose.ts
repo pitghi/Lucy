@@ -4,9 +4,9 @@ import { formatPercent, formatThreshold } from '../i18n/fr.ts';
 /**
  * Ponderation par la dose.
  *
- * C'est le correctif central apporte aux notations existantes : un ingredient
- * n'est pas « bon » ou « mauvais » en soi, il l'est a partir d'une certaine
- * concentration. Un conservateur present a 0,05 % et le meme a 1 % ne
+ * C'est le correctif central apporte aux notations existantes : un ingrédient
+ * n'est pas « bon » ou « mauvais » en soi, il l'est à partir d'une certaine
+ * concentration. Un conservateur present à 0,05 % et le meme à 1 % ne
  * meritent pas la meme penalite, et un actif liste en fin d'INCI, donc sous
  * sa dose efficace, ne merite aucun bonus.
  */
@@ -17,12 +17,12 @@ export function midpoint(estimate: ConcentrationEstimate): number {
 }
 
 /**
- * Facteur de penalite entre 0 et 1, en fonction du rapport a un seuil d'effet.
+ * Facteur de penalite entre 0 et 1, en fonction du rapport à un seuil d'effet.
  *
  * En dessous de la moitie du seuil, l'effet est considere nul. Il croit
  * ensuite lineairement et sature a trois fois le seuil. Cette rampe est
  * volontairement simple et lisible : elle est destinee a etre recalibree
- * ingredient par ingredient a partir des retours de tolerance des
+ * ingrédient par ingrédient à partir des retours de tolérance des
  * utilisateurs, pas a modeliser une courbe dose-reponse.
  */
 export function penaltyFactor(concentration: number, threshold: number): number {
@@ -34,7 +34,7 @@ export function penaltyFactor(concentration: number, threshold: number): number 
 }
 
 /**
- * Facteur d'efficacite entre 0 et 1 : quelle part de l'intervalle estime se
+ * Facteur d'efficacité entre 0 et 1 : quelle part de l'intervalle estimé se
  * situe au-dessus de la dose minimale efficace.
  *
  * Un actif dont l'intervalle est entierement sous la dose efficace ne rapporte
@@ -67,5 +67,20 @@ export const CONFIDENCE_WEIGHT = { high: 1, medium: 0.85, low: 0.6 } as const;
 export function formatRange(estimate: ConcentrationEstimate): string {
   if (estimate.min === estimate.max) return formatPercent(estimate.max);
   if (estimate.min === 0) return `au plus ${formatPercent(estimate.max)}`;
-  return `${formatThreshold(estimate.min)} a ${formatPercent(estimate.max)}`;
+  // « entre X et Y » plutot que « X a Y » : les explications introduisent deja
+  // l'intervalle par « estime a », et « estime à 2 a 20 % » se lit mal.
+  return `entre ${formatThreshold(estimate.min)} et ${formatPercent(estimate.max)}`;
+}
+
+/**
+ * Formule complete « estimé à ... » pour une explication de score.
+ *
+ * La phrase est construite d'un bloc plutot que par concatenation : un
+ * intervalle et une valeur unique n'appellent pas la meme preposition, et
+ * « estimé à entre 2 et 20 % » serait incorrect.
+ */
+export function formatEstimatedAt(estimate: ConcentrationEstimate): string {
+  if (estimate.min === estimate.max) return `estimé à ${formatPercent(estimate.max)}`;
+  if (estimate.min === 0) return `estimé sous ${formatPercent(estimate.max)}`;
+  return `estimé entre ${formatThreshold(estimate.min)} et ${formatPercent(estimate.max)}`;
 }

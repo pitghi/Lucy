@@ -11,26 +11,26 @@ import { assessProduct } from '../scoring/assess.ts';
  * Recommandation de produits.
  *
  * Au stade MVP, il s'agit d'un moteur de regles : filtrage sur le profil puis
- * classement par score personnalise. Le filtrage collaboratif est ecarte
+ * classement par score personnalise. Le filtrage collaboratif est écarté
  * volontairement — sans base d'utilisateurs il n'a aucune donnee a exploiter,
  * et le demarrage a froid le rendrait moins pertinent qu'un simple tri.
  *
- * La brique a conserver pour la suite est le journal de tolerance : ce sont
+ * La brique a conserver pour la suite est le journal de tolérance : ce sont
  * les retours « ce produit m'a convenu / ne m'a pas convenu » qui permettront
- * de recalibrer les seuils par ingredient, ce qu'aucune notation existante ne
+ * de recalibrer les seuils par ingrédient, ce qu'aucune notation existante ne
  * peut faire.
  */
 
 export interface RecommendOptions {
-  /** Restreint aux produits de cette categorie. */
+  /** Restreint àux produits de cette categorie. */
   category?: ProductCategory;
   /** Preoccupation que l'utilisateur cherche a traiter en priorite. */
   targetConcern?: Concern;
-  /** Nombre de resultats renvoyes. */
+  /** Nombre de résultats renvoyes. */
   limit?: number;
   /** Score personnalise minimal pour qu'un produit soit propose. */
   minScore?: number;
-  /** Nombre maximal de produits d'une meme marque dans les resultats. */
+  /** Nombre maximal de produits d'une meme marque dans les résultats. */
   maxPerBrand?: number;
 }
 
@@ -50,12 +50,12 @@ const DEFAULTS = {
 } as const;
 
 /**
- * Bonus de pertinence accorde a un produit dont un actif repond effectivement
- * a la preoccupation ciblee, a dose efficace.
+ * Bonus de pertinence accorde à un produit dont un actif repond effectivement
+ * a la préoccupation ciblee, a dose efficace.
  */
 const TARGET_CONCERN_BONUS = 15;
 
-/** Le produit contient-il un actif efficace pour la preoccupation ciblee ? */
+/** Le produit contient-il un actif efficace pour la préoccupation ciblee ? */
 function addressesConcern(
   assessment: ProductAssessment,
   concern: Concern,
@@ -68,7 +68,7 @@ function addressesConcern(
  * Classe un catalogue de produits pour un profil donne.
  *
  * Le tri applique une contrainte de diversite par marque : sans elle, une
- * marque a la formulation homogene monopolise les premiers resultats, ce qui
+ * marque à la formulation homogene monopolise les premiers résultats, ce qui
  * degrade l'utilite percue autant que la credibilite du classement.
  */
 export function recommend(
@@ -87,7 +87,7 @@ export function recommend(
 
     const assessment = assessProduct(product, profile);
 
-    // Un ingredient non tolere est eliminatoire, jamais compense.
+    // Un ingrédient non toléré est eliminatoire, jamais compense.
     if (assessment.blockers.length > 0) continue;
 
     const personalizedScore = assessment.personalized?.value ?? assessment.skin.value;

@@ -5,7 +5,7 @@ import { normalizeLabel } from './parse.ts';
 /**
  * Resolution d'un libelle d'emballage vers une entree du referentiel.
  *
- * La resolution doit tolerer le bruit reel : parentheses explicatives,
+ * La resolution doit tolérer le bruit reel : parentheses explicatives,
  * suffixes botaniques variables ("centella asiatica leaf extract" vs
  * "centella asiatica extract") et coquilles d'OCR.
  */
@@ -63,7 +63,7 @@ function boundedLevenshtein(a: string, b: string, max: number): number {
 }
 
 /**
- * Tolerance orthographique proportionnelle a la longueur du libelle : une
+ * Tolérance orthographique proportionnelle à la longueur du libelle : une
  * coquille sur "aqua" ne doit pas etre traitee comme sur un nom botanique
  * de trente caracteres.
  */
@@ -101,7 +101,7 @@ export function resolveIngredient(normalized: string): Ingredient | undefined {
   return fuzzyMatch(stripped || normalized);
 }
 
-/** Attache l'entree du referentiel a chaque ingredient parse. */
+/** Attache l'entree du referentiel a chaque ingrédient parse. */
 export function resolveAll(parsed: ParsedIngredient[]): ParsedIngredient[] {
   return parsed.map((item) => {
     const ingredient = resolveIngredient(item.normalized);
@@ -109,7 +109,7 @@ export function resolveAll(parsed: ParsedIngredient[]): ParsedIngredient[] {
   });
 }
 
-/** Part des ingredients resolus dans le referentiel, entre 0 et 1. */
+/** Part des ingrédients resolus dans le referentiel, entre 0 et 1. */
 export function coverage(parsed: ParsedIngredient[]): number {
   if (parsed.length === 0) return 0;
   const resolved = parsed.filter((p) => p.ingredient).length;

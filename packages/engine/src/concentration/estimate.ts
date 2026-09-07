@@ -8,23 +8,23 @@ import type {
 import { normalizeLabel } from '../inci/parse.ts';
 
 /**
- * Estimation des concentrations a partir d'une liste INCI.
+ * Estimation des concentrations à partir d'une liste INCI.
  *
  * C'est la piece qui distingue Lucy des notations existantes. Aucune marque
- * ne publie ses dosages, et le reglement CE 1223/2009 n'impose qu'un ordre
+ * ne publie ses dosages, et le règlement CE 1223/2009 n'imposé qu'un ordre
  * de poids decroissant, libre en dessous de 1 %. On ne peut donc pas
  * connaitre une concentration exacte — mais on peut l'encadrer, et
- * l'encadrement suffit a savoir si un ingredient est present a une dose qui
+ * l'encadrement suffit a savoir si un ingrédient est present à une dose qui
  * fait une difference.
  *
  * Quatre contraintes sont combinees :
  *
- *  1. Ordre decroissant impose par le reglement, au-dessus de 1 %.
- *  2. Ancres de seuil : certains ingredients ont une plage d'usage tres
+ *  1. Ordre decroissant imposé par le règlement, au-dessus de 1 %.
+ *  2. Ancres de seuil : certains ingrédients ont une plage d'usage très
  *     contrainte (phenoxyethanol <= 1 %, EDTA ~0,1 %, tocopherol <= 0,5 %).
  *     Tout ce qui les suit est donc borne par leur propre maximum.
- *  3. Limites reglementaires par categorie de produit (Annexes UE).
- *  4. Bilan de masse : la somme des ingredients fait 100 %, ce qui resserre
+ *  3. Limites réglementaires par categorie de produit (Annexes UE).
+ *  4. Bilan de masse : la somme des ingrédients fait 100 %, ce qui resserre
  *     surtout la tete de liste.
  *
  * Le resultat est un intervalle assorti d'un niveau de confiance, jamais une
@@ -44,7 +44,7 @@ interface Bounds {
   min: number;
   max: number;
   method: ConcentrationEstimate['method'];
-  /** true si l'ingredient n'est pas garanti present (mention « peut contenir »). */
+  /** true si l'ingrédient n'est pas garanti present (mention « peut contenir »). */
   optional: boolean;
   /** true si l'entree du referentiel a fourni une plage d'usage. */
   known: boolean;
@@ -55,8 +55,8 @@ interface Bounds {
  *
  * Quand une contrainte externe (position dans la liste, ancre, limite legale)
  * descend sous le plancher issu de la plage d'usage habituelle, ce plancher
- * n'apprend plus rien : l'ingredient est simplement « au plus » le nouveau
- * plafond. Le conserver ferait croire a une concentration connue avec
+ * n'apprend plus rien : l'ingrédient est simplement « au plus » le nouveau
+ * plafond. Le conserver ferait croire à une concentration connue avec
  * precision, ce qui est exactement l'erreur a eviter.
  */
 function capMax(bounds: Bounds, newMax: number, method: ConcentrationEstimate['method']): void {
@@ -91,7 +91,7 @@ function claimFor(
   return undefined;
 }
 
-/** Bornes propres a un ingredient, avant toute propagation. */
+/** Bornes propres à un ingrédient, avant toute propagation. */
 function initialBounds(
   item: ParsedIngredient,
   category: ProductCategory,
@@ -119,20 +119,20 @@ function initialBounds(
   if (regulatory !== undefined && regulatory < max) {
     max = regulatory;
     method = 'regulatory_cap';
-    // Une limite legale inferieure a la plage d'usage habituelle rend le
+    // Une limite legale inférieure à la plage d'usage habituelle rend le
     // plancher issu de cette plage caduc.
     if (min > max) min = 0;
   }
 
-  // Un ingredient non garanti present ne peut pas avoir de plancher.
+  // Un ingrédient non garanti present ne peut pas avoir de plancher.
   if (optional) min = 0;
 
   return { min, max, method, optional, known: typical !== undefined };
 }
 
 /**
- * Position du premier ingredient dont le maximum propre est inferieur ou egal
- * a 1 %. A partir de la, le reglement n'impose plus d'ordre : la monotonie
+ * Position du premier ingrédient dont le maximum propre est inférieur ou egal
+ * a 1 %. A partir de la, le règlement n'imposé plus d'ordre : la monotonie
  * decroissante cesse de s'appliquer, mais le plafond de 1 % se propage.
  */
 function findFreeOrderStart(bounds: Bounds[]): number {
@@ -144,7 +144,7 @@ function findFreeOrderStart(bounds: Bounds[]): number {
 }
 
 /**
- * Applique l'ordre decroissant impose par le reglement, dans la seule zone ou
+ * Applique l'ordre decroissant imposé par le règlement, dans la seule zone ou
  * il vaut. Un maximum se propage vers le bas de la liste, un minimum vers le
  * haut : c'est le mecanisme d'ancrage.
  */
@@ -162,7 +162,7 @@ function propagateOrder(bounds: Bounds[], freeOrderStart: number): void {
     const current = bounds[i];
     const next = bounds[i + 1];
     if (!current || !next) continue;
-    // Un ingredient ne peut pas etre moins concentre que celui qui le suit.
+    // Un ingrédient ne peut pas etre moins concentre que celui qui le suit.
     if (next.min > current.min) current.min = Math.min(next.min, current.max);
   }
 }
@@ -177,12 +177,12 @@ function applyFreeOrderCap(bounds: Bounds[], freeOrderStart: number): void {
 }
 
 /**
- * Bilan de masse : la formule totalise 100 %. Un ingredient ne peut donc pas
+ * Bilan de masse : la formule totalise 100 %. Un ingrédient ne peut donc pas
  * depasser ce que les planchers des autres laissent disponible, et la tete de
  * liste ne peut pas descendre en dessous de ce que les plafonds des autres
  * laissent a combler.
  *
- * Les ingredients optionnels (« peut contenir ») sont exclus du plancher
+ * Les ingrédients optionnels (« peut contenir ») sont exclus du plancher
  * collectif puisque leur presence n'est pas garantie.
  */
 function applyMassBalance(bounds: Bounds[]): void {
@@ -224,7 +224,7 @@ function totalWidth(bounds: Bounds[]): number {
 }
 
 /**
- * Estime la concentration de chaque ingredient d'une liste INCI resolue.
+ * Estime la concentration de chaque ingrédient d'une liste INCI resolue.
  *
  * @param parsed   liste parsee et resolue contre le referentiel
  * @param category categorie du produit, qui determine les limites legales

@@ -11,17 +11,17 @@ import {
   CONFIDENCE_WEIGHT,
   EVIDENCE_WEIGHT,
   efficacyFactor,
-  formatRange,
+  formatEstimatedAt,
   midpoint,
   penaltyFactor,
 } from './dose.ts';
 
 /**
- * Score peau : tolerance cutanee et efficacite, ponderees par la dose.
+ * Score peau : tolérance cutanée et efficacité, ponderees par la dose.
  *
  * Volontairement dissocie du score environnement. Un silicone est excellent
  * pour la peau et mediocre pour les milieux aquatiques ; une huile essentielle
- * est biodegradable et allergisante. Moyenner ces deux axes produit une note
+ * est biodégradable et allergisante. Moyenner ces deux axes produit une note
  * qui n'informe sur rien, ce qui est le principal defaut des notations
  * generalistes actuelles.
  */
@@ -29,24 +29,24 @@ import {
 /** Poids d'un point de severite d'irritation. */
 const IRRITATION_WEIGHT = 12;
 
-/** Poids d'un point de severite d'effet degraissant. */
+/** Poids d'un point de severite d'effet dégraissant. */
 const STRIPPING_WEIGHT = 8;
 
 /**
- * Poids de l'indice comedogene, deliberement faible : les valeurs publiees
+ * Poids de l'indice comédogène, deliberement faible : les valeurs publiées
  * proviennent de tests sur oreille de lapin des annees 1970, dont la
- * transposition a la peau humaine n'est pas etablie. On ne peut pas les
+ * transposition à la peau humaine n'est pas etablie. On ne peut pas les
  * ignorer, on ne doit pas les traiter comme une preuve.
  */
 const COMEDOGENIC_WEIGHT = 2.5;
 
-/** Seuil d'indice comedogene en dessous duquel aucune penalite n'est appliquee. */
+/** Seuil d'indice comédogène en dessous duquel aucune penalite n'est appliquee. */
 const COMEDOGENIC_FLOOR = 3;
 
-/** Concentration de reference pour la ponderation de la comedogenicite. */
+/** Concentration de référence pour la ponderation de la comedogenicite. */
 const COMEDOGENIC_THRESHOLD = 3;
 
-/** Poids d'un allergene de parfum a declaration obligatoire. */
+/** Poids d'un allergène de parfum à déclaration obligatoire. */
 const FRAGRANCE_ALLERGEN_WEIGHT = 6;
 
 /** Poids d'un sensibilisant de contact reconnu. */
@@ -56,17 +56,17 @@ const SENSITIZER_WEIGHT = 14;
 const BENEFIT_WEIGHT = 5;
 
 /**
- * Plafond de bonus. Un produit riche en actifs mais mal tolere ne doit pas
+ * Plafond de bonus. Un produit riche en actifs mais mal toléré ne doit pas
  * pouvoir remonter au niveau d'un produit bien formule.
  */
 const BENEFIT_CAP = 40;
 
 /**
- * Base du score d'adequation au profil.
+ * Base du score d'adéquation au profil.
  *
- * Ce score ne part pas de 100 : sinon tout produit simplement bien tolere
+ * Ce score ne part pas de 100 : sinon tout produit simplement bien toléré
  * plafonnerait, et l'echelle ne distinguerait plus un produit inoffensif mais
- * sans interet d'un produit reellement adapte au profil. Partir du milieu de
+ * sans interet d'un produit reellement adapté au profil. Partir du milieu de
  * l'echelle laisse les actifs pertinents faire monter la note et les motifs
  * d'intolerance la faire descendre.
  */
@@ -75,12 +75,12 @@ const FIT_BASELINE = 60;
 /**
  * Plafond de la penalite cumulee du poste parfum.
  *
- * Une liste INCI mentionne « parfum » puis, separement, les allergenes de
- * parfum a declaration obligatoire qu'il contient : limonene, linalool,
+ * Une liste INCI mentionne « parfum » puis, séparément, les allergènes de
+ * parfum à déclaration obligatoire qu'il contient : limonene, linalool,
  * geraniol. Ces substances ne s'ajoutent pas au parfum, elles le composent.
- * Les penaliser une a une revient a compter quatre fois le meme poste, ce qui
- * est precisement le travers des notations par simple presence d'ingredient.
- * Le poste entier est donc plafonne.
+ * Les penaliser une à une revient a compter quatre fois le meme poste, ce qui
+ * est precisement le travers des notations par simple presence d'ingrédient.
+ * Le poste entier est donc plafonné.
  */
 const FRAGRANCE_GROUP_CAP = 22;
 
@@ -92,8 +92,8 @@ const COMEDOGENIC_SENSITIVE_TYPES: SkinType[] = ['oily', 'combination'];
 
 interface SkinScoreOptions {
   /**
-   * Profil utilisateur. Absent, le calcul produit un score de tolerance
-   * generique ; present, un score d'adequation au profil.
+   * Profil utilisateur. Absent, le calcul produit un score de tolérance
+   * generique ; present, un score d'adéquation au profil.
    */
   profile?: SkinProfile;
 }
@@ -112,10 +112,10 @@ function conditionalWeight(
 }
 
 /**
- * L'ingredient releve-t-il du poste parfum ?
+ * L'ingrédient releve-t-il du poste parfum ?
  *
- * Le mot « parfum » sur une liste INCI designe un melange, et les allergenes
- * declares juste apres en font partie. Ils constituent donc un seul poste,
+ * Le mot « parfum » sur une liste INCI designe un mélange, et les allergènes
+ * déclarés juste apres en font partie. Ils constituent donc un seul poste,
  * a penaliser une seule fois.
  */
 function isFragrancePost(ingredient: NonNullable<ParsedIngredient['ingredient']>): boolean {
@@ -139,7 +139,7 @@ export function scoreSkin(
   let bonuses = 0;
   let resolved = 0;
 
-  // Le poste parfum est accumule a part pour pouvoir etre plafonne dans son
+  // Le poste parfum est accumule a part pour pouvoir etre plafonné dans son
   // ensemble, puis reintegre au total.
   let fragrancePenalties = 0;
   const fragranceReasons: ScoreReason[] = [];
@@ -150,7 +150,7 @@ export function scoreSkin(
     if (!ingredient || !estimate) continue;
     resolved++;
 
-    // L'utilisateur a declare bien tolerer cet ingredient : on n'applique
+    // L'utilisateur a déclaré bien tolérer cet ingrédient : on n'applique
     // aucune penalite, meme si le referentiel en prevoit une. Le vecu de
     // l'utilisateur prime sur la moyenne statistique.
     const isTolerated = tolerated.has(ingredient.inci);
@@ -192,11 +192,11 @@ export function scoreSkin(
         const scope = onlyForTypes ? ` (peaux ${formatSkinTypes(onlyForTypes)})` : '';
         addPenalty(
           impact,
-          `Potentiel irritant a partir de ${formatThreshold(threshold)} %${scope} ; estime a ${formatRange(estimate)}`,
+          `Potentiel irritant à partir de ${formatThreshold(threshold)} %${scope} ; ${formatEstimatedAt(estimate)}`,
         );
       }
 
-      // --- Effet degraissant ------------------------------------------------
+      // --- Effet dégraissant ------------------------------------------------
       if (skin.stripping) {
         const { severity, threshold, onlyForTypes } = skin.stripping;
         const weight = conditionalWeight(onlyForTypes, skinType);
@@ -204,7 +204,7 @@ export function scoreSkin(
         const impact = severity * STRIPPING_WEIGHT * dose * weight * confidenceWeight;
         addPenalty(
           impact,
-          `Effet degraissant a partir de ${formatThreshold(threshold)} % ; estime a ${formatRange(estimate)}`,
+          `Effet dégraissant à partir de ${formatThreshold(threshold)} % ; ${formatEstimatedAt(estimate)}`,
         );
       }
 
@@ -218,33 +218,33 @@ export function scoreSkin(
             skin.comedogenic * COMEDOGENIC_WEIGHT * dose * weight * confidenceWeight;
           addPenalty(
             impact,
-            `Indice comedogene ${skin.comedogenic}/5 (donnee de faible robustesse) ; estime a ${formatRange(estimate)}`,
+            `Indice comédogène ${skin.comedogenic}/5 (donnée de faible robustesse) ; ${formatEstimatedAt(estimate)}`,
           );
         }
       }
 
-      // --- Allergenes -------------------------------------------------------
+      // --- Allergènes -------------------------------------------------------
       if (skin.allergen) {
         const isSensitizer = skin.allergen === 'known_sensitizer';
         const baseWeight = isSensitizer ? SENSITIZER_WEIGHT : FRAGRANCE_ALLERGEN_WEIGHT;
-        // Un allergene agit a tres faible dose : le seuil de reference est
-        // celui de la declaration obligatoire, pas une dose d'usage.
+        // Un allergène agit à très faible dose : le seuil de référence est
+        // celui de là déclaration obligatoire, pas une dose d'usage.
         const dose = penaltyFactor(mid, isSensitizer ? 0.01 : 0.05);
         const sensitiveBoost = skinType === 'sensitive' ? 1.5 : 1;
         const impact = baseWeight * dose * sensitiveBoost * confidenceWeight;
         addPenalty(
           impact,
           isSensitizer
-            ? `Sensibilisant de contact reconnu ; estime a ${formatRange(estimate)}`
-            : `Allergene de parfum a declaration obligatoire ; estime a ${formatRange(estimate)}`,
+            ? `Sensibilisant de contact reconnu ; ${formatEstimatedAt(estimate)}`
+            : `Allergène de parfum à déclaration obligatoire ; ${formatEstimatedAt(estimate)}`,
         );
       }
     }
 
     // --- Benefices ----------------------------------------------------------
     for (const benefit of skin?.benefits ?? []) {
-      // Avec un profil, seuls les benefices repondant aux preoccupations
-      // declarees comptent : un actif depigmentant n'apporte rien a qui ne
+      // Avec un profil, seuls les benefices repondant aux préoccupations
+      // declarees comptent : un actif dépigmentant n'apporte rien a qui ne
       // cherche pas a traiter des taches.
       if (profile && !profile.concerns.includes(benefit.concern)) continue;
 
@@ -256,23 +256,23 @@ export function scoreSkin(
       if (impact < 0.5) continue;
 
       const label =
-        `Actif efficace des ${formatThreshold(benefit.minEffective)} % sur ` +
-        `${CONCERN_LABELS[benefit.concern]} ; estime a ${formatRange(estimate)}`;
+        `Actif efficace dès ${formatThreshold(benefit.minEffective)} % sur ` +
+        `${CONCERN_LABELS[benefit.concern]} ; ${formatEstimatedAt(estimate)}`;
 
       if (profile) {
         bonuses += impact;
         reasons.push(makeReason(impact, label));
       } else {
-        // Hors profil, le score mesure la tolerance : la presence d'un actif
-        // efficace est signalee mais ne remonte pas une note de tolerance.
+        // Hors profil, le score mesure la tolérance : la presence d'un actif
+        // efficace est signalee mais ne remonte pas une note de tolérance.
         reasons.push(makeReason(impact, label, true));
       }
     }
   }
 
   // --- Plafonnement du poste parfum -----------------------------------------
-  // Les impacts affiches sont mis a la meme echelle que la penalite retenue,
-  // pour que l'utilisateur puisse retrouver le calcul a partir des lignes
+  // Les impacts affiches sont mis à la meme echelle que la penalite retenue,
+  // pour que l'utilisateur puisse retrouver le calcul à partir des lignes
   // qu'on lui montre.
   const fragranceCap =
     skinType === 'sensitive' ? FRAGRANCE_GROUP_CAP_SENSITIVE : FRAGRANCE_GROUP_CAP;
