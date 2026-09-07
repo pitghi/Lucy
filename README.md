@@ -56,7 +56,7 @@ Trois scores independants en decoulent, jamais moyennes entre eux :
 | Score environnement | fonctionnel, calibrage provisoire |
 | Score d'adequation au profil | fonctionnel |
 | Moteur de recommandation | fonctionnel (regles) |
-| Application mobile Expo | a faire |
+| Application mobile Expo | quatre ecrans, navigation a finaliser |
 | Source de donnees produits | mesuree, voir ci-dessous |
 
 ## Faisabilite mesuree
@@ -103,10 +103,16 @@ Une notation par simple presence de l'ingredient les crediterait a l'identique.
 
 ## Documentation
 
+- [`docs/decisions.md`](docs/decisions.md) — le journal des decisions : ce qui
+  a ete tranche, pourquoi, ce qui a ete ecarte, ce qui reste ouvert. A lire
+  avant de proposer un changement de conception.
 - [`docs/methodologie.md`](docs/methodologie.md) — le modele de scoring en
   detail. Ce document est destine a etre publie : la transparence de la methode
   est une condition de credibilite autant qu'une protection.
 - [`docs/mvp.md`](docs/mvp.md) — perimetre, etapes et risques du MVP.
+- [`docs/apercu/`](docs/apercu/) — captures des ecrans, rendues par React Native.
+- [`design-system/lucy/`](design-system/lucy/) — design system et ecarts assumes.
+- [`CLAUDE.md`](CLAUDE.md) — contexte charge automatiquement par Claude Code.
 
 ## Avertissements
 
