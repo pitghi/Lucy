@@ -1,0 +1,17 @@
+{
+  "name": "@lucy/engine",
+  "version": "0.1.0",
+  "description": "Moteur de scoring Lucy : parsing INCI, estimation de concentration, scoring peau/environnement",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "test": "node --experimental-strip-types --test test/*.test.ts",
+    "typecheck": "tsc --noEmit",
+    "demo": "node --experimental-strip-types demo/demo.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.0"
+  }
+}
