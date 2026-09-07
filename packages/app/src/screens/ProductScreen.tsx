@@ -10,6 +10,7 @@ import { ScoreRow } from '../components/ScoreRow';
 import { ReasonCard } from '../components/ReasonCard';
 import { CoverageNotice } from '../components/CoverageNotice';
 import { ConfidenceIndicator } from '../components/Confidence';
+import { ProductImage } from '../components/ProductImage';
 
 /**
  * Fiche produit.
@@ -88,6 +89,10 @@ export function ProductScreen({
         ]}
         showsVerticalScrollIndicator={false}
       >
+        {/* La photo precede le nom : en rayon, on verifie d'abord qu'on tient
+            le bon flacon, le detail de la formule vient ensuite. */}
+        <ProductImage barcode={product.barcode} variant="hero" />
+
         <View style={styles.heading}>
           <Text style={[type.display, { color: palette.text }]}>{product.name}</Text>
           {product.barcode ? (

@@ -7,6 +7,11 @@ import type { Product } from '@lucy/engine';
  * marques reelles : une note publiée sur un produit identifiable engage, et
  * cette question se traite avec la methodologie et le droit de reponse, pas
  * dans un jeu de donnees de developpement.
+ *
+ * Reserve depuis l'ajout des photographies (decisions 3.7) : les codes-barres
+ * ci-dessous sont de vrais EAN pris au hasard, donc la photo recuperee affiche
+ * une marque reelle qui ne correspond pas a la composition decrite. La fiche
+ * n'est plus anonyme a l'ecran. Point ouvert, cf. §7 du journal.
  */
 export const DEMO_CATALOG: Product[] = [
   {

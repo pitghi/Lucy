@@ -232,6 +232,29 @@ Les compositions sont representatives du marche mais anonymisees. Publier une
 note sur un produit identifiable engage ; cela se traite avec la methodologie
 et le droit de reponse, pas dans un jeu de donnees de developpement.
 
+### 3.7 Les photographies d'emballage viennent d'Open Beauty Facts — *acte* **[PR]**
+
+Recuperees par code-barres via l'API `api/v2` (`image_front_url` et
+`image_front_small_url`), avec cache de session. L'URL ne figure pas dans le
+type `Product` du moteur : celui-ci reste une entree de scoring, et le
+code-barres suffit comme cle de jointure. Aucun score ne depend de la presence
+d'une photo.
+
+Ecarte : des visuels generiques dessines en SVG, et un aplat aux initiales de
+la marque. Les deux preservaient l'anonymisation de 3.5 ; l'arbitrage a
+retenu la photo reelle, plus utile pour reconnaitre un produit en rayon.
+
+**Tension assumee avec 3.5.** La photo attache une marque identifiable a une
+fiche dont la composition et les trois notes sont inventees. Le constat est
+mesure, pas theorique : sur les six codes-barres de demonstration, trois sont
+absents d'Open Beauty Facts et les trois presents designent **d'autres
+produits** — un shampooing Garnier s'affiche sur une creme de soin visage, une
+creme Byphasse sur un serum a la niacinamide. Ces EAN avaient ete pris au
+hasard. La sortie de cette tension n'est pas tranchee : voir §7.
+
+Consequence pratique : la couverture d'Open Beauty Facts etant partielle, une
+photo manquante est un etat ordinaire de l'interface et non une erreur (5.10).
+
 ### 3.6 Les valeurs reglementaires doivent etre auditees — *a valider*
 
 Les Annexes du reglement 1223/2009 sont amendees plusieurs fois par an. Les
@@ -339,6 +362,23 @@ restaient illisibles sur fond sombre. Le mode sombre emploie des tons plus
 clairs et moins satures, conformement a `color-dark-mode`. Les deux themes se
 verifient separement.
 
+### 5.10 La photo produit a un repli de meme encombrement — *acte*
+
+Deux tailles : vignette de 56 px dans les cartes de recommandation, rendu
+pleine largeur de 200 px en tete de fiche. Le repli — icone et, sur la fiche,
+la mention « Photo indisponible » — occupe exactement la meme place que
+l'image : un emplacement qui s'affaisse quand la photo manque ferait sauter la
+mise en page a chaque chargement, et la moitie du catalogue de demonstration
+est dans ce cas (3.7).
+
+Le cadrage est `contain` et non `cover` : les photos d'une base contributive
+sont cadrees de facon tres inegale, et un recadrage automatique ampute autant
+d'etiquettes qu'il en centre.
+
+La photo est decorative au sens de l'accessibilite : le nom et la marque sont
+lus juste a cote, et « photo de l'emballage » n'ajouterait qu'une redite au
+lecteur d'ecran.
+
 ---
 
 ## 6. Posture juridique et editoriale
@@ -371,11 +411,38 @@ Rien n'a ete decide sur ces points ; ils ne sont pas des oublis.
 | **Modele economique** | Non aborde. Determine ce qui est acceptable en matiere de partenariats marques, donc la credibilite du classement. |
 | **Nom et positionnement** | « Lucy » est le nom du depot, pas une decision de marque. |
 | **Taux de presence du code-barres** | L'audit a mesure la presence de la **liste d'ingredients**, pas celle du code-barres. Un scan qui ne trouve pas le produit et un scan qui le trouve sans sa composition appellent deux traitements differents. |
+| **Coherence des codes-barres de demonstration** | Depuis 3.7, l'incoherence entre les EAN du catalogue et les produits qu'ils designent est visible a l'ecran. Deux sorties : aligner le catalogue sur les vraies fiches Open Beauty Facts — ce qui rouvre le droit de reponse de 6.1 sur des produits identifiables — ou retirer les EAN reels et n'afficher la photo que pour un produit effectivement scanne. Non tranche. |
 | **Ecran de saisie / OCR** | Identifie comme priorite fonctionnelle suivante (3.1), pas encore ecrit. |
 
 ---
 
 ## 8. Historique des sessions
+
+### 2026-09-07 — photographies produit
+
+Session courte, sur un depot deja constitue. L'application a d'abord ete
+relancee sur simulateur iOS pour verifier qu'elle tournait en l'etat : elle
+tourne, avec deux reserves relevees au passage et non traitees — `react-native`
+est en 0.76.5 quand le SDK 52 attend 0.76.9, et `npm audit` remonte 23
+vulnerabilites.
+
+Ajout des **photographies d'emballage** (3.7, 5.10) : un module de
+recuperation Open Beauty Facts avec cache de session, un composant a deux
+tailles, integres aux cartes de recommandation et en tete de fiche produit.
+Verifie sur simulateur dans les deux themes, avec photo et sans.
+
+Le point notable est methodologique. La source des visuels a ete presentee
+comme un arbitrage, en signalant d'emblee la tension avec 3.5 ; l'option des
+photos reelles a ete retenue. C'est en interrogeant l'API **avant** d'integrer
+qu'est apparu le vrai probleme, qui n'etait pas celui annonce : non seulement
+la photo reintroduit une marque reelle, mais les codes-barres du catalogue de
+demonstration ne designent pas les produits qu'ils pretendent decrire. Le
+desaccord de conception portait sur un risque juridique ; la verification a
+revele une incoherence de donnees. Les deux sont reels, et seul le second se
+voit a l'ecran.
+
+Cette incoherence reste ouverte (§7) : elle etait hors du perimetre demande, et
+ses deux sorties possibles n'engagent pas la meme posture editoriale.
 
 ### 2026-09-07 — cadrage, moteur, audit, premiers ecrans
 
