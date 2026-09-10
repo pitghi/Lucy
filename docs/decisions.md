@@ -43,6 +43,31 @@ Une base de code pour iOS et Android, scan code-barres correct via
 handicap majeur quand le scan est la fonction centrale), natif iOS seul (une
 seule plateforme).
 
+### 1.4 Distribution de test par TestFlight, via EAS Build — *acte*
+
+`expo-camera` ne fonctionne pas dans Expo Go : tester le scan sur un appareil
+reel suppose un binaire natif. EAS Build le produit sans chaine Xcode locale,
+et TestFlight le distribue aux testeurs sans passer par la revue App Store.
+
+Trois profils dans `packages/app/eas.json`, du moins engageant au plus :
+`simulator` (binaire simulateur, aucun compte Apple requis), `preview`
+(distribution interne sur appareils declares), `production` (TestFlight puis
+App Store).
+
+Le numero de build est tenu par EAS (`appVersionSource: "remote"`) et non dans
+`app.json` : il s'incremente a chaque envoi sans salir l'arbre de travail ni
+entrer en conflit entre worktrees. `app.json` ne porte que la valeur initiale.
+
+`ITSAppUsesNonExemptEncryption` est declare a `false` : l'application n'emploie
+que HTTPS, et sans cette declaration App Store Connect repose la question de
+conformite export a chaque televersement.
+
+Le plugin `expo-camera` reclamait le micro et `RECORD_AUDIO` par defaut. Les
+deux sont desactives : Lucy lit un code-barres, et une demande de permission
+non justifiee est exactement ce que le projet reproche a ses concurrents.
+
+---
+
 ---
 
 ## 2. Methode d'evaluation

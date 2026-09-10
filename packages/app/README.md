@@ -23,6 +23,46 @@ dependance, aucune couche d'adaptation n'est necessaire.
 | `ProfileScreen` | Type de peau, preoccupations, ingredients non toleres |
 | `RecommendationsScreen` | Classement pour le profil, avec le motif de chaque position |
 
+## Publier une version de test
+
+Le scan ne fonctionne pas dans Expo Go : `expo-camera` demande un binaire
+natif. Les builds passent par EAS (justification et profils : decision 1.4 du
+[journal](../../docs/decisions.md)).
+
+Le projet Expo est deja cree et lie : `@pitghi/lucy`, dont l'identifiant
+figure dans `app.json`. Les commandes, du moins engageant au plus :
+
+```bash
+npm run build:simulator --workspace @lucy/app  # simulateur, sans compte Apple
+npm run build:preview   --workspace @lucy/app  # appareils declares
+npm run build:ios       --workspace @lucy/app  # TestFlight
+npm run submit:ios      --workspace @lucy/app  # envoi du dernier build
+```
+
+Le premier build de production demande les identifiants Apple et genere le
+certificat de distribution et le profil d'approvisionnement ; EAS les conserve
+ensuite. `com.lucy.app` doit etre disponible sur App Store Connect — s'il est
+pris, changer `ios.bundleIdentifier` **avant** le premier build.
+
+Deux points a connaitre :
+
+- **Ne pas builder depuis un worktree git.** EAS archive le depot par git ;
+  fusionner la branche et lancer le build depuis la copie principale.
+- **Prevenir les testeurs** que le catalogue est local. Un code-barres absent
+  renvoie vers la saisie manuelle : c'est le comportement voulu (decision 5.7),
+  pas une panne, mais sans cet avertissement il sera remonte comme telle.
+
+## Icones
+
+`assets/` est produit par `scripts/icones.py`, a partir des jetons de design.
+La marque figure la these du projet : quatre barres decroissantes, une liste
+INCI ordonnee par concentration, la derniere estompee sous le seuil d'effet.
+Modifier le script plutot que les PNG, puis :
+
+```bash
+cd packages/app && python3 scripts/icones.py
+```
+
 ## Regles de design a ne pas casser
 
 Le detail et la justification sont dans
