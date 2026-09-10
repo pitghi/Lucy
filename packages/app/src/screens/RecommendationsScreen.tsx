@@ -16,6 +16,7 @@ import {
 } from '../theme/index';
 import { useIsDark, usePalette } from '../theme/usePalette';
 import { Chip, ChipGroup } from '../components/Chip';
+import { ProductImage } from '../components/ProductImage';
 
 /**
  * Recommandations pour le profil.
@@ -183,6 +184,7 @@ function RecommendationCard({
     >
       <View style={styles.cardHead}>
         <Text style={[type.caption, { color: palette.textSubtle }]}>{rank}</Text>
+        <ProductImage barcode={product.barcode} />
         <View style={styles.cardTitle}>
           <Text style={[type.bodyMedium, { color: palette.text }]} numberOfLines={2}>
             {product.name}
@@ -239,7 +241,7 @@ const styles = StyleSheet.create({
   filters: { gap: space.sm, marginTop: space.md },
 
   card: { borderWidth: 1, borderRadius: radius.lg, padding: space.lg, gap: space.md },
-  cardHead: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md },
+  cardHead: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   cardTitle: { flex: 1, gap: 2 },
 
   scores: { flexDirection: 'row', gap: space.sm },
