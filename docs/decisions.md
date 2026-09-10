@@ -56,7 +56,9 @@ App Store).
 
 Le numero de build est tenu par EAS (`appVersionSource: "remote"`) et non dans
 `app.json` : il s'incremente a chaque envoi sans salir l'arbre de travail ni
-entrer en conflit entre worktrees. `app.json` ne porte que la valeur initiale.
+entrer en conflit entre worktrees. `app.json` ne porte donc ni `buildNumber` ni
+`versionCode` — EAS les ignore, et les laisser aurait fait croire a une source
+de verite qui n'en est pas une.
 
 `ITSAppUsesNonExemptEncryption` est declare a `false` : l'application n'emploie
 que HTTPS, et sans cette declaration App Store Connect repose la question de
@@ -65,6 +67,12 @@ conformite export a chaque televersement.
 Le plugin `expo-camera` reclamait le micro et `RECORD_AUDIO` par defaut. Les
 deux sont desactives : Lucy lit un code-barres, et une demande de permission
 non justifiee est exactement ce que le projet reproche a ses concurrents.
+
+Le texte de la permission camera est ecrit **une seule fois**, dans les options
+du plugin. Une valeur concurrente dans `ios.infoPlist` est silencieusement
+ecrasee : le premier binaire annoncait la phrase courte, sans la garantie
+qu'aucune image n'est conservee. C'est l'inspection du `.app` construit, non la
+configuration, qui l'a montre.
 
 ---
 

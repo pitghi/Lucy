@@ -44,13 +44,12 @@ certificat de distribution et le profil d'approvisionnement ; EAS les conserve
 ensuite. `com.lucy.app` doit etre disponible sur App Store Connect — s'il est
 pris, changer `ios.bundleIdentifier` **avant** le premier build.
 
-Deux points a connaitre :
+**Prevenir les testeurs** que le catalogue est local : un code-barres absent
+renvoie vers la saisie manuelle. C'est le comportement voulu (decision 5.7),
+pas une panne, mais sans cet avertissement il sera remonte comme telle.
 
-- **Ne pas builder depuis un worktree git.** EAS archive le depot par git ;
-  fusionner la branche et lancer le build depuis la copie principale.
-- **Prevenir les testeurs** que le catalogue est local. Un code-barres absent
-  renvoie vers la saisie manuelle : c'est le comportement voulu (decision 5.7),
-  pas une panne, mais sans cet avertissement il sera remonte comme telle.
+Le profil `simulator` a ete valide : build 1 construit par EAS depuis un
+worktree git sans difficulte, installe et lance sur iPhone 17.
 
 ## Icones
 
