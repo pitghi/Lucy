@@ -7,6 +7,10 @@ import type {
 } from '../types.ts';
 import { assessProduct } from '../scoring/assess.ts';
 import { parseInciList, normalizeLabel } from '../inci/parse.ts';
+import { rejectedBarcodes } from './journal.ts';
+import { estimateTexture } from '../scoring/texture.ts';
+import { resolveAll } from '../inci/resolve.ts';
+import { estimateConcentrations } from '../concentration/estimate.ts';
 
 /**
  * Recommandation de produits.
@@ -50,6 +54,12 @@ export interface RecommendOptions {
   minEnvScore?: number;
   /** INCI a ecarter en plus de ceux que le profil declare non toleres. */
   excludeInci?: string[];
+  /**
+   * Texture attendue. L'estimation etant grossiere, un produit dont la texture
+   * reste indeterminee n'est **pas** ecarte : le filtre retire ce qui contredit
+   * la preference, pas ce qui ne la confirme pas.
+   */
+  texture?: 'fluid' | 'rich';
 }
 
 export interface Recommendation {
@@ -101,8 +111,12 @@ export function recommend(
   const scored: Recommendation[] = [];
 
   const excluded = new Set((options.excludeInci ?? []).map(normalizeLabel));
+  // Reproposer un produit apres un retour negatif est le defaut le plus
+  // visible qu'une recommandation puisse avoir.
+  const rejected = rejectedBarcodes(profile);
 
   for (const product of catalog) {
+    if (product.barcode && rejected.has(product.barcode)) continue;
     if (options.category && product.category !== options.category) continue;
 
     const parsed = parseInciList(product.inciList);
@@ -111,6 +125,18 @@ export function recommend(
       continue;
     }
     if (excluded.size > 0 && parsed.some((i) => excluded.has(i.normalized))) continue;
+
+    // La preference du profil s'applique partout ; une demande explicite la
+    // remplace le temps d'une recherche.
+    const wantedTexture = options.texture ?? profile.preferredTexture;
+    if (wantedTexture) {
+      const resolved = resolveAll(parsed);
+      const { texture } = estimateTexture(
+        resolved,
+        estimateConcentrations(resolved, product.category, product.claims ?? []),
+      );
+      if (texture !== 'unknown' && texture !== wantedTexture) continue;
+    }
 
     const assessment = assessProduct(product, profile);
 

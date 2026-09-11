@@ -51,9 +51,12 @@ type State =
   | { phase: 'echec'; reason: SearchFailure }
   | { phase: 'resultats'; outcome: SearchOutcome; comprises: string[] };
 
+// Les exemples sont cales sur ce que le catalogue peut reellement satisfaire :
+// un exemple qui ne renvoie rien donne l'impression que la recherche est
+// cassee alors qu'elle a bien compris la demande.
 const EXEMPLES = [
-  'Une crème hydratante avec maximum 9 ingrédients, bonne pour ma peau et la planète',
-  'Un sérum éclat sans parfum',
+  'Une crème hydratante avec maximum 15 ingrédients, bonne pour ma peau et la planète',
+  'Une crème apaisante sans parfum pour peau sensible',
 ];
 
 const ECHECS: Record<SearchFailure, { titre: string; detail: string }> = {
@@ -176,7 +179,7 @@ export function SearchScreen({ catalog, profile, onSelect, onEditProfile }: Prop
               <TextInput
                 value={text}
                 onChangeText={setText}
-                placeholder="Une crème hydratante avec maximum 9 ingrédients…"
+                placeholder="Une crème hydratante avec maximum 15 ingrédients…"
                 placeholderTextColor={palette.textSubtle}
                 multiline
                 returnKeyType="search"

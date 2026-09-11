@@ -5,7 +5,12 @@ import { useFonts } from 'expo-font';
 import { Lora_400Regular, Lora_600SemiBold } from '@expo-google-fonts/lora';
 import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { ScanLine, Search, Sparkles, UserCog } from 'lucide-react-native';
-import { assessProduct, type Product, type SkinProfile } from '@lucy/engine';
+import {
+  assessProduct,
+  type Product,
+  type SkinProfile,
+  type ToleranceEntry,
+} from '@lucy/engine';
 import { radius, space, TOUCH_MIN, type } from './src/theme/index';
 import { usePalette } from './src/theme/usePalette';
 import { ScanScreen } from './src/screens/ScanScreen';
@@ -44,6 +49,38 @@ export default function App() {
   });
   const [selected, setSelected] = useState<Product | null>(null);
 
+  /**
+   * Enregistre un verdict dans le journal de tolerance.
+   *
+   * Le produit juge non convenable disparait des propositions ; c'est la seule
+   * consequence immediate. Aucun ingredient n'est condamne pour autant : un
+   * produit en porte quinze, et rien ne dit lequel a pose probleme. Le profil
+   * propose une intolerance seulement quand plusieurs rejets se recoupent, et
+   * c'est l'utilisateur qui tranche.
+   */
+  const recordTolerance = useCallback(
+    (product: Product, suited: boolean) => {
+      setProfile((current) => {
+        if (!current) return current;
+        const entry: ToleranceEntry = {
+          ...(product.barcode ? { barcode: product.barcode } : {}),
+          name: product.name,
+          verdict: suited ? 'suited' : 'unsuited',
+          date: new Date().toISOString().slice(0, 10),
+        };
+        // Un nouveau verdict remplace le precedent : l'utilisateur a le droit
+        // de changer d'avis, et deux verdicts opposes sur le meme produit
+        // rendraient le journal inexploitable.
+        const journal = (current.journal ?? []).filter(
+          (item) => item.barcode !== entry.barcode || item.name !== entry.name,
+        );
+        return { ...current, journal: [entry, ...journal] };
+      });
+      setSelected(null);
+    },
+    [],
+  );
+
   const assessment = useMemo(
     () => (selected ? assessProduct(selected, profile ?? undefined) : null),
     [selected, profile],
@@ -63,7 +100,7 @@ export default function App() {
           product={selected}
           assessment={assessment}
           onBack={() => setSelected(null)}
-          onToleranceFeedback={() => setSelected(null)}
+          onToleranceFeedback={(suited) => recordTolerance(selected, suited)}
         />
       </SafeAreaProvider>
     );
@@ -100,6 +137,7 @@ export default function App() {
           {tab === 'profile' ? (
             <ProfileScreen
               initial={profile ?? undefined}
+              catalog={DEMO_CATALOG}
               onSave={(next) => {
                 setProfile(next);
                 setTab('reco');

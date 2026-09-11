@@ -163,6 +163,36 @@ export interface BrandClaim {
   percent: number;
 }
 
+/** Verdict porte par l'utilisateur sur un produit qu'il a essaye. */
+export type ToleranceVerdict = 'suited' | 'unsuited';
+
+/**
+ * Une entree du journal de tolerance.
+ *
+ * C'est la seule donnee du projet qu'aucun concurrent ne possede. Sa valeur
+ * n'apparait qu'au volume : croisee sur assez d'entrees, elle permet de
+ * recalibrer les seuils d'effet par ingredient. Sur une seule entree, elle ne
+ * permet rien — un produit porte quinze ingredients, et rien ne dit lequel a
+ * pose probleme.
+ */
+export interface ToleranceEntry {
+  barcode?: string;
+  /** Nom du produit au moment du verdict, pour rester lisible si le catalogue bouge. */
+  name: string;
+  verdict: ToleranceVerdict;
+  /** Date ISO du verdict. */
+  date: string;
+}
+
+/**
+ * Texture d'un produit, estimee a partir de sa formule.
+ *
+ * « unknown » n'est pas un echec mais un resultat : quand l'intervalle de
+ * concentration des corps gras chevauche le seuil, la formule ne permet pas de
+ * trancher, et l'annoncer vaut mieux que deviner.
+ */
+export type Texture = 'fluid' | 'rich' | 'unknown';
+
 /** Profil utilisateur : ce que l'app collecte à l'onboarding puis affine. */
 export interface SkinProfile {
   skinType: SkinType;
@@ -173,6 +203,14 @@ export interface SkinProfile {
   notTolerated: string[];
   /** L'utilisateur souhaite eviter tout parfum. */
   avoidFragrance?: boolean;
+  /**
+   * Produits essayes et leur verdict. Un produit juge non convenable n'est
+   * plus propose : le reproposer apres un retour negatif est le defaut le plus
+   * visible qu'une recommandation puisse avoir.
+   */
+  journal?: ToleranceEntry[];
+  /** Texture preferee, si l'utilisateur en a declare une. */
+  preferredTexture?: Exclude<Texture, 'unknown'>;
 }
 
 /** Une ligne d'explication du score, affichee dans la fiche produit. */
