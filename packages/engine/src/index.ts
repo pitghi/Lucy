@@ -18,3 +18,11 @@ export { formatRange, midpoint, penaltyFactor, efficacyFactor } from './scoring/
 export { ALL_INGREDIENTS } from './data/ingredients.ts';
 export { recommend } from './reco/recommend.ts';
 export type { Recommendation, RecommendOptions } from './reco/recommend.ts';
+export { search, parseSearchQuery, AXIS_FLOOR } from './reco/search.ts';
+export type {
+  SearchQuery,
+  SearchAxis,
+  SearchResult,
+  SearchOutcome,
+  MatchedCriterion,
+} from './reco/search.ts';
