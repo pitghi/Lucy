@@ -259,11 +259,40 @@ Licence ODbL. `scripts/fetch-sample.sh` reconstitue l'echantillon a
 l'identique. Note pratique : l'API plafonne a une dizaine de requetes par
 minute et un `page_size` superieur a 24 declenche ce plafond silencieusement.
 
-### 3.5 Les produits de demonstration ne sont attribues a aucune marque reelle — *acte*
+### 3.5 Les produits de demonstration ne sont attribues a aucune marque reelle — *revoque le 2026-09-11, voir 3.8*
 
-Les compositions sont representatives du marche mais anonymisees. Publier une
-note sur un produit identifiable engage ; cela se traite avec la methodologie
-et le droit de reponse, pas dans un jeu de donnees de developpement.
+Les compositions etaient representatives du marche mais anonymisees. Publier
+une note sur un produit identifiable engage ; cela se traite avec la
+methodologie et le droit de reponse, pas dans un jeu de donnees de
+developpement.
+
+Revoquee : l'ajout des photographies (3.7) a rendu l'anonymat intenable a
+l'ecran. Voir 3.8.
+
+### 3.8 Le catalogue de demonstration porte de vrais produits — *acte*
+
+Nom, marque, code-barres et liste INCI viennent tous de la meme fiche Open
+Beauty Facts. La photo correspond donc au produit qu'elle illustre, ce qui
+n'etait plus le cas depuis 3.7 : le catalogue etait anonymise mais portait de
+vrais EAN tires au hasard, et affichait donc une marque etrangere a la
+composition decrite. L'incoherence etait visible et figurait au §7.
+
+Des trois sorties possibles — anonymiser jusqu'a retirer les photos, garder
+l'incoherence, ou aligner sur de vrais produits — la troisieme est la seule qui
+donne un jeu de demonstration representatif. Les scores cessent d'ailleurs
+d'etre uniformement excellents : sur de vraies formules, l'axe environnement
+descend a 33.
+
+Ce que cela engage est ce qu'annoncait 3.5, et 6.1 le dit : noter un produit
+identifiable ouvre le droit de reponse. Acceptable sur un jeu de developpement,
+**pas publiable tel quel** avant que la methodologie et la procedure de
+contestation soient en place.
+
+Le catalogue est genere par `packages/engine/scripts/build-catalog.ts`, dont
+les criteres sont explicites : couverture du referentiel d'au moins 75 %, au
+plus deux produits par marque, un quota de formules courtes — sans lui le tri
+par couverture ne retient que des listes de quarante ingredients, et une
+demande du type « au maximum quinze ingredients » ne renverrait jamais rien.
 
 ### 3.7 Les photographies d'emballage viennent d'Open Beauty Facts — *acte* **[PR]**
 
@@ -311,6 +340,42 @@ tri.
 Au plus deux produits d'une meme marque dans les resultats. Sans elle, une
 marque a la formulation homogene monopolise les premieres places, ce qui degrade
 l'utilite percue autant que la credibilite du classement.
+
+### 4.4 Le journal suggere une intolerance, il ne la decrete pas — *acte*
+
+Un produit rejete n'est plus propose : c'est la seule consequence automatique.
+Aucun ingredient n'est penalise pour autant — un produit en porte quinze, et un
+retour negatif ne dit pas lequel a pose probleme. En condamner un reviendrait a
+inventer une cause, ce que le projet refuse partout ailleurs.
+
+Quand un meme ingredient revient dans trois produits rejetes et dans aucun
+produit accepte, le profil **pose la question** et l'utilisateur tranche. Le
+seuil de trois reste faible statistiquement ; il ne s'agit pas de conclure,
+mais de soumettre une correlation a la seule personne qui connaisse sa peau.
+Les ingredients omnipresents — eau, glycerine, conservateurs — sont exclus des
+suggestions : ils ressortiraient systematiquement et discrediteraient les
+autres.
+
+### 4.5 La texture se lit dans l'ordre de la liste, pas dans les masses — *acte*
+
+Les utilisateurs raisonnent en textures, qu'une liste INCI ne porte pas. Deux
+voies ont ete essayees.
+
+**Ecartee : sommer les concentrations estimees des corps gras.** Sur une creme
+riche typique, le total va de 7 a 35 % — un intervalle qui chevauche tous les
+seuils plausibles. Le mecanisme d'estimation est concu pour encadrer un
+ingredient, pas pour additionner dix intervalles dont les incertitudes se
+cumulent.
+
+**Retenue : lire l'ordre.** Trois corps gras ou plus, dont un dans les
+premieres positions, decrivent une phase grasse substantielle ; un seul en fin
+de liste decrit un gel. C'est grossier, et c'est dit : la confiance ne depasse
+jamais « moyenne », et un produit dont la texture reste indeterminee n'est
+jamais ecarte — le filtre retire ce qui contredit la preference, pas ce qui ne
+la confirme pas.
+
+L'odeur, elle, reste hors de portee : au-dela de « sans parfum », une liste
+d'ingredients n'en dit rien. Le profil le dit plutot que de faire semblant.
 
 ### 4.3 Le journal de tolerance est collecte des le MVP — *acte*
 
@@ -444,7 +509,7 @@ Rien n'a ete decide sur ces points ; ils ne sont pas des oublis.
 | **Modele economique** | Non aborde. Determine ce qui est acceptable en matiere de partenariats marques, donc la credibilite du classement. |
 | **Nom et positionnement** | « Lucy » est le nom du depot, pas une decision de marque. |
 | **Taux de presence du code-barres** | L'audit a mesure la presence de la **liste d'ingredients**, pas celle du code-barres. Un scan qui ne trouve pas le produit et un scan qui le trouve sans sa composition appellent deux traitements differents. |
-| **Coherence des codes-barres de demonstration** | Depuis 3.7, l'incoherence entre les EAN du catalogue et les produits qu'ils designent est visible a l'ecran. Deux sorties : aligner le catalogue sur les vraies fiches Open Beauty Facts — ce qui rouvre le droit de reponse de 6.1 sur des produits identifiables — ou retirer les EAN reels et n'afficher la photo que pour un produit effectivement scanne. Non tranche. |
+| **Deploiement du service de traduction** | `packages/api` porte la cle d'API pour la recherche en langage libre. Limitation de debit, authentification de l'application, budget par recherche et hebergement : non traites. |
 | **Ecran de saisie / OCR** | Identifie comme priorite fonctionnelle suivante (3.1), pas encore ecrit. |
 
 ---

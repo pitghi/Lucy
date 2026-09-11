@@ -18,3 +18,20 @@ export { formatRange, midpoint, penaltyFactor, efficacyFactor } from './scoring/
 export { ALL_INGREDIENTS } from './data/ingredients.ts';
 export { recommend } from './reco/recommend.ts';
 export type { Recommendation, RecommendOptions } from './reco/recommend.ts';
+export { search, parseSearchQuery, AXIS_FLOOR } from './reco/search.ts';
+export { estimateTexture } from './scoring/texture.ts';
+export type { TextureEstimate } from './scoring/texture.ts';
+export {
+  suggestIntolerances,
+  rejectedBarcodes,
+  SUGGESTION_THRESHOLD,
+} from './reco/journal.ts';
+export type { IntoleranceSuggestion } from './reco/journal.ts';
+export type {
+  SearchQuery,
+  SearchAxis,
+  SearchResult,
+  SearchOutcome,
+  MatchedCriterion,
+  UnmetCriterion,
+} from './reco/search.ts';

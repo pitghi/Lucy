@@ -1,22 +1,14 @@
 import { useMemo, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ChevronRight, Sparkles, UserCog } from 'lucide-react-native';
+import { Sparkles, UserCog } from 'lucide-react-native';
 import type { Concern, Product, SkinProfile } from '@lucy/engine';
 import { recommend, type Recommendation } from '@lucy/engine';
 import { CONCERN_LABELS } from '../data/labels';
-import {
-  AXIS_TITLES_SHORT,
-  font,
-  presentScore,
-  radius,
-  space,
-  TOUCH_MIN,
-  type,
-} from '../theme/index';
-import { useIsDark, usePalette } from '../theme/usePalette';
+import { radius, space, TOUCH_MIN, type } from '../theme/index';
+import { usePalette } from '../theme/usePalette';
 import { Chip, ChipGroup } from '../components/Chip';
-import { ProductImage } from '../components/ProductImage';
+import { ProductCard } from '../components/ProductCard';
 
 /**
  * Recommandations pour le profil.
@@ -167,70 +159,24 @@ function RecommendationCard({
 }) {
   const palette = usePalette();
   const { product, assessment, highlights } = recommendation;
-  const fitValue = assessment.personalized?.value ?? assessment.skin.value;
-  const dark = useIsDark();
-  const fit = presentScore('fit', fitValue, dark);
 
   return (
-    <Pressable
+    <ProductCard
+      product={product}
+      assessment={assessment}
+      rank={rank}
       onPress={() => onPress(recommendation)}
-      accessibilityRole="button"
-      accessibilityLabel={`${product.name} de ${product.brand}. ${fit.accessibilityLabel}`}
-      style={({ pressed }) => [
-        styles.card,
-        { backgroundColor: palette.card, borderColor: palette.border },
-        pressed && styles.pressed,
-      ]}
-    >
-      <View style={styles.cardHead}>
-        <Text style={[type.caption, { color: palette.textSubtle }]}>{rank}</Text>
-        <ProductImage barcode={product.barcode} />
-        <View style={styles.cardTitle}>
-          <Text style={[type.bodyMedium, { color: palette.text }]} numberOfLines={2}>
-            {product.name}
-          </Text>
-          <Text style={[type.caption, { color: palette.textMuted }]}>{product.brand}</Text>
-        </View>
-        <ChevronRight size={20} color={palette.textSubtle} strokeWidth={2} />
-      </View>
-
-      {/* Les trois scores restent visibles des la liste : un classement sur le
-          seul score d'adéquation masquerait un produit adapté mais lourd pour
-          l'environnement. */}
-      <View style={styles.scores}>
-        {(
-          [
-            ['fit', fitValue],
-            ['tolerance', assessment.skin.value],
-            ['environment', assessment.env.value],
-          ] as const
-        ).map(([axis, value]) => {
-          const score = presentScore(axis, value, dark);
-          return (
-            <View key={axis} style={[styles.scorePill, { backgroundColor: score.soft }]}>
-              <Text
-                style={[styles.scoreLabel, { color: palette.textMuted }]}
-                numberOfLines={1}
-              >
-                {AXIS_TITLES_SHORT[axis]}
-              </Text>
-              <Text style={[type.smallMedium, styles.scoreValue, { color: score.color }]}>
-                {value}
-              </Text>
-            </View>
-          );
-        })}
-      </View>
-
-      {highlights.length > 0 ? (
-        <View style={[styles.reason, { borderTopColor: palette.border }]}>
-          <Sparkles size={14} color={palette.primary} strokeWidth={2} />
-          <Text style={[type.caption, { color: palette.textMuted, flex: 1 }]}>
-            {highlights[0]}
-          </Text>
-        </View>
-      ) : null}
-    </Pressable>
+      note={
+        highlights.length > 0 ? (
+          <View style={styles.reason}>
+            <Sparkles size={14} color={palette.primary} strokeWidth={2} />
+            <Text style={[type.caption, { color: palette.textMuted, flex: 1 }]}>
+              {highlights[0]}
+            </Text>
+          </View>
+        ) : null
+      }
+    />
   );
 }
 
@@ -240,22 +186,9 @@ const styles = StyleSheet.create({
   header: { gap: space.sm, marginBottom: space.md },
   filters: { gap: space.sm, marginTop: space.md },
 
-  card: { borderWidth: 1, borderRadius: radius.lg, padding: space.lg, gap: space.md },
-  cardHead: { flexDirection: 'row', alignItems: 'center', gap: space.md },
-  cardTitle: { flex: 1, gap: 2 },
 
-  scores: { flexDirection: 'row', gap: space.sm },
-  scorePill: {
-    flex: 1,
-    gap: 2,
-    paddingHorizontal: space.md,
-    paddingVertical: space.sm,
-    borderRadius: radius.md,
-  },
-  scoreLabel: { fontSize: 11, lineHeight: 15, fontFamily: font.body },
-  scoreValue: { fontVariant: ['tabular-nums'], fontSize: 17 },
 
-  reason: { flexDirection: 'row', alignItems: 'center', gap: space.sm, borderTopWidth: 1, paddingTop: space.md },
+  reason: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
 
   emptyContainer: {
     flex: 1,

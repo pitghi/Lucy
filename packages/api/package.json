@@ -1,0 +1,22 @@
+{
+  "name": "@lucy/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Traduction des demandes en langage libre en criteres de recherche Lucy",
+  "main": "./src/server.ts",
+  "scripts": {
+    "start": "node --experimental-strip-types src/server.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-strip-types --test test/*.test.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.125.0",
+    "@lucy/engine": "*",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.0"
+  }
+}

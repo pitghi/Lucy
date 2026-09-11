@@ -1,8 +1,15 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Check, Info } from 'lucide-react-native';
-import type { Concern, SkinProfile, SkinType } from '@lucy/engine';
+import { Check, Droplet, Heart, HeartCrack, Info, Lightbulb } from 'lucide-react-native';
+import {
+  suggestIntolerances,
+  type Concern,
+  type Product,
+  type SkinProfile,
+  type SkinType,
+  type ToleranceEntry,
+} from '@lucy/engine';
 import { radius, space, TOUCH_MIN, type } from '../theme/index';
 import { usePalette } from '../theme/usePalette';
 import { Chip, ChipGroup } from '../components/Chip';
@@ -46,12 +53,20 @@ const COMMON_INTOLERANCES = [
   'cocamidopropyl betaine',
 ];
 
+/** Textures que la formule permet d'approcher. Ni plus, ni moins. */
+const TEXTURES: Array<{ value: 'fluid' | 'rich'; label: string; hint: string }> = [
+  { value: 'fluid', label: 'Légère', hint: 'Gel, fluide, sérum' },
+  { value: 'rich', label: 'Riche', hint: 'Crème nourrissante, baume' },
+];
+
 interface Props {
   initial?: Partial<SkinProfile>;
+  /** Catalogue, pour relire le journal et en tirer des suggestions. */
+  catalog?: Product[];
   onSave: (profile: SkinProfile) => void;
 }
 
-export function ProfileScreen({ initial, onSave }: Props) {
+export function ProfileScreen({ initial, catalog = [], onSave }: Props) {
   const palette = usePalette();
   const insets = useSafeAreaInsets();
 
@@ -59,6 +74,27 @@ export function ProfileScreen({ initial, onSave }: Props) {
   const [concerns, setConcerns] = useState<Concern[]>(initial?.concerns ?? []);
   const [notTolerated, setNotTolerated] = useState<string[]>(initial?.notTolerated ?? []);
   const [avoidFragrance, setAvoidFragrance] = useState(initial?.avoidFragrance ?? false);
+  const [journal, setJournal] = useState<ToleranceEntry[]>(initial?.journal ?? []);
+  const [preferredTexture, setPreferredTexture] = useState<'fluid' | 'rich' | null>(
+    initial?.preferredTexture ?? null,
+  );
+
+  // Le journal ne condamne aucun ingredient de lui-meme : il propose, quand
+  // plusieurs rejets se recoupent, et l'utilisateur tranche.
+  const suggestions = useMemo(
+    () =>
+      suggestIntolerances(
+        {
+          skinType: skinType ?? 'normal',
+          concerns,
+          tolerated: [],
+          notTolerated,
+          journal,
+        },
+        catalog,
+      ),
+    [skinType, concerns, notTolerated, journal, catalog],
+  );
 
   const toggle = <T,>(list: T[], value: T): T[] =>
     list.includes(value) ? list.filter((item) => item !== value) : [...list, value];
@@ -214,6 +250,152 @@ export function ProfileScreen({ initial, onSave }: Props) {
           </Pressable>
         </View>
 
+        {/* Etape 4 — texture */}
+        <View style={styles.section}>
+          <View style={styles.sectionHead}>
+            <Text style={[type.title, { color: palette.text }]}>Texture préférée</Text>
+            <Text style={[type.caption, { color: palette.textSubtle }]}>Optionnel</Text>
+          </View>
+          <Text style={[type.small, { color: palette.textMuted }]}>
+            Estimée d'après la place des corps gras dans la liste INCI, seule information
+            qu'une composition en donne. C'est une approximation : l'émulsionnant et le
+            procédé comptent autant, et ne se lisent pas. Un produit dont la texture reste
+            indéterminée n'est jamais écarté.
+          </Text>
+          <View style={styles.typeList}>
+            {TEXTURES.map((option) => {
+              const active = preferredTexture === option.value;
+              return (
+                <Pressable
+                  key={option.value}
+                  onPress={() => setPreferredTexture(active ? null : option.value)}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: active, checked: active }}
+                  accessibilityLabel={`${option.label}. ${option.hint}`}
+                  style={({ pressed }) => [
+                    styles.typeCard,
+                    {
+                      backgroundColor: active ? palette.primarySoft : palette.card,
+                      borderColor: active ? palette.primary : palette.border,
+                    },
+                    pressed && styles.pressed,
+                  ]}
+                >
+                  <Droplet
+                    size={18}
+                    color={active ? palette.primary : palette.textSubtle}
+                    strokeWidth={2}
+                  />
+                  <View style={styles.typeText}>
+                    <Text
+                      style={[type.bodyMedium, { color: active ? palette.primary : palette.text }]}
+                    >
+                      {option.label}
+                    </Text>
+                    <Text style={[type.caption, { color: palette.textMuted }]}>{option.hint}</Text>
+                  </View>
+                  {active ? <Check size={20} color={palette.primary} strokeWidth={2.5} /> : null}
+                </Pressable>
+              );
+            })}
+          </View>
+          <Text style={[type.caption, { color: palette.textSubtle }]}>
+            L'odeur, elle, ne se déduit pas d'une liste d'ingrédients : au-delà de « sans
+            parfum », Lucy n'a pas la donnée et ne la devine pas.
+          </Text>
+        </View>
+
+        {/* Etape 5 — journal de tolerance */}
+        <View style={styles.section}>
+          <View style={styles.sectionHead}>
+            <Text style={[type.title, { color: palette.text }]}>Produits essayés</Text>
+            <Text style={[type.caption, { color: palette.textSubtle }]}>
+              {journal.length > 0 ? `${journal.length}` : 'Aucun'}
+            </Text>
+          </View>
+          <Text style={[type.small, { color: palette.textMuted }]}>
+            Renseigné depuis la fiche d'un produit. Ce qui ne vous a pas convenu n'est plus
+            proposé.
+          </Text>
+
+          {journal.length === 0 ? (
+            <Text style={[type.caption, { color: palette.textSubtle }]}>
+              Ouvrez la fiche d'un produit et indiquez s'il vous a convenu.
+            </Text>
+          ) : (
+            <View style={styles.journal}>
+              {journal.map((entry) => (
+                <View
+                  key={`${entry.barcode ?? ''}-${entry.name}`}
+                  style={[
+                    styles.journalRow,
+                    { backgroundColor: palette.card, borderColor: palette.border },
+                  ]}
+                >
+                  {entry.verdict === 'suited' ? (
+                    <Heart size={16} color={palette.primary} strokeWidth={2} />
+                  ) : (
+                    <HeartCrack size={16} color={palette.danger} strokeWidth={2} />
+                  )}
+                  <View style={styles.typeText}>
+                    <Text style={[type.smallMedium, { color: palette.text }]} numberOfLines={1}>
+                      {entry.name}
+                    </Text>
+                    <Text style={[type.caption, { color: palette.textMuted }]}>
+                      {entry.verdict === 'suited' ? 'Vous a convenu' : "Ne vous a pas convenu"}
+                      {' · '}
+                      {entry.date}
+                    </Text>
+                  </View>
+                  <Pressable
+                    onPress={() =>
+                      setJournal(journal.filter((item) => item !== entry))
+                    }
+                    accessibilityRole="button"
+                    accessibilityLabel={`Retirer ${entry.name} du journal`}
+                    style={({ pressed }) => [styles.remove, pressed && styles.pressed]}
+                  >
+                    <Text style={[type.caption, { color: palette.primary }]}>Retirer</Text>
+                  </Pressable>
+                </View>
+              ))}
+            </View>
+          )}
+
+          {/* Une correlation n'est pas une cause : on pose la question, on ne
+              tranche pas a la place de l'utilisateur. */}
+          {suggestions.map((suggestion) => (
+            <View
+              key={suggestion.inci}
+              style={[
+                styles.suggestion,
+                { backgroundColor: palette.warningSoft, borderColor: palette.warning },
+              ]}
+            >
+              <Lightbulb size={18} color={palette.warning} strokeWidth={2} />
+              <View style={styles.typeText}>
+                <Text style={[type.smallMedium, { color: palette.text }]}>
+                  {suggestion.inRejected} produits qui ne vous ont pas convenu contiennent{' '}
+                  {suggestion.inci}
+                </Text>
+                <Text style={[type.caption, { color: palette.textMuted }]}>
+                  {suggestion.products.join(', ')}. Ce n'est pas une preuve — un produit
+                  contient des dizaines d'ingrédients. À vous de juger.
+                </Text>
+                <Pressable
+                  onPress={() => setNotTolerated(toggle(notTolerated, suggestion.inci))}
+                  accessibilityRole="button"
+                  style={({ pressed }) => [styles.remove, pressed && styles.pressed]}
+                >
+                  <Text style={[type.smallMedium, { color: palette.primary }]}>
+                    Ajouter à mes intolérances
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
+          ))}
+        </View>
+
         <View style={[styles.disclaimer, { backgroundColor: palette.surfaceMuted }]}>
           <Info size={16} color={palette.textMuted} strokeWidth={2} />
           <Text style={[type.caption, { color: palette.textMuted, flex: 1 }]}>
@@ -242,6 +424,8 @@ export function ProfileScreen({ initial, onSave }: Props) {
               tolerated: initial?.tolerated ?? [],
               notTolerated,
               avoidFragrance,
+              journal,
+              ...(preferredTexture ? { preferredTexture } : {}),
             })
           }
           disabled={!canSave}
@@ -282,6 +466,23 @@ const styles = StyleSheet.create({
     padding: space.lg,
     borderRadius: radius.lg,
     borderWidth: 1.5,
+  },
+  journal: { gap: space.sm },
+  journalRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.sm,
+    borderWidth: 1,
+    borderRadius: radius.md,
+    padding: space.md,
+  },
+  remove: { minHeight: TOUCH_MIN, justifyContent: 'center' },
+  suggestion: {
+    flexDirection: 'row',
+    gap: space.sm,
+    borderWidth: 1,
+    borderRadius: radius.md,
+    padding: space.md,
   },
   typeText: { flex: 1, gap: 2 },
   pressed: { opacity: 0.7 },

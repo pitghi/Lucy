@@ -9,21 +9,29 @@
 # L'API limite la recherche a une dizaine de requetes par minute, et un
 # page_size superieur a 24 declenche ce plafond : d'ou la pause entre appels.
 #
-# Usage : ./scripts/fetch-sample.sh <repertoire-de-sortie>
+# Usage : ./scripts/fetch-sample.sh <repertoire-de-sortie> [pays]
+#
+# Sans pays, l'echantillon est mondial : c'est ce que veut l'audit de
+# couverture, qui doit mesurer le referentiel sur la diversite reelle de la
+# base. Avec un pays (« france »), il se restreint au marche correspondant,
+# ce dont a besoin la construction du catalogue de demonstration.
 
 set -euo pipefail
 
-OUT="${1:?Usage: fetch-sample.sh <repertoire-de-sortie>}"
+OUT="${1:?Usage: fetch-sample.sh <repertoire-de-sortie> [pays]}"
+COUNTRY="${2:-}"
 mkdir -p "$OUT"
 
 UA="LucyMVP/0.1 (audit de couverture du referentiel)"
 FIELDS="code,product_name,brands,ingredients_text,categories_tags"
 CATEGORIES=(face-creams day-creams night-creams moisturizers serums face-cleansers)
+FILTER=""
+[ -n "$COUNTRY" ] && FILTER="&countries_tags_en=${COUNTRY}"
 
 for category in "${CATEGORIES[@]}"; do
   for page in 1 2 3 4 5; do
     curl -sS -m 60 -A "$UA" \
-      "https://world.openbeautyfacts.org/api/v2/search?categories_tags_en=${category}&fields=${FIELDS}&page_size=24&page=${page}" \
+      "https://world.openbeautyfacts.org/api/v2/search?categories_tags_en=${category}${FILTER}&fields=${FIELDS}&page_size=24&page=${page}" \
       -o "${OUT}/${category}_${page}.json"
     count=$(python3 -c "import json,sys;print(len(json.load(open(sys.argv[1])).get('products',[])))" "${OUT}/${category}_${page}.json" 2>/dev/null || echo 0)
     printf '%-16s page %s : %3s produits\n' "$category" "$page" "$count"

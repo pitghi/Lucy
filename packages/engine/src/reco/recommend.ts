@@ -6,6 +6,11 @@ import type {
   SkinProfile,
 } from '../types.ts';
 import { assessProduct } from '../scoring/assess.ts';
+import { parseInciList, normalizeLabel } from '../inci/parse.ts';
+import { rejectedBarcodes } from './journal.ts';
+import { estimateTexture } from '../scoring/texture.ts';
+import { resolveAll } from '../inci/resolve.ts';
+import { estimateConcentrations } from '../concentration/estimate.ts';
 
 /**
  * Recommandation de produits.
@@ -32,6 +37,29 @@ export interface RecommendOptions {
   minScore?: number;
   /** Nombre maximal de produits d'une meme marque dans les résultats. */
   maxPerBrand?: number;
+  /**
+   * Nombre maximal d'ingrédients dans la liste INCI.
+   *
+   * Une liste courte n'est pas en soi un gage de qualite — le moteur n'en fait
+   * donc pas un critere de score — mais c'est une demande frequente et
+   * parfaitement objective, d'ou un filtre et non un bonus.
+   */
+  maxIngredients?: number;
+  /**
+   * Planchers par axe. Un axe explicitement demande devient une contrainte,
+   * jamais le terme d'une moyenne : « bonne pour ma peau et pour la planete »
+   * se traduit par deux seuils a franchir, pas par la fusion des deux notes.
+   */
+  minSkinScore?: number;
+  minEnvScore?: number;
+  /** INCI a ecarter en plus de ceux que le profil declare non toleres. */
+  excludeInci?: string[];
+  /**
+   * Texture attendue. L'estimation etant grossiere, un produit dont la texture
+   * reste indeterminee n'est **pas** ecarte : le filtre retire ce qui contredit
+   * la preference, pas ce qui ne la confirme pas.
+   */
+  texture?: 'fluid' | 'rich';
 }
 
 export interface Recommendation {
@@ -82,13 +110,48 @@ export function recommend(
 
   const scored: Recommendation[] = [];
 
+  const excluded = new Set((options.excludeInci ?? []).map(normalizeLabel));
+  // Reproposer un produit apres un retour negatif est le defaut le plus
+  // visible qu'une recommandation puisse avoir.
+  const rejected = rejectedBarcodes(profile);
+
   for (const product of catalog) {
+    if (product.barcode && rejected.has(product.barcode)) continue;
     if (options.category && product.category !== options.category) continue;
+
+    const parsed = parseInciList(product.inciList);
+
+    if (options.maxIngredients !== undefined && parsed.length > options.maxIngredients) {
+      continue;
+    }
+    if (excluded.size > 0 && parsed.some((i) => excluded.has(i.normalized))) continue;
+
+    // La preference du profil s'applique partout ; une demande explicite la
+    // remplace le temps d'une recherche.
+    const wantedTexture = options.texture ?? profile.preferredTexture;
+    if (wantedTexture) {
+      const resolved = resolveAll(parsed);
+      const { texture } = estimateTexture(
+        resolved,
+        estimateConcentrations(resolved, product.category, product.claims ?? []),
+      );
+      if (texture !== 'unknown' && texture !== wantedTexture) continue;
+    }
 
     const assessment = assessProduct(product, profile);
 
     // Un ingrédient non toléré est eliminatoire, jamais compense.
     if (assessment.blockers.length > 0) continue;
+
+    // Un axe demande explicitement est une contrainte a franchir. Il n'entre
+    // pas dans le classement : moyenner tolérance et environnement rendrait
+    // les deux notes illisibles, ce que le projet refuse par construction.
+    if (options.minSkinScore !== undefined && assessment.skin.value < options.minSkinScore) {
+      continue;
+    }
+    if (options.minEnvScore !== undefined && assessment.env.value < options.minEnvScore) {
+      continue;
+    }
 
     const personalizedScore = assessment.personalized?.value ?? assessment.skin.value;
     if (personalizedScore < minScore) continue;
