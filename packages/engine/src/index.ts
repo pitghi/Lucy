@@ -25,4 +25,5 @@ export type {
   SearchResult,
   SearchOutcome,
   MatchedCriterion,
+  UnmetCriterion,
 } from './reco/search.ts';

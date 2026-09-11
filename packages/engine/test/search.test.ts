@@ -97,12 +97,18 @@ test('chaque resultat porte les criteres qu il satisfait', () => {
   assert.ok(results.length > 0);
   const first = results[0];
   assert.ok(first);
-  const labels = first.matched.map((m) => m.label);
-  assert.ok(labels.some((l) => l.includes('6 ingredients')));
-  assert.ok(labels.includes('tolerance cutanee'));
-  assert.ok(labels.includes('impact environnemental'));
-  // Un critere sans constat mesure ne vaut rien : il doit porter sa preuve.
-  for (const m of first.matched) assert.ok(m.evidence.length > 0);
+  const kinds = first.matched.map((m) => m.kind);
+  assert.ok(kinds.includes('maxIngredients'));
+  assert.deepEqual(
+    first.matched.filter((m) => m.kind === 'axis').map((m) => m.axis),
+    ['skin', 'env'],
+  );
+  // Le critere porte le fait constate, pas un libelle : c'est l'interface qui
+  // formule, en francais accentue.
+  const limite = first.matched.find((m) => m.kind === 'maxIngredients');
+  assert.ok(limite && limite.kind === 'maxIngredients');
+  assert.equal(limite.requested, 6);
+  assert.ok(limite.actual <= 6);
 });
 
 test('un axe intenable est relache et signale, plutot que de rendre une liste vide', () => {
@@ -118,7 +124,7 @@ test('un axe intenable est relache et signale, plutot que de rendre une liste vi
   const { results, unmet } = search(mediocre, profile, { axes: ['skin'] });
   assert.equal(results.length, 0, 'aucun produit ne merite d etre propose ici');
   assert.ok(unmet.length > 0, 'le critere non tenu doit etre annonce');
-  assert.ok(unmet[0]?.includes('tolerance'));
+  assert.equal(unmet[0]?.kind, 'axis');
 });
 
 test('un axe trop exigeant est relache quand le catalogue a mieux a offrir', () => {
@@ -142,7 +148,7 @@ test('une recherche sans resultat dit quel critere est en cause', () => {
   const { results, unmet } = search(catalog, profile, { maxIngredients: 2 });
   assert.equal(results.length, 0);
   assert.ok(
-    unmet.some((u) => u.includes('2 ingredients')),
+    unmet.some((u) => u.kind === 'maxIngredients' && u.requested === 2),
     `attendu une mention du nombre d ingredients, obtenu ${JSON.stringify(unmet)}`,
   );
 });

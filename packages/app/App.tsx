@@ -4,7 +4,7 @@ import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-cont
 import { useFonts } from 'expo-font';
 import { Lora_400Regular, Lora_600SemiBold } from '@expo-google-fonts/lora';
 import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
-import { ScanLine, Sparkles, UserCog } from 'lucide-react-native';
+import { ScanLine, Search, Sparkles, UserCog } from 'lucide-react-native';
 import { assessProduct, type Product, type SkinProfile } from '@lucy/engine';
 import { radius, space, TOUCH_MIN, type } from './src/theme/index';
 import { usePalette } from './src/theme/usePalette';
@@ -12,6 +12,7 @@ import { ScanScreen } from './src/screens/ScanScreen';
 import { ProductScreen } from './src/screens/ProductScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
 import { RecommendationsScreen } from './src/screens/RecommendationsScreen';
+import { SearchScreen } from './src/screens/SearchScreen';
 import { DEMO_CATALOG } from './src/data/catalog';
 
 /**
@@ -23,7 +24,7 @@ import { DEMO_CATALOG } from './src/data/catalog';
  * une URL, ce qu'un etat local ne permet pas.
  */
 
-type Tab = 'scan' | 'reco' | 'profile';
+type Tab = 'scan' | 'search' | 'reco' | 'profile';
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -80,6 +81,14 @@ export default function App() {
               onManualEntry={() => setSelected(DEMO_CATALOG[1] ?? null)}
             />
           ) : null}
+          {tab === 'search' ? (
+            <SearchScreen
+              catalog={DEMO_CATALOG}
+              profile={profile}
+              onSelect={setSelected}
+              onEditProfile={() => setTab('profile')}
+            />
+          ) : null}
           {tab === 'reco' ? (
             <RecommendationsScreen
               catalog={DEMO_CATALOG}
@@ -109,7 +118,7 @@ export default function App() {
 /**
  * Barre d'onglets.
  *
- * Trois destinations de premier niveau, sous la limite de cinq
+ * Quatre destinations de premier niveau, sous la limite de cinq
  * (`bottom-nav-limit`), chacune avec icone et libelle (`nav-label-icon`).
  * L'onglet actif est signale par la couleur, le poids du texte et un
  * indicateur, jamais par la couleur seule.
@@ -120,6 +129,7 @@ function TabBar({ current, onChange }: { current: Tab; onChange: (tab: Tab) => v
 
   const tabs = [
     { key: 'scan' as const, label: 'Scanner', Icon: ScanLine },
+    { key: 'search' as const, label: 'Rechercher', Icon: Search },
     { key: 'reco' as const, label: 'Pour vous', Icon: Sparkles },
     { key: 'profile' as const, label: 'Profil', Icon: UserCog },
   ];

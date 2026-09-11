@@ -41,13 +41,27 @@ export interface SearchQuery {
   limit?: number;
 }
 
-/** Un critere de la demande, et le constat du moteur sur ce produit. */
-export interface MatchedCriterion {
-  /** Formulation destinee a l'utilisateur, en francais. */
-  label: string;
-  /** Valeur constatee qui justifie le libelle. */
-  evidence: string;
-}
+/**
+ * Un critere de la demande, et le fait constate sur ce produit.
+ *
+ * Volontairement sans libelle : le moteur renvoie des faits, l'interface les
+ * formule. C'est elle qui possede son vocabulaire d'affichage, et la langue du
+ * projet est le francais accentue — ce qu'un moteur sans dependance ni locale
+ * n'a pas a porter.
+ */
+export type MatchedCriterion =
+  | { kind: 'category'; category: ProductCategory }
+  | { kind: 'maxIngredients'; requested: number; actual: number }
+  | { kind: 'axis'; axis: SearchAxis; score: number }
+  | { kind: 'concern'; concern: Concern; score: number }
+  | { kind: 'avoidFragrance' };
+
+/** Critere de la demande qu'aucun produit du catalogue ne satisfait. */
+export type UnmetCriterion =
+  | { kind: 'axis'; axis: SearchAxis; floor: number }
+  | { kind: 'maxIngredients'; requested: number }
+  | { kind: 'category'; category: ProductCategory }
+  | { kind: 'aucun' };
 
 export interface SearchResult extends Recommendation {
   /**
@@ -61,12 +75,11 @@ export interface SearchResult extends Recommendation {
 export interface SearchOutcome {
   results: SearchResult[];
   /**
-   * Criteres de la demande qu'aucun produit du catalogue ne satisfait, ou que
-   * le moteur a du relacher pour ne pas rendre une liste vide. L'interface les
-   * annonce : une recherche qui ignore silencieusement la moitie de la demande
-   * est pire qu'une recherche vide.
+   * Criteres que le moteur a du relacher, ou qu'aucun produit ne satisfait.
+   * L'interface les annonce : une recherche qui ignore silencieusement la
+   * moitie de la demande est pire qu'une recherche vide.
    */
-  unmet: string[];
+  unmet: UnmetCriterion[];
 }
 
 /**
@@ -77,35 +90,6 @@ export interface SearchOutcome {
  * bas, le critere ne filtre plus rien et la mention devient mensongere.
  */
 export const AXIS_FLOOR = 70;
-
-const CONCERN_LABELS: Record<Concern, string> = {
-  acne: 'imperfections',
-  redness: 'rougeurs',
-  dryness: 'secheresse',
-  aging: 'signes de l age',
-  pigmentation: 'taches',
-  dullness: 'teint terne',
-  barrier: 'barriere cutanee',
-};
-
-const CATEGORY_LABELS: Record<ProductCategory, string> = {
-  leave_on_face: 'soin visage sans rincage',
-  rinse_off_face: 'soin visage rince',
-  leave_on_body: 'soin corps',
-};
-
-function toOptions(query: SearchQuery): RecommendOptions {
-  const axes = new Set(query.axes ?? []);
-  return {
-    category: query.category,
-    targetConcern: query.targetConcern,
-    maxIngredients: query.maxIngredients,
-    minSkinScore: axes.has('skin') ? AXIS_FLOOR : undefined,
-    minEnvScore: axes.has('env') ? AXIS_FLOOR : undefined,
-    excludeInci: query.excludeInci,
-    limit: query.limit,
-  };
-}
 
 const CATEGORIES: ProductCategory[] = ['leave_on_face', 'rinse_off_face', 'leave_on_body'];
 const CONCERNS: Concern[] = [
@@ -179,40 +163,48 @@ export function parseSearchQuery(raw: unknown): SearchQuery {
   return query;
 }
 
-/** Criteres verifies par ce produit, formules pour l'utilisateur. */
+function toOptions(query: SearchQuery): RecommendOptions {
+  const axes = new Set(query.axes ?? []);
+  return {
+    category: query.category,
+    targetConcern: query.targetConcern,
+    maxIngredients: query.maxIngredients,
+    minSkinScore: axes.has('skin') ? AXIS_FLOOR : undefined,
+    minEnvScore: axes.has('env') ? AXIS_FLOOR : undefined,
+    excludeInci: query.excludeInci,
+    limit: query.limit,
+  };
+}
+
+/** Faits constates sur ce produit, critere par critere de la demande. */
 function criteria(result: Recommendation, query: SearchQuery): MatchedCriterion[] {
   const matched: MatchedCriterion[] = [];
   const { product, assessment } = result;
 
-  if (query.category) {
-    matched.push({
-      label: CATEGORY_LABELS[query.category],
-      evidence: product.category,
-    });
-  }
+  if (query.category) matched.push({ kind: 'category', category: query.category });
   if (query.maxIngredients !== undefined) {
-    const count = parseInciList(product.inciList).length;
     matched.push({
-      label: `au plus ${query.maxIngredients} ingredients`,
-      evidence: `${count} ingredients`,
+      kind: 'maxIngredients',
+      requested: query.maxIngredients,
+      actual: parseInciList(product.inciList).length,
     });
   }
   for (const axis of query.axes ?? []) {
-    const score = axis === 'skin' ? assessment.skin.value : assessment.env.value;
     matched.push({
-      label: axis === 'skin' ? 'tolerance cutanee' : 'impact environnemental',
-      evidence: `${score} sur 100`,
+      kind: 'axis',
+      axis,
+      score: axis === 'skin' ? assessment.skin.value : assessment.env.value,
     });
   }
   if (query.targetConcern) {
     matched.push({
-      label: CONCERN_LABELS[query.targetConcern],
-      evidence: `adequation ${assessment.personalized?.value ?? assessment.skin.value} sur 100`,
+      kind: 'concern',
+      concern: query.targetConcern,
+      score: assessment.personalized?.value ?? assessment.skin.value,
     });
   }
-  if (query.avoidFragrance) {
-    matched.push({ label: 'sans parfum', evidence: 'aucun parfum declare' });
-  }
+  if (query.avoidFragrance) matched.push({ kind: 'avoidFragrance' });
+
   return matched;
 }
 
@@ -240,11 +232,7 @@ export function search(
 
   if (results.length > 0) return { results: decorate(results), unmet: [] };
 
-  const unmet: string[] = [];
-  const axisLabel = (axis: SearchAxis) =>
-    axis === 'skin'
-      ? `aucun produit au-dessus de ${AXIS_FLOOR} en tolerance cutanee`
-      : `aucun produit au-dessus de ${AXIS_FLOOR} en impact environnemental`;
+  const unmet: UnmetCriterion[] = [];
 
   // Les axes sont le seul critere que l'on relache : ils expriment une
   // exigence de qualite, pas la nature du produit cherche. Relacher la
@@ -254,7 +242,7 @@ export function search(
   if (query.axes?.length) {
     const withoutAxes = recommend(catalog, effective, relaxed);
     if (withoutAxes.length > 0) {
-      for (const axis of query.axes) unmet.push(axisLabel(axis));
+      for (const axis of query.axes) unmet.push({ kind: 'axis', axis, floor: AXIS_FLOOR });
       return { results: decorate(withoutAxes), unmet };
     }
   }
@@ -263,24 +251,19 @@ export function search(
   // criteres est en cause : une recherche vide sans explication laisse
   // l'utilisateur reformuler au hasard.
   if (query.maxIngredients !== undefined) {
-    const sansLimite = recommend(catalog, effective, {
-      ...relaxed,
-      maxIngredients: undefined,
-    });
+    const sansLimite = recommend(catalog, effective, { ...relaxed, maxIngredients: undefined });
     if (sansLimite.length > 0) {
-      unmet.push(`aucun produit a ${query.maxIngredients} ingredients ou moins`);
+      unmet.push({ kind: 'maxIngredients', requested: query.maxIngredients });
     }
   }
   if (query.category && unmet.length === 0) {
     const sansCategorie = recommend(catalog, effective, { ...relaxed, category: undefined });
-    if (sansCategorie.length > 0) {
-      unmet.push(`aucun produit dans la categorie ${CATEGORY_LABELS[query.category]}`);
-    }
+    if (sansCategorie.length > 0) unmet.push({ kind: 'category', category: query.category });
   }
   if (query.axes?.length && unmet.length === 0) {
-    for (const axis of query.axes) unmet.push(axisLabel(axis));
+    for (const axis of query.axes) unmet.push({ kind: 'axis', axis, floor: AXIS_FLOOR });
   }
-  if (unmet.length === 0) unmet.push('aucun produit du catalogue ne repond a cette demande');
+  if (unmet.length === 0) unmet.push({ kind: 'aucun' });
 
   return { results: [], unmet };
 }

@@ -17,6 +17,15 @@ import { translate, MAX_INPUT_CHARS } from './query.ts';
 const MODEL = process.env.LUCY_MODEL ?? 'claude-opus-5';
 const PORT = Number(process.env.PORT ?? 8787);
 
+/**
+ * Origine autorisee a appeler le service depuis un navigateur.
+ *
+ * Vide par defaut, donc refuse : l'application mobile n'a pas besoin de CORS,
+ * et l'ouvrir a tous laisserait n'importe quel site consommer le budget
+ * d'API. A renseigner pour l'apercu web du depot (`http://localhost:8081`).
+ */
+const CORS_ORIGIN = process.env.LUCY_CORS_ORIGIN ?? '';
+
 /** Corps maximal accepte, largement au-dessus d'une phrase de recherche. */
 const MAX_BODY_BYTES = 4 * 1024;
 
@@ -27,6 +36,7 @@ function send(res: ServerResponse, status: number, body: unknown): void {
   res.writeHead(status, {
     'content-type': 'application/json; charset=utf-8',
     'content-length': Buffer.byteLength(payload),
+    ...(CORS_ORIGIN ? { 'access-control-allow-origin': CORS_ORIGIN } : {}),
   });
   res.end(payload);
 }
@@ -43,6 +53,15 @@ async function readBody(req: IncomingMessage): Promise<string> {
 }
 
 async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> {
+  if (req.method === 'OPTIONS' && CORS_ORIGIN) {
+    res.writeHead(204, {
+      'access-control-allow-origin': CORS_ORIGIN,
+      'access-control-allow-methods': 'POST, OPTIONS',
+      'access-control-allow-headers': 'content-type',
+    });
+    res.end();
+    return;
+  }
   if (req.method === 'GET' && req.url === '/sante') {
     return send(res, 200, { statut: 'ok', modele: MODEL });
   }
