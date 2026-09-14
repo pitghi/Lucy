@@ -603,14 +603,18 @@ les appareils recoivent vraiment plutot que ce qu'on croit avoir publie :
   sans un build `preview` prealable.
 
 Le premier point a d'abord ete lu comme « aucune OTA n'a jamais ete publiee ».
-C'est faux, et la verification qui le montre vaut d'etre retenue : une empreinte
-inventee renvoie exactement le meme `204 NO_UPDATE_AVAILABLE` que la vraie. Le
-serveur ne repond pas « rien n'est publie » mais « rien pour l'empreinte que tu
-m'as donnee » — un `204` ne distingue pas une absence de publication d'une
-publication qui n'atteint personne, faute de la bonne empreinte ou d'une
-branche que le canal ecoute. Une OTA ayant bien ete lancee sur ce projet, c'est
-l'un de ces deux cas, et il reste a trancher lequel : **la cible de rollback est
-indeterminee jusque-la**, et rien ne doit etre publie avant.
+La conclusion se trouve etre juste — le tableau de bord affiche « No updates
+yet » —, mais le raisonnement ne la portait pas, et la verification qui le
+montre vaut d'etre retenue : une empreinte inventee renvoie exactement le meme
+`204 NO_UPDATE_AVAILABLE` que la vraie. Le serveur ne repond pas « rien n'est
+publie » mais « rien pour l'empreinte que tu m'as donnee ». Un `204` ne
+distingue donc pas une absence de publication d'une publication qui n'atteint
+personne, faute de la bonne empreinte ou d'une branche que le canal ecoute —
+et ce sont precisement les deux pannes silencieuses qu'on cherche. La requete
+sert a confirmer une livraison, jamais a prouver une absence.
+
+**Cible de rollback, etablie au tableau de bord** : le bundle embarque, par
+`eas update:roll-back-to-embedded`. Aucun groupe anterieur n'existe.
 
 L'empreinte `runtimeVersion` est inchangee par la PR #8 — verifie, pas suppose :
 la liste des sources de l'empreinte ne contient aucun fichier de
