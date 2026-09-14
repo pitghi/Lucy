@@ -113,14 +113,27 @@ alignee apres un binaire distribue impose de meme un nouveau binaire.
 l'execution : brancher l'onglet Recherche sur l'API deployee suivra donc une
 mise a jour, sans nouveau binaire.
 
-Avec une reserve decouverte a la mise en service : **le bloc `env` de
-`eas.json` ne vaut que pour les builds**. `eas update` prend ses variables
-ailleurs — environnements EAS, ou environnement d'ou la commande part. Une mise
-a jour publiee sans precaution repart avec la valeur de repli
+Avec deux reserves decouvertes a la mise en service, qui se combinent en un
+piege.
+
+**Le bloc `env` de `eas.json` ne vaut que pour les builds.** `eas update` prend
+ses variables ailleurs — environnements EAS, ou environnement d'ou la commande
+part. Une mise a jour publiee sans precaution repart avec la valeur de repli
 `http://localhost:8787`, et l'onglet Recherche retombe en panne. La publication
 reussit, aucune erreur n'est levee : seules les recherches cessent de
-fonctionner, chez les testeurs. Le README de l'application donne la forme a
-employer.
+fonctionner, chez les testeurs.
+
+**Et `eas.json` entre dans l'empreinte `runtimeVersion`.** Le reflexe naturel —
+declarer la variable dans les profils de build — ne se contente donc pas d'etre
+sans effet sur les mises a jour : il rend les binaires deja distribues
+**ineligibles a toutes**. Mesure plutot que suppose : les trois lignes ajoutees
+faisaient passer l'empreinte de `d959927b…`, celle du build remis aux testeurs,
+a `b9d2d0098…`. La livraison serait partie, la commande aurait reussi, et aucun
+appareil n'aurait rien recu.
+
+D'ou la regle : `EXPO_PUBLIC_LUCY_API` se declare dans les **environnements
+EAS**, jamais dans `eas.json`. Le README de l'application donne les commandes,
+et le skill `ota` porte l'avertissement la ou la publication se tape.
 
 ---
 
@@ -545,6 +558,36 @@ Sa valeur reelle est ailleurs : croisee sur un volume suffisant, elle permet de
 correlations individuelles. C'est la seule donnee du projet qu'aucun concurrent
 ne possede — d'ou la collecte immediate, meme sans exploitation.
 
+### 4.6 Le journal se remplit aussi depuis le profil, par recherche au catalogue — *acte*
+
+La fiche produit etait la seule entree du journal (4.3). Elle suppose d'avoir
+l'emballage sous la main, alors que ce qu'on a deja essaye est justement ce
+qu'on n'a plus : le flacon est fini, jete, ou range ailleurs. Le journal
+restait donc vide au moment ou il sert le plus — avant la premiere serie de
+recommandations, quand il pourrait ecarter d'emblee ce qui a deja echoue.
+
+La section « Produits essayes » du profil porte donc un bouton **Rechercher un
+produit**, qui ouvre une recherche par marque et par nom sur le catalogue, avec
+les deux verdicts directement dans la liste.
+
+**Ce n'est pas la recherche de l'onglet dedie**, et la difference est de
+nature, pas de degre. Celle-ci repond a « ou est ce produit precis », un
+rapprochement de chaines qui se fait **localement**, sans appel reseau : la
+recherche en langage libre envoie la phrase a un service pour la traduire en
+criteres, ce qui serait ici un cout — et une dependance au reseau — sans
+contrepartie. Aucune donnee ne quitte l'appareil pour remplir le journal.
+
+**Ecartee : ouvrir la fiche produit pour poser le verdict.** Le parcours entier
+tient sa valeur d'etre bref. Ouvrir une fiche pour repondre a une question
+qu'on vient de poser ajoute deux ecrans par produit, et le profil se remplit
+typiquement de trois ou quatre produits d'affilee. Le verdict se pose donc dans
+la liste, et reposer le verdict actif le retire — seul moyen de corriger une
+erreur sans quitter la recherche.
+
+Le catalogue de demonstration ne couvre pas le marche : l'etat vide le dit et
+renvoie au scan, plutot que de laisser croire que le produit cherche n'existe
+pas.
+
 ---
 
 ## 5. Design d'interface
@@ -600,10 +643,17 @@ produit reel reste inconnue. Sous 70 %, l'ecran annonce une **analyse
 partielle** assumee plutot qu'un score complet. Afficher une note calculee sur
 la moitie d'une formule serait une precision empruntee.
 
-### 5.7 La saisie de la liste INCI est au meme niveau que le scan — *acte*
+### 5.7 La saisie de la liste INCI est au meme niveau que le scan — *acte, suspendu a l'ecran*
 
 Consequence directe de 3.1. Elle est presentee des l'ecran de scan, avant tout
 echec, et non comme un recours apres echec.
+
+**Suspendu le 2026-09-14 [PR].** Le principe tient, mais l'ecran de saisie n'a
+jamais ete ecrit : le bouton ouvrait un produit de demonstration. Un chemin qui
+ne mene pas ou il annonce coute plus cher que son absence — d'autant plus
+depuis que les echecs de scan sont nommes (5.12) et y renvoyaient. Les appels a
+la saisie sont donc retires de l'ecran de scan ; ils reviennent avec l'ecran
+reel, qui reste la priorite fonctionnelle suivante (§7).
 
 ### 5.8 Navigation par etat local — *provisoire*
 
@@ -634,6 +684,80 @@ d'etiquettes qu'il en centre.
 La photo est decorative au sens de l'accessibilite : le nom et la marque sont
 lus juste a cote, et « photo de l'emballage » n'ajouterait qu'une redite au
 lecteur d'ecran.
+
+### 5.11 Le code-barres scanne interroge Open Beauty Facts — *acte*
+
+Le scan ne cherchait que dans le catalogue de demonstration, quatorze produits.
+Tout le reste du rayon repartait sans rien : ni fiche, ni message. Vu de
+l'utilisateur, la lecture optique etait en panne alors qu'elle lisait
+correctement — c'est la recherche qui n'avait nulle part ou chercher.
+
+Le code-barres interroge desormais Open Beauty Facts, la meme base et la meme
+cle de jointure que les photographies (3.7), avec un cache de session. Le
+catalogue local passe en premier : il repond hors ligne et sans delai.
+
+### 5.12 Un scan qui n'aboutit pas nomme son cas — *acte*
+
+C'est la question ouverte du §7 sur le taux de presence du code-barres,
+tranchee du cote de l'interface. Un scan a quatre issues, pas deux, et les
+confondre reporte sur la camera un echec qui vient de la donnee :
+
+| Issue | Ce que l'ecran dit et propose |
+| --- | --- |
+| Produit trouve | La fiche s'ouvre |
+| Code-barres absent de la base | Le code est nomme, puis reprise de la lecture |
+| Produit reference sans composition exploitable | Le produit est nomme, puis reprise de la lecture |
+| Reseau indisponible | Reessayer le meme code, ou renoncer |
+
+Le seuil d'exploitabilite est celui de l'audit : cinq ingredients (3.1). Une
+panne reseau ne se conclut jamais en « produit inconnu » : le produit existe
+peut-etre, et les deux cas n'appellent pas la meme suite — seul le reseau vaut
+d'etre rejoue.
+
+Les deux premiers cas devraient mener a une saisie de la liste ; ils n'y menent
+pas, faute d'ecran de saisie (5.7). L'ecran les nomme donc sans rien promettre,
+ce qui reste preferable au silence d'avant — mais c'est un parcours qui
+s'arrete la, et c'est la l'argument le plus fort pour ecrire cet ecran.
+
+Le code lu s'affiche des la lecture, avant meme le resultat : il prouve que la
+camera a fait son travail. Et la lecture est suspendue tant qu'un message
+d'echec est a l'ecran — sur un simple delai, le meme code repartait en boucle
+et recouvrait le message avant qu'il soit lu.
+
+### 5.13 Le zero de tete d'un code-barres ne survit pas a iOS — *acte*
+
+Constate dans la source de `expo-camera` : AVFoundation restitue les UPC-A en
+EAN-13 prefixes d'un zero, et la bibliotheque retire ce zero de **tout** EAN-13
+qui en porte un, y compris un EAN-13 nord-americain qui le portait
+legitimement. Android rend le code tel qu'imprime. Le meme emballage arrive
+donc a douze ou treize chiffres selon le telephone, alors que la base ne
+connait qu'une des deux ecritures.
+
+La recherche essaie donc les deux, la seconde seulement si la premiere est
+absente — l'API plafonne a une dizaine de requetes par minute (3.4).
+
+Ecarte : normaliser tous les codes sur treize chiffres. Cela supposerait que la
+base stocke toujours la forme longue, ce qui n'est pas verifie, et les EAN-8 du
+catalogue montrent que les formes courtes y existent bel et bien.
+
+### 5.14 La categorie d'un produit scanne est deduite, et c'est une approximation — *provisoire*
+
+Le moteur a besoin d'une categorie : un produit rince expose la peau bien moins
+longtemps qu'un soin laisse en place, et la note s'en ressent. Open Beauty
+Facts ne la donne pas sous une forme exploitable — les categories sont
+contributives et arrivent dans la langue du contributeur, un gel nettoyant
+CeraVe etant classe « Reinigingsgel ». La deduction croise donc categories et
+nom, sur des racines assez specifiques pour ne pas confondre un « Aqua-Gel »
+hydratant avec un gel moussant.
+
+Dans le doute, `leave_on_face` : c'est l'hypothese la plus exposante. S'y
+tromper sous-estime une note, se tromper dans l'autre sens la surestime — et
+une note trop genereuse est la faute que tout le projet cherche a corriger.
+
+**Provisoire** parce qu'une categorie devinee qui deplace une note sans le dire
+contredit la regle de visibilite de l'incertitude. La sortie est d'afficher la
+categorie retenue sur la fiche et de permettre sa correction ; ce n'est pas
+fait. Voir §7.
 
 ---
 
@@ -666,14 +790,15 @@ Rien n'a ete decide sur ces points ; ils ne sont pas des oublis.
 | **Plafond du score d'adequation** | Le premier produit recommande affiche 100/100/100. Conforme au modele (base 60 + bonus plafonne a 40), mais trois fois 100 fait suspect a l'oeil. Un plafond a 95 garderait de la granularite en haut d'echelle. Non tranche. |
 | **Modele economique** | Non aborde. Determine ce qui est acceptable en matiere de partenariats marques, donc la credibilite du classement. |
 | **Nom et positionnement** | « Lucy » est le nom du depot, pas une decision de marque. |
-| **Taux de presence du code-barres** | L'audit a mesure la presence de la **liste d'ingredients**, pas celle du code-barres. Un scan qui ne trouve pas le produit et un scan qui le trouve sans sa composition appellent deux traitements differents. |
+| **Taux de presence du code-barres** | Traite cote interface (5.12) : les deux cas sont desormais distingues a l'ecran. Reste non mesure — l'audit portait sur la **liste d'ingredients**, pas sur le code-barres, donc on ignore quelle part des scans aboutit reellement en rayon. |
+| **Categorie d'un produit scanne** | Deduite des categories et du nom Open Beauty Facts (5.14), donc approximative, alors qu'elle deplace la note. Elle devrait s'afficher sur la fiche et pouvoir etre corrigee. Non fait. |
 | **Authentification de l'application aupres du service** | Le point d'entree de `packages/api` est public : qui connait l'URL peut l'appeler. Un jeton embarque dans le binaire s'en extrait comme une cle d'API. L'attestation d'application (App Attest, Play Integrity) est la reponse serieuse ; non traitee. En attendant, le plafond par adresse (1.7) et le plafond de depense sur la cle tiennent lieu de protection. |
 | **Budget par recherche** | Mesure en volume de jetons (~670 en entree, ~60 en sortie), soit moins de 3 $ par mois pour 10 000 recherches chez tous les fournisseurs examines. Ce qui n'est pas mesure, c'est la latence ressentie dans un champ de recherche. |
 | **Opposition a l'entrainement sur le plan gratuit** | Le plan Experiment de Mistral alimente l'entrainement par defaut ; l'opposition se fait dans la console (1.8). Reste a verifier que l'option existe bien sur ce plan, la documentation ne distinguant pas explicitement gratuit et payant. A faire avant de brancher de vrais testeurs, sinon passer au plan payant. |
 | **Qualite de traduction de `ministral-3b-2512`** | Quatre demandes eprouvees a la mise en service, toutes correctes (voir 1.8). C'est un signal, pas une mesure : rien n'est eprouve sur les formulations relachees, les negations, ni les demandes portant sur plusieurs produits. A reprendre sur de vraies demandes de testeurs. Repli : `mistral-small-2603`, soixante-cinq fois moins de debit. |
 | **Alignement de `react-native`** | Le projet est en 0.76.5, le SDK 52 attend 0.76.9. Sans consequence sur les builds, mais c'est une dependance native : l'aligner changera l'empreinte `runtimeVersion` (1.6) et coutera un binaire de plus aux testeurs deja equipes. A faire au prochain build natif, pas seul. |
 | **Nom de l'application sur l'App Store** | « Lucy » etait pris : la fiche s'appelle « Lucy (cd6504) ». A changer avant d'ouvrir la beta externe, et lie a la question du nom de marque ci-dessus. |
-| **Ecran de saisie / OCR** | Identifie comme priorite fonctionnelle suivante (3.1), pas encore ecrit. |
+| **Ecran de saisie / OCR** | Priorite fonctionnelle suivante (3.1), toujours pas ecrit. Son absence coute desormais davantage : les appels a la saisie ont ete retires de l'ecran de scan (5.7), donc un produit non reconnu n'a plus aucune suite dans l'application. |
 
 ---
 
@@ -727,6 +852,47 @@ Deuxieme point de vigilance, moins visible : l'adresse du client. La lire dans
 un en-tete que l'appelant peut poser lui-meme rendrait la limite decorative.
 Seul un en-tete que le proxy ecrase fait foi, et le defaut du code reste
 l'adresse de la connexion.
+
+### 2026-09-14 — recherche au catalogue depuis le profil
+
+Ajout du bouton **Rechercher un produit** dans « Produits essayes » du profil
+(4.6), fusionne dans `main` par la PR #8.
+
+Etat des canaux de mise a jour releve au passage, en interrogeant le serveur
+`u.expo.dev` — qui repond sans authentification, ce qui permet de voir ce que
+les appareils recoivent vraiment plutot que ce qu'on croit avoir publie :
+
+- canal `production` : existe, et ne sert **rien** pour l'empreinte calculee
+  ici (`d959927b…`), sur iOS comme sur Android ;
+- canal `preview` : **n'existe pas**, aucun build interne n'ayant ete fait. La
+  prudence qui consisterait a livrer d'abord en interne n'est pas disponible
+  sans un build `preview` prealable.
+
+Le premier point a d'abord ete lu comme « aucune OTA n'a jamais ete publiee ».
+La conclusion se trouve etre juste — le tableau de bord affiche « No updates
+yet » —, mais le raisonnement ne la portait pas, et la verification qui le
+montre vaut d'etre retenue : une empreinte inventee renvoie exactement le meme
+`204 NO_UPDATE_AVAILABLE` que la vraie. Le serveur ne repond pas « rien n'est
+publie » mais « rien pour l'empreinte que tu m'as donnee ». Un `204` ne
+distingue donc pas une absence de publication d'une publication qui n'atteint
+personne, faute de la bonne empreinte ou d'une branche que le canal ecoute —
+et ce sont precisement les deux pannes silencieuses qu'on cherche. La requete
+sert a confirmer une livraison, jamais a prouver une absence.
+
+**Cible de rollback, etablie au tableau de bord** : le bundle embarque, par
+`eas update:roll-back-to-embedded`. Aucun groupe anterieur n'existe.
+
+L'empreinte `runtimeVersion` est inchangee par la PR #8 — verifie, pas suppose :
+la liste des sources de l'empreinte ne contient aucun fichier de
+`packages/app/src/`. Elle contient en revanche le bloc `scripts` du
+`package.json` et `eas.json`, ce qui merite d'etre su : renommer un script npm
+suffit a couper l'OTA.
+
+La procedure complete est consignee en skill (`.claude/skills/ota/`), cible de
+rollback comprise, plutot que redecouverte a chaque livraison.
+
+La publication elle-meme n'a pas ete faite : la session distante n'a pas de
+compte Expo et aucun jeton n'y est injecte.
 
 ### 2026-09-14 — premiere distribution TestFlight
 

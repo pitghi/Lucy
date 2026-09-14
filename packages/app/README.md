@@ -18,7 +18,7 @@ dependance, aucune couche d'adaptation n'est necessaire.
 
 | Ecran | Role |
 | --- | --- |
-| `ScanScreen` | Lecture du code-barres, et saisie de la liste INCI presentee au meme niveau |
+| `ScanScreen` | Lecture du code-barres, recherche du produit, et compte rendu quand elle n'aboutit pas |
 | `ProductScreen` | Trois scores separes, puis leurs motifs sources et la composition estimee |
 | `ProfileScreen` | Type de peau, preoccupations, ingredients non toleres |
 | `RecommendationsScreen` | Classement pour le profil, avec le motif de chaque position |
@@ -80,35 +80,47 @@ besoin de relancer l'application.
 l'execution. Il suit donc les mises a jour : brancher l'onglet Recherche sur
 l'API deployee ne demande pas un nouveau binaire.
 
-Il est renseigne dans les trois profils de `eas.json`. Le service et sa
-procedure de mise en ligne sont decrits dans
-[`packages/api/README.md`](../api/README.md) — **l'URL y figure a deux
-endroits**, `fly.toml` et `eas.json`, et changer l'une sans l'autre enverrait
-les recherches des utilisateurs a cote.
+Elle se declare dans les **environnements EAS**, et surtout **pas** dans le
+bloc `env` de `eas.json`.
 
-### Le bloc `env` de `eas.json` ne vaut que pour les builds
+### Pourquoi pas dans `eas.json`
 
-`eas update` ne le lit pas. Il prend ses variables dans les environnements EAS,
-stockes sur les serveurs d'Expo, ou dans l'environnement d'ou la commande est
-lancee. Une mise a jour publiee sans precaution repart donc avec la valeur de
-repli `http://localhost:8787` — et l'onglet Recherche retombe en panne, sans
-que rien n'echoue au moment de la publication.
+`eas.json` entre dans l'empreinte `runtimeVersion` (voir le skill `ota`). Y
+ajouter trois lignes change l'empreinte, donc rend les binaires deja distribues
+**ineligibles a toute mise a jour en vol**. La livraison part, la commande
+reussit, et aucun appareil ne la recoit. Mesure plutot que suppose : le bloc
+`env` faisait passer l'empreinte de `d959927b…` a `b9d2d0098…`, quand le build
+distribue aux testeurs porte la premiere.
 
-Le piege est d'autant plus vicieux que la publication reussit : il n'y a pas
-d'erreur, juste des recherches qui cessent de fonctionner chez les testeurs.
+### Ou la declarer
 
-Passer la valeur explicitement :
+Une fois, dans chaque environnement EAS — ce qui couvre les builds **et** les
+mises a jour, sans toucher a l'empreinte :
+
+```bash
+cd packages/app
+npx --yes eas-cli@latest env:create --name EXPO_PUBLIC_LUCY_API \
+  --value https://lucy-api.fly.dev --environment production --visibility plaintext
+npx --yes eas-cli@latest env:create --name EXPO_PUBLIC_LUCY_API \
+  --value https://lucy-api.fly.dev --environment preview --visibility plaintext
+```
+
+Tant que ce n'est pas fait, passer la valeur explicitement a chaque
+publication, sans quoi la mise a jour repart avec le repli
+`http://localhost:8787` :
 
 ```bash
 EXPO_PUBLIC_LUCY_API=https://lucy-api.fly.dev \
-  npx eas-cli update --branch production --message "..."
+  npx --yes eas-cli@latest update --branch production -m "..."
 ```
 
-Ou, pour ne plus y penser, la declarer une fois dans les environnements EAS
-(`eas env:create`), en gardant `eas.json` aligne sur la meme valeur.
+Le piege est vicieux : la publication reussit, rien n'echoue, et ce sont les
+recherches des testeurs qui cessent de fonctionner.
 
-**Prevenir les testeurs** que le catalogue est local : un code-barres absent
-renvoie vers la saisie manuelle. C'est le comportement voulu (decision 5.7),
+**Prevenir les testeurs** qu'un produit peut n'etre pas reconnu : le scan
+interroge Open Beauty Facts, base contributive dont la couverture est
+partielle (3.1). L'ecran dit alors lequel des trois cas s'applique — code
+absent, composition manquante, reseau indisponible. C'est un etat ordinaire,
 pas une panne, mais sans cet avertissement il sera remonte comme telle.
 
 Le profil `simulator` a ete valide : build 1 construit par EAS depuis un
@@ -150,10 +162,11 @@ Les quatre regles structurantes :
 - **React Navigation.** La navigation est un etat local, suffisant pour ce
   premier jet. La regle `deep-linking` impose qu'une fiche produit soit
   atteignable par une URL : a brancher avant toute mise en ligne.
-- **Lecture optique de la liste INCI.** L'audit de couverture a montre que
+- **Ecran de saisie de la liste INCI.** L'audit de couverture a montre que
   quatre produits sur dix n'ont pas de liste exploitable dans les bases
-  ouvertes. L'ecran de scan y renvoie deja, mais l'ecran de saisie lui-meme
-  reste a ecrire. C'est la priorite fonctionnelle suivante.
+  ouvertes. L'ecran de scan renvoyait vers une saisie qui n'existe pas ; le
+  renvoi a ete retire en attendant l'ecran reel, qui reste la priorite
+  fonctionnelle suivante (5.7).
 - **Persistance du profil et du journal de tolerance.**
 - **Verification sur appareil reel** des surfaces tactiles, de l'agrandissement
   systeme du texte et du mode « animations reduites ».
