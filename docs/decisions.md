@@ -293,6 +293,25 @@ intolerance. La regle posee en 1.8 — le service ne fait entrer aucune donnee
 de sante dans l'infrastructure — tient sans amenagement : ce qui est stocke est
 un compteur anonymise, pas une demande.
 
+Trois consequences de mise en oeuvre, qui n'etaient pas evidentes avant de
+l'ecrire :
+
+- **La validation part en copie generee.** Une Edge Function est deployee
+  isolement et rien ne garantit qu'un import pointant hors de son dossier
+  survive a l'empaquetage. `parseSearchQuery` a donc ete extraite dans un
+  module sans aucune dependance d'execution (`reco/query.ts`), recopiee vers
+  `functions/_shared/` par un script, et **un test du moteur compare la copie a
+  sa source**. La regle reste ecrite une seule fois : ce qui la garantit n'est
+  plus l'absence de copie mais le test qui casse quand elle diverge.
+- **Un compteur en panne refuse.** Si la base ne repond pas, le service rend
+  503 plutot que de laisser passer. Un plafond qui s'efface des qu'il tombe ne
+  protege rien le jour ou il compte — et c'est le jour ou il compte que la base
+  est sous tension.
+- **Le point d'entree reste ouvert** (`--no-verify-jwt`). Exiger un jeton
+  reviendrait a embarquer la cle anonyme dans le bundle, ou elle serait
+  publique de toute facon : le filtre serait apparent, pas reel. La question de
+  l'authentification reste donc entiere, et consignee comme telle.
+
 Ce que ce choix coute : **la region n'est plus garantie par le serveur**. Les
 Edge Functions s'executent au plus pres de l'appelant, et forcer l'Europe passe
 par un en-tete envoye **par l'application**. La garantie posee en 1.8 se

@@ -1,0 +1,7 @@
+{
+  "imports": {
+    "@mistralai/mistralai": "npm:@mistralai/mistralai@2.7.0",
+    "@supabase/supabase-js": "npm:@supabase/supabase-js@2"
+  },
+  "nodeModulesDir": "auto"
+}

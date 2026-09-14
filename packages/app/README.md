@@ -100,9 +100,9 @@ mises a jour, sans toucher a l'empreinte :
 ```bash
 cd packages/app
 npx --yes eas-cli@latest env:create --name EXPO_PUBLIC_LUCY_API \
-  --value https://lucy-api.fly.dev --environment production --visibility plaintext
+  --value https://<ref>.supabase.co/functions/v1 --environment production --visibility plaintext
 npx --yes eas-cli@latest env:create --name EXPO_PUBLIC_LUCY_API \
-  --value https://lucy-api.fly.dev --environment preview --visibility plaintext
+  --value https://<ref>.supabase.co/functions/v1 --environment preview --visibility plaintext
 ```
 
 Tant que ce n'est pas fait, passer la valeur explicitement a chaque
@@ -110,7 +110,7 @@ publication, sans quoi la mise a jour repart avec le repli
 `http://localhost:8787` :
 
 ```bash
-EXPO_PUBLIC_LUCY_API=https://lucy-api.fly.dev \
+EXPO_PUBLIC_LUCY_API=https://<ref>.supabase.co/functions/v1 \
   npx --yes eas-cli@latest update --branch production -m "..."
 ```
 

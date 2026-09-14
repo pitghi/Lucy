@@ -158,13 +158,13 @@ que la variable existe (`eas env:list --environment production`) ou la passer
 en prefixe :
 
 ```bash
-EXPO_PUBLIC_LUCY_API=https://lucy-api.fly.dev \
+EXPO_PUBLIC_LUCY_API=https://<ref>.supabase.co/functions/v1 \
   npx --yes eas-cli@latest update --branch production -m "..."
 ```
 
 Corollaire a ne pas contourner : cette variable **ne doit pas** etre declaree
 dans `eas.json`, qui entre dans l'empreinte. L'y mettre casse l'OTA pour tous
-les binaires deja distribues (mesure : `d959927b…` devient `b9d2d0098…`).
+les binaires deja distribues (mesure faite le 14 : `d959927b…` devenait `b9d2d0098…`).
 
 Les commandes `eas env:*` echouent actuellement sur un desaccord d'`owner`
 entre `app.json` (`pitghi`) et le projet EAS (`pitghis-team`). **Ne pas

@@ -12,7 +12,23 @@ import { parseSearchQuery, type SearchQuery } from '@lucy/engine';
  * et cette validation vaut aussi si le service change un jour de forme.
  */
 
-const BASE = process.env.EXPO_PUBLIC_LUCY_API ?? 'http://localhost:8787';
+const BASE = process.env.EXPO_PUBLIC_LUCY_API ?? 'http://localhost:54321/functions/v1';
+
+/**
+ * Region d'execution imposee au service.
+ *
+ * **Ne pas retirer cet en-tete.** Les Edge Functions s'executent par defaut au
+ * plus pres de l'appelant, donc n'importe ou dans le monde. « Une creme pour la
+ * rosacee » revele une condition cutanee : la phrase de recherche est en
+ * pratique une donnee de sante, et toute l'architecture existe pour que ce type
+ * d'information ne quitte pas l'appareil. Le profil ne part pas ; la phrase, si.
+ *
+ * Depuis que le service a quitte un hebergement ou la region etait fixee par la
+ * configuration du serveur (decision 1.9), c'est cet en-tete — donc le client —
+ * qui porte la garantie. Le retirer ferait repartir les phrases hors d'Europe
+ * sans qu'aucun test n'echoue.
+ */
+const REGION = 'eu-west-3';
 
 /** Au-dela, l'attente n'est plus acceptable dans un champ de recherche. */
 const TIMEOUT_MS = 12_000;
@@ -41,9 +57,9 @@ export async function translateQuery(text: string): Promise<TranslationOutcome> 
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
   try {
-    const response = await fetch(`${BASE}/recherche/criteres`, {
+    const response = await fetch(`${BASE}/recherche-criteres`, {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', 'x-region': REGION },
       body: JSON.stringify({ text }),
       signal: controller.signal,
     });

@@ -6,13 +6,17 @@
 # echouer. La derniere est la seule qui compte vraiment : une phrase entiere
 # traduite en criteres, ce qu'aucun controle de sante ne prouve.
 #
-#   ./scripts/verifier.sh                          # instance locale
-#   ./scripts/verifier.sh https://lucy-api.fly.dev # instance deployee
+#   ./supabase/verifier.sh                                   # instance locale
+#   ./supabase/verifier.sh https://<ref>.supabase.co/functions/v1
 #
 set -uo pipefail
 
-BASE="${1:-http://localhost:8787}"
+BASE="${1:-http://localhost:54321/functions/v1}"
 PHRASE="${2:-une creme apaisante sans parfum pour peau sensible}"
+
+# Meme en-tete que l'application : sans lui, la fonction s'executerait au plus
+# pres de l'appelant, donc potentiellement hors d'Europe.
+REGION='eu-west-3'
 
 vert()  { printf '\033[32m%s\033[0m\n' "$1"; }
 rouge() { printf '\033[31m%s\033[0m\n' "$1"; }
@@ -23,18 +27,18 @@ echec=0
 echo "Service : $BASE"
 echo
 
-# --- 1. Le service repond ---------------------------------------------------
-# Echoue si le service n'est pas demarre, si le deploiement n'a pas abouti, ou
-# si la machine ne se reveille pas.
-printf '1. Le service repond           ... '
-sante=$(curl -sS -m 30 "$BASE/sante" 2>&1)
-if echo "$sante" | grep -q '"statut":"ok"'; then
+# --- 1. La fonction est joignable -------------------------------------------
+# Une demande vide : elle doit etre refusee proprement (400), ce qui prouve que
+# la fonction est deployee et repond, sans rien depenser en traduction.
+printf '1. La fonction est joignable   ... '
+code=$(curl -sS -m 40 -o /dev/null -w '%{http_code}' -X POST "$BASE/recherche-criteres" \
+  -H 'content-type: application/json' -H "x-region: $REGION" -d '{"text":""}' 2>&1)
+if [ "$code" = '400' ]; then
   vert 'ok'
-  gris "   $sante"
 else
-  rouge 'echec'
-  gris "   $sante"
-  gris '   -> service arrete, deploiement non abouti, ou mauvaise URL.'
+  rouge "echec (code $code)"
+  gris '   -> fonction non deployee, mauvaise URL, ou verification JWT active.'
+  gris '      `supabase functions logs recherche-criteres` donne le detail.'
   exit 1
 fi
 
@@ -44,8 +48,8 @@ fi
 # regional, et l'acceptation du schema de sortie structuree. Un `/sante` vert
 # ne prouve aucun de ces quatre points.
 printf '2. Une phrase est traduite     ... '
-reponse=$(curl -sS -m 40 -X POST "$BASE/recherche/criteres" \
-  -H 'content-type: application/json' \
+reponse=$(curl -sS -m 40 -X POST "$BASE/recherche-criteres" \
+  -H 'content-type: application/json' -H "x-region: $REGION" \
   -d "{\"text\":\"$PHRASE\"}" 2>&1)
 
 if echo "$reponse" | grep -q '"query"'; then
@@ -63,8 +67,9 @@ else
   rouge 'echec'
   gris "   $reponse"
   gris '   -> cle invalide, modele indisponible sur l abonnement, point'
-  gris '      d entree regional ferme, ou schema refuse. `fly logs` donne le'
-  gris '      code et le message exacts du fournisseur.'
+  gris '      d entree regional ferme, ou schema refuse.'
+  gris '      `supabase functions logs recherche-criteres` donne le code et le'
+  gris '      message exacts du fournisseur.'
   echec=1
 fi
 
@@ -73,8 +78,9 @@ fi
 printf '3. La limite de debit protege  ... '
 vus=''
 for _ in $(seq 1 12); do
-  code=$(curl -sS -m 40 -o /dev/null -w '%{http_code}' -X POST "$BASE/recherche/criteres" \
-    -H 'content-type: application/json' -d '{"text":"test de plafond"}' 2>/dev/null)
+  code=$(curl -sS -m 40 -o /dev/null -w '%{http_code}' -X POST "$BASE/recherche-criteres" \
+    -H 'content-type: application/json' -H "x-region: $REGION" \
+    -d '{"text":"test de plafond"}' 2>/dev/null)
   vus="$vus $code"
   [ "$code" = '429' ] && break
 done
@@ -85,8 +91,9 @@ if echo "$vus" | grep -q '429'; then
 else
   rouge 'jamais atteinte'
   gris "   codes :$vus"
-  gris '   -> le plafond ne se declenche pas. Verifier LUCY_RATE_LIMIT, et'
-  gris '      LUCY_IP_HEADER qui doit valoir fly-client-ip derriere Fly.'
+  gris '   -> le plafond ne se declenche pas. Verifier LUCY_RATE_LIMIT, et que'
+  gris '      la table `rate_limit` et la fonction `verifier_debit` existent'
+  gris '      bien (supabase/rate_limit.sql).'
   echec=1
 fi
 
