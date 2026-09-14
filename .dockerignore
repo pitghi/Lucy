@@ -1,5 +1,10 @@
-# L'application mobile ne participe pas a l'image du service.
-packages/app
+# L'application mobile n'est pas exclue, contrairement a ce qu'on attendrait :
+# `npm ci` verifie l'arbre complet du verrou, il lui faut donc tous les
+# manifestes du monorepo, celui de l'application compris. L'exclure et
+# rattraper son seul `package.json` par une negation demanderait de se fier a
+# l'ordre d'evaluation des regles ; hors node_modules, deja ecarte plus bas,
+# le dossier pese 312 Ko. Le contexte de construction les porte, l'image non :
+# le Dockerfile ne copie que le moteur et le service.
 
 **/node_modules
 **/.git
