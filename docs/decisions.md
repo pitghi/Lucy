@@ -587,6 +587,35 @@ Rien n'a ete decide sur ces points ; ils ne sont pas des oublis.
 
 ## 8. Historique des sessions
 
+### 2026-09-14 — recherche au catalogue depuis le profil
+
+Ajout du bouton **Rechercher un produit** dans « Produits essayes » du profil
+(4.6), fusionne dans `main` par la PR #8.
+
+Etat des canaux de mise a jour releve au passage, en interrogeant le serveur
+`u.expo.dev` — qui repond sans authentification, ce qui permet de voir ce que
+les appareils recoivent vraiment plutot que ce qu'on croit avoir publie :
+
+- canal `production` : existe, **aucune mise a jour publiee**. Les appareils
+  tournent donc sur le bundle embarque du build 2, et c'est la cible de
+  rollback pour la premiere OTA — `eas update:roll-back-to-embedded`, pas
+  `update:republish`, faute de groupe anterieur ;
+- canal `preview` : **n'existe pas**, aucun build interne n'ayant ete fait. La
+  prudence qui consisterait a livrer d'abord en interne n'est pas disponible
+  sans un build `preview` prealable.
+
+L'empreinte `runtimeVersion` est inchangee par la PR #8 — verifie, pas suppose :
+la liste des sources de l'empreinte ne contient aucun fichier de
+`packages/app/src/`. Elle contient en revanche le bloc `scripts` du
+`package.json` et `eas.json`, ce qui merite d'etre su : renommer un script npm
+suffit a couper l'OTA.
+
+La procedure complete est consignee en skill (`.claude/skills/ota/`), cible de
+rollback comprise, plutot que redecouverte a chaque livraison.
+
+La publication elle-meme n'a pas ete faite : la session distante n'a pas de
+compte Expo et aucun jeton n'y est injecte.
+
 ### 2026-09-14 — premiere distribution TestFlight
 
 Point de depart : `main` sur la recherche en langage libre, aucun build de

@@ -59,6 +59,9 @@ npm run ios     --workspace @lucy/app         # simulateur iOS (macOS requis)
 npm run android --workspace @lucy/app
 npm run web     --workspace @lucy/app         # apercu rapide en navigateur
 
+# Livraison aux testeurs : voir le skill `.claude/skills/ota/`
+npm run update:production --workspace @lucy/app   # mise a jour en vol
+
 # Audit de couverture du referentiel sur des produits reels
 ./packages/engine/scripts/fetch-sample.sh /tmp/lucy-sample
 node --experimental-strip-types \
