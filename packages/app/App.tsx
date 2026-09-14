@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { Platform, Pressable, StatusBar, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFonts } from 'expo-font';
@@ -19,6 +19,7 @@ import { ProfileScreen } from './src/screens/ProfileScreen';
 import { RecommendationsScreen } from './src/screens/RecommendationsScreen';
 import { SearchScreen } from './src/screens/SearchScreen';
 import { DEMO_CATALOG } from './src/data/catalog';
+import { lookupBarcode, type LookupOutcome } from './src/data/productLookup';
 
 /**
  * Racine de l'application.
@@ -50,6 +51,35 @@ export default function App() {
   const [selected, setSelected] = useState<Product | null>(null);
 
   /**
+   * Etat de la lecture en cours.
+   *
+   * Un scan a trois issues et non deux : la fiche s'ouvre, la recherche
+   * echoue, ou elle est en cours. La derniere n'etait pas representee et la
+   * deuxieme ne l'etait pas du tout — le code partait en recherche et, s'il
+   * ne donnait rien, l'ecran ne bougeait pas.
+   */
+  const [scan, setScan] = useState<{
+    searching: boolean;
+    code: string | null;
+    failure: Exclude<LookupOutcome, { statut: 'trouve' }> | null;
+  }>({ searching: false, code: null, failure: null });
+
+  /**
+   * Delai de garde apres la fermeture d'une fiche.
+   *
+   * L'emballage est encore devant l'objectif quand on revient au scan : sans
+   * ce delai, le meme code repart aussitot et rouvre la fiche qu'on vient de
+   * quitter — l'ecran de scan devient alors inatteignable.
+   */
+  const lastScanned = useRef<string | null>(null);
+  const reopenBlockedUntil = useRef(0);
+
+  const closeProduct = useCallback(() => {
+    reopenBlockedUntil.current = Date.now() + 2500;
+    setSelected(null);
+  }, []);
+
+  /**
    * Enregistre un verdict dans le journal de tolerance.
    *
    * Le produit juge non convenable disparait des propositions ; c'est la seule
@@ -76,9 +106,9 @@ export default function App() {
         );
         return { ...current, journal: [entry, ...journal] };
       });
-      setSelected(null);
+      closeProduct();
     },
-    [],
+    [closeProduct],
   );
 
   const assessment = useMemo(
@@ -86,10 +116,39 @@ export default function App() {
     [selected, profile],
   );
 
+  /**
+   * Cherche le produit derriere un code-barres lu.
+   *
+   * La recherche interroge le catalogue local puis Open Beauty Facts. Elle
+   * n'echoue jamais en silence : chaque issue negative remonte a l'ecran de
+   * scan, qui la nomme et propose la suite.
+   */
   const handleBarcode = useCallback((barcode: string) => {
-    const found = DEMO_CATALOG.find((item) => item.barcode === barcode);
-    setSelected(found ?? null);
+    if (barcode === lastScanned.current && Date.now() < reopenBlockedUntil.current) {
+      return;
+    }
+    lastScanned.current = barcode;
+    setScan({ searching: true, code: barcode, failure: null });
+
+    lookupBarcode(barcode).then((outcome) => {
+      if (outcome.statut === 'trouve') {
+        setScan({ searching: false, code: null, failure: null });
+        setSelected(outcome.product);
+        return;
+      }
+      setScan({ searching: false, code: barcode, failure: outcome });
+    });
   }, []);
+
+  /** Ecarte le message d'echec et rouvre la lecture. */
+  const dismissScan = useCallback(() => {
+    setScan({ searching: false, code: null, failure: null });
+  }, []);
+
+  /** Relance la recherche du meme code apres une coupure de reseau. */
+  const retryLookup = useCallback(() => {
+    if (scan.code) handleBarcode(scan.code);
+  }, [scan.code, handleBarcode]);
 
   if (!fontsLoaded) return null;
 
@@ -99,7 +158,7 @@ export default function App() {
         <ProductScreen
           product={selected}
           assessment={assessment}
-          onBack={() => setSelected(null)}
+          onBack={closeProduct}
           onToleranceFeedback={(suited) => recordTolerance(selected, suited)}
         />
       </SafeAreaProvider>
@@ -113,9 +172,17 @@ export default function App() {
           {tab === 'scan' ? (
             <ScanScreen
               onBarcode={handleBarcode}
-              // En attendant la lecture optique, la saisie ouvre un produit de
+              searching={scan.searching}
+              pendingCode={scan.code}
+              failure={scan.failure}
+              onDismiss={dismissScan}
+              onRetryLookup={retryLookup}
+              // En attendant l'ecran de saisie, la saisie ouvre un produit de
               // demonstration pour parcourir la fiche.
-              onManualEntry={() => setSelected(DEMO_CATALOG[1] ?? null)}
+              onManualEntry={() => {
+                dismissScan();
+                setSelected(DEMO_CATALOG[1] ?? null);
+              }}
             />
           ) : null}
           {tab === 'search' ? (
