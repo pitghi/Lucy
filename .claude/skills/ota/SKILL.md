@@ -166,6 +166,13 @@ Corollaire a ne pas contourner : cette variable **ne doit pas** etre declaree
 dans `eas.json`, qui entre dans l'empreinte. L'y mettre casse l'OTA pour tous
 les binaires deja distribues (mesure : `d959927b…` devient `b9d2d0098…`).
 
+Les commandes `eas env:*` echouent actuellement sur un desaccord d'`owner`
+entre `app.json` (`pitghi`) et le projet EAS (`pitghis-team`). **Ne pas
+corriger `app.json` pour les faire passer** : il entre dans l'empreinte en
+entier, et le remede couterait ce qu'il pretend eviter. Declarer les variables
+depuis le tableau de bord Expo, ou les passer en prefixe comme ci-dessus ;
+le desaccord se corrigera au prochain build natif.
+
 **Ne pas utiliser `--auto`** : il prend le nom de la branche git comme branche
 EAS. Depuis `main`, il publierait sur une branche `main` que le canal
 `production` n'ecoute pas — publication silencieusement sans effet.
