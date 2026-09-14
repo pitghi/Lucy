@@ -1,6 +1,5 @@
-import Anthropic from '@anthropic-ai/sdk';
+import type { GoogleGenAI } from '@google/genai';
 import * as z from 'zod/v4';
-import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
 import { parseSearchQuery, type SearchQuery } from '@lucy/engine';
 
 /**
@@ -54,6 +53,21 @@ const CritereSchema = z.object({
     ),
 });
 
+/**
+ * Le meme schema, en JSON Schema, pour la sortie structuree du modele.
+ *
+ * Derive du schema zod plutot que reecrit a la main : deux definitions de la
+ * meme forme divergent toujours, et c'est la description des champs qui porte
+ * l'essentiel des consignes donnees au modele.
+ *
+ * `$schema` est retire : l'API n'accepte qu'un sous-ensemble de JSON Schema et
+ * ce mot-cle n'en fait pas partie.
+ */
+const SCHEMA_JSON = (() => {
+  const { $schema: _ignore, ...reste } = z.toJSONSchema(CritereSchema) as Record<string, unknown>;
+  return reste;
+})();
+
 const SYSTEM = `Tu traduis une demande de produit cosmetique en criteres de recherche.
 
 Tu ne choisis aucun produit et tu n'en connais aucun : tu decris seulement ce
@@ -80,44 +94,74 @@ export interface TranslateResult {
   empty: boolean;
 }
 
+/** Modele par defaut. Voir le README pour le choix de l'alias. */
+export const DEFAULT_MODEL = 'gemini-flash-latest';
+
+/**
+ * Marge de sortie.
+ *
+ * Genereuse au regard d'une reponse qui tient en quelques dizaines de jetons :
+ * les modeles recents consomment ce budget pour raisonner avant de repondre, et
+ * une marge trop juste rend une reponse vide ou tronquee plutot qu'une erreur
+ * lisible.
+ */
+const MAX_OUTPUT_TOKENS = 2048;
+
+/** Sortie inexploitable du modele : une panne, pas une demande incomprise. */
+export class TranslationUnusable extends Error {}
+
 /**
  * Traduit une phrase en `SearchQuery` valide.
  *
  * La sortie du modele repasse systematiquement par `parseSearchQuery`, la
  * validation du moteur. Le schema impose deja la forme, mais la validation
  * reste : c'est elle qui fait foi, et elle vaut aussi pour toute future source
- * de criteres.
+ * de criteres — ce changement de fournisseur en est la demonstration.
  */
 export async function translate(
-  client: Anthropic,
+  client: GoogleGenAI,
   text: string,
-  model = 'claude-opus-5',
+  model = DEFAULT_MODEL,
 ): Promise<TranslateResult> {
   const demande = text.slice(0, MAX_INPUT_CHARS);
 
-  const response = await client.messages.parse({
+  const response = await client.models.generateContent({
     model,
-    max_tokens: 1024,
-    system: SYSTEM,
-    // La traduction d'une demande est une tache simple : l'effort le plus bas
-    // suffit et tient la latence d'un champ de recherche.
-    output_config: { effort: 'low', format: zodOutputFormat(CritereSchema) },
-    messages: [{ role: 'user', content: `<demande>${demande}</demande>` }],
+    contents: `<demande>${demande}</demande>`,
+    config: {
+      systemInstruction: SYSTEM,
+      responseMimeType: 'application/json',
+      responseJsonSchema: SCHEMA_JSON,
+      maxOutputTokens: MAX_OUTPUT_TOKENS,
+      // La traduction d'une demande n'a pas a varier d'un appel a l'autre :
+      // deux fois la meme phrase doivent donner les memes criteres, sans quoi
+      // une recherche qui a fonctionne devient impossible a reproduire.
+      temperature: 0,
+    },
   });
 
-  const parsed = response.parsed_output;
-  if (!parsed) return { query: {}, empty: true };
+  const brut = response.text;
+
+  // Une sortie absente ou illisible n'est pas une demande incomprise : c'est le
+  // service qui a echoue. Les confondre afficherait « je n'ai pas compris
+  // cette demande » a quelqu'un dont la phrase etait parfaitement claire, et
+  // l'inviterait a la reformuler indefiniment.
+  if (!brut) {
+    throw new TranslationUnusable('reponse vide du modele');
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(brut);
+  } catch {
+    throw new TranslationUnusable('reponse du modele illisible');
+  }
 
   // `null` exprime l'absence cote modele ; le moteur, lui, attend un champ
-  // absent. On ne transmet que ce qui est renseigne.
-  const query = parseSearchQuery({
-    category: parsed.category ?? undefined,
-    targetConcern: parsed.targetConcern ?? undefined,
-    maxIngredients: parsed.maxIngredients ?? undefined,
-    axes: parsed.axes,
-    avoidFragrance: parsed.avoidFragrance,
-    excludeInci: parsed.excludeInci,
-  });
+  // absent. `parseSearchQuery` ecarte en silence tout ce qu'il ne reconnait
+  // pas, y compris un `null` : lui passer l'objet tel quel suffit, et c'est
+  // ainsi que la validation reste le seul endroit qui fait foi.
+  const query = parseSearchQuery(parsed);
 
   return { query, empty: Object.keys(query).length === 0 };
 }

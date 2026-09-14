@@ -4,7 +4,7 @@ import type { IncomingMessage } from 'node:http';
  * Limitation de debit par adresse IP.
  *
  * Le service porte la cle d'API : sans plafond, une URL publique est une cle
- * Anthropic ouverte a qui la trouve, et la facture suit. C'est le garde-fou
+ * du modele ouverte a qui la trouve, et la facture suit. C'est le garde-fou
  * minimal avant d'exposer le point d'entree.
  *
  * Fenetre glissante, en memoire, sans dependance ni base : le service est sans

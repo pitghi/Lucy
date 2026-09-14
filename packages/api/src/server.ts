@@ -1,6 +1,6 @@
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
-import Anthropic from '@anthropic-ai/sdk';
-import { translate, MAX_INPUT_CHARS } from './query.ts';
+import { ApiError, GoogleGenAI } from '@google/genai';
+import { translate, DEFAULT_MODEL, MAX_INPUT_CHARS, TranslationUnusable } from './query.ts';
 import { adresseClient, creerLimiteDebit } from './debit.ts';
 
 /**
@@ -15,7 +15,7 @@ import { adresseClient, creerLimiteDebit } from './debit.ts';
  * ne pas faire entrer de donnees de sante dans l'infrastructure.
  */
 
-const MODEL = process.env.LUCY_MODEL ?? 'claude-opus-5';
+const MODEL = process.env.LUCY_MODEL ?? DEFAULT_MODEL;
 const PORT = Number(process.env.PORT ?? 8787);
 
 /**
@@ -41,7 +41,19 @@ const IP_HEADER = (process.env.LUCY_IP_HEADER ?? '').toLowerCase();
 
 const limite = creerLimiteDebit(RATE_LIMIT);
 
-const client = new Anthropic();
+/**
+ * Le SDK ne lit aucune variable d'environnement de lui-meme : sans cette cle,
+ * le service demarrerait et echouerait a chaque recherche. Mieux vaut refuser
+ * de demarrer — une machine qui ne repond pas se voit dans les journaux et au
+ * controle de sante, une panne par requete ne se voit que chez l'utilisateur.
+ */
+const API_KEY = process.env.GEMINI_API_KEY;
+if (!API_KEY && process.env.NODE_ENV !== 'test') {
+  console.error('GEMINI_API_KEY absente : le service ne peut pas traduire.');
+  process.exit(1);
+}
+
+const client = new GoogleGenAI({ apiKey: API_KEY ?? '' });
 
 function send(res: ServerResponse, status: number, body: unknown): void {
   const payload = JSON.stringify(body);
@@ -108,11 +120,20 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
     // en laissant croire qu'elle a repondu.
     return send(res, 200, { query, empty });
   } catch (error) {
-    if (error instanceof Anthropic.RateLimitError) {
+    // Le quota du fournisseur et le plafond local se presentent de la meme
+    // facon a l'application : dans les deux cas elle invite a patienter.
+    if (error instanceof ApiError && error.status === 429) {
       return send(res, 429, { erreur: 'trop de demandes' });
     }
-    if (error instanceof Anthropic.APIError) {
+    if (error instanceof ApiError) {
       console.error('erreur API', error.status, error.message);
+      return send(res, 502, { erreur: 'service de traduction indisponible' });
+    }
+    // Sortie inexploitable : une panne, pas une demande incomprise. La
+    // distinction compte — l'application propose de reformuler dans un cas et
+    // de reessayer dans l'autre.
+    if (error instanceof TranslationUnusable) {
+      console.error('reponse inexploitable', error.message);
       return send(res, 502, { erreur: 'service de traduction indisponible' });
     }
     console.error('erreur inattendue', error);

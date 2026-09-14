@@ -131,7 +131,7 @@ partage a proteger, le plafond approximatif coute moins cher.
 
 Consequence assumee : le compteur repart de zero a chaque reveil de la machine.
 Il ecarte l'accident et le curieux, pas un abus soutenu. **Ce qui borne la
-facture est le plafond de depense pose sur la cle**, cote console Anthropic, et
+facture est le plafond de depense pose sur la cle**, cote Google AI Studio, et
 non ce compteur. Confondre les deux serait se croire protege.
 
 L'adresse du client est lue dans `fly-client-ip`, que le proxy **ecrase** a
@@ -153,6 +153,40 @@ n'est pas ecrite.
 ---
 
 ---
+
+### 1.8 Fournisseur du modele de traduction : Gemini, palier payant — *acte*
+
+Le service de traduction appelle l'API Gemini de Google, modele
+`gemini-flash-latest`, **sur le palier payant**.
+
+Un alias plutot qu'une version figee : le modele ne produit ni note ni
+classement. Il traduit une phrase en criteres, et le moteur de regles decide
+ensuite — c'est la reproductibilite du moteur qui est opposable a une marque,
+pas celle de la traduction. Un nom de version fige finirait par etre retire et
+rendrait une panne franche sur un service qui tournait.
+
+**Le palier payant n'est pas un choix de confort.** Sur le palier gratuit,
+Google utilise le contenu soumis pour ameliorer ses produits et des relecteurs
+humains peuvent le lire. Or « une creme pour la rosacee » revele une condition
+cutanee : la phrase de recherche est, en pratique, une donnee de sante, alors
+meme que toute l'architecture existe pour que ce type d'information ne quitte
+pas le telephone (le profil, lui, ne part pas). Accepter le palier gratuit
+annulerait cette precaution par un autre chemin, et pour une economie de
+l'ordre du centime. La facturation doit etre activee sur la cle avant la mise
+en ligne, meme si le volume reste sous le seuil gratuit.
+
+Le cout n'a pas departage les fournisseurs, et ne le pouvait pas : une demande
+represente environ 670 jetons en entree et 60 en sortie, soit **moins de 3 $
+par mois pour 10 000 recherches** chez tous les candidats examines (Gemini
+Flash-Lite, Ministral, DeepSeek). A l'echelle du MVP — quelques testeurs — la
+depense est de l'ordre du centime quel que soit le choix. Ce qui departage est
+ailleurs : le traitement des donnees, la qualite de la traduction en francais,
+la latence ressentie dans un champ de recherche.
+
+Ce que ce choix laisse ouvert : **la localisation du traitement**. La phrase
+part chez Google, hors du cadre que le projet s'impose pour le reste. Un
+fournisseur europeen la traiterait dans l'Union, a cout comparable. La question
+merite d'etre reprise avant une diffusion large (§7).
 
 ## 2. Methode d'evaluation
 
@@ -586,7 +620,8 @@ Rien n'a ete decide sur ces points ; ils ne sont pas des oublis.
 | **Nom et positionnement** | « Lucy » est le nom du depot, pas une decision de marque. |
 | **Taux de presence du code-barres** | L'audit a mesure la presence de la **liste d'ingredients**, pas celle du code-barres. Un scan qui ne trouve pas le produit et un scan qui le trouve sans sa composition appellent deux traitements differents. |
 | **Authentification de l'application aupres du service** | Le point d'entree de `packages/api` est public : qui connait l'URL peut l'appeler. Un jeton embarque dans le binaire s'en extrait comme une cle d'API. L'attestation d'application (App Attest, Play Integrity) est la reponse serieuse ; non traitee. En attendant, le plafond par adresse (1.7) et le plafond de depense sur la cle tiennent lieu de protection. |
-| **Budget par recherche** | Le cout d'une traduction n'a pas ete mesure sur de vraies demandes, donc le plafond de depense mensuel est pose au juge. Un modele plus petit suffit probablement (voir le README du service), mais l'arbitrage latence / cout / qualite n'est pas fait. |
+| **Budget par recherche** | Mesure en volume de jetons (~670 en entree, ~60 en sortie), soit moins de 3 $ par mois pour 10 000 recherches chez tous les fournisseurs examines. Ce qui n'est pas mesure, c'est la **qualite de la traduction en francais** selon le modele, ni la latence ressentie : l'arbitrage se fera la, pas sur le prix. |
+| **Localisation du traitement de la phrase** | La phrase de recherche part chez Google (1.8). Elle peut reveler une condition cutanee — « une creme pour la rosacee » — alors que le profil, lui, ne quitte jamais le telephone. Un fournisseur europeen la traiterait dans l'Union a cout comparable. A reprendre avant une diffusion large. |
 | **Alignement de `react-native`** | Le projet est en 0.76.5, le SDK 52 attend 0.76.9. Sans consequence sur les builds, mais c'est une dependance native : l'aligner changera l'empreinte `runtimeVersion` (1.6) et coutera un binaire de plus aux testeurs deja equipes. A faire au prochain build natif, pas seul. |
 | **Nom de l'application sur l'App Store** | « Lucy » etait pris : la fiche s'appelle « Lucy (cd6504) ». A changer avant d'ouvrir la beta externe, et lie a la question du nom de marque ci-dessus. |
 | **Ecran de saisie / OCR** | Identifie comme priorite fonctionnelle suivante (3.1), pas encore ecrit. |
@@ -609,13 +644,26 @@ Ce qui a ete fait (1.7) : limitation de debit par adresse, image conteneur,
 configuration Fly.io, et `EXPO_PUBLIC_LUCY_API` renseigne dans les trois
 profils de build.
 
+En cours de session, le fournisseur du modele est passe d'Anthropic a Gemini
+(1.8). Le changement a coute peu — une trentaine de lignes dans `query.ts` et
+la gestion d'erreurs du serveur — parce que `parseSearchQuery` etait deja le
+seul endroit qui fait foi sur la forme des criteres. La validation du moteur
+n'avait pas ete ecrite pour permettre un changement de fournisseur ; elle l'a
+permis quand meme, ce qui est le meilleur argument pour la garder.
+
+Une difference de contrat a relever : le SDK precedent rendait un objet deja
+valide, le nouveau rend du texte. Une sortie vide ou illisible est desormais
+distinguee d'une demande incomprise, et remonte en panne plutot qu'en « je n'ai
+pas compris ». Les confondre invitait a reformuler indefiniment une phrase qui
+n'avait rien de fautif.
+
 La question qui a occupe le plus de temps n'est pas l'hebergement mais **ce que
 la limitation de debit protege reellement**. Un compteur en memoire sur une
 machine qui s'eteint des qu'elle est inactive ne borne pas une facture : il
 repart de zero a chaque reveil. Le tenir ailleurs supposerait une base, donc un
 endroit ou des demandes s'accumulent — ce que le service evite par
 construction. L'arbitrage retenu est de garder le compteur approximatif et de
-poser la limite qui compte **sur la cle**, cote console Anthropic. Ecrire
+poser la limite qui compte **sur la cle**, cote Google AI Studio. Ecrire
 l'inverse aurait donne l'impression d'un garde-fou la ou il n'y en a pas.
 
 Deuxieme point de vigilance, moins visible : l'adresse du client. La lire dans

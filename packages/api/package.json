@@ -11,7 +11,7 @@
     "test": "node --experimental-strip-types --test test/*.test.ts"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.125.0",
+    "@google/genai": "^2.22.0",
     "@lucy/engine": "*",
     "zod": "^3.24.0"
   },

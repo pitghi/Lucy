@@ -35,7 +35,7 @@ la validation reste, parce que c'est elle qui fait foi.
 ## Lancer
 
 ```bash
-export ANTHROPIC_API_KEY=...          # ou `ant auth login`
+export GEMINI_API_KEY=...             # Google AI Studio
 npm start --workspace @lucy/api       # ecoute sur :8787
 npm test  --workspace @lucy/api       # 16 tests, sans reseau
 ```
@@ -44,9 +44,9 @@ Variables :
 
 | Variable | Defaut | Role |
 | --- | --- | --- |
-| `ANTHROPIC_API_KEY` | — | Cle du modele. Jamais dans le depot ni dans l'image. |
+| `GEMINI_API_KEY` | — | Cle du modele. **Obligatoire** : sans elle le service refuse de demarrer. Jamais dans le depot ni dans l'image. |
 | `PORT` | `8787` | Port d'ecoute. |
-| `LUCY_MODEL` | `claude-opus-5` | Modele de traduction. |
+| `LUCY_MODEL` | `gemini-flash-latest` | Modele de traduction. |
 | `LUCY_RATE_LIMIT` | `10` | Demandes par minute et par adresse. `0` desactive. |
 | `LUCY_IP_HEADER` | — | En-tete portant l'adresse du client, derriere un proxy. |
 | `LUCY_CORS_ORIGIN` | — | Origine autorisee pour l'apercu web. Ferme par defaut. |
@@ -68,7 +68,7 @@ Deux limites assumees, qui tiennent a ce choix :
   qu'elle est inactive.
 
 Le garde-fou contre l'abus soutenu n'est donc pas ce compteur mais le **plafond
-de depense pose sur la cle**, cote console Anthropic. Le compteur ecarte
+de depense pose sur la cle**, cote Google AI Studio. Le compteur ecarte
 l'accident et le curieux ; il ne remplace pas la limite qui borne la facture.
 
 `LUCY_IP_HEADER` ne doit designer qu'un en-tete que le proxy **ecrase** a
@@ -91,11 +91,45 @@ en laissant croire qu'elle a compris.
 
 ## Cout et modele
 
-Le modele par defaut est `claude-opus-5`, a l'effort le plus bas — la
-traduction d'une demande est une tache simple et la latence compte dans un
-champ de recherche. `LUCY_MODEL` permet d'en changer : un modele plus petit
-suffit probablement ici, mais c'est un arbitrage a mesurer sur de vraies
-demandes avant de le figer.
+Le modele par defaut est `gemini-flash-latest`, un alias maintenu par Google.
+Un alias plutot qu'une version figee : le modele ne produit ni note ni
+classement — il traduit une phrase en criteres, et c'est le moteur de regles
+qui decide ensuite. La reproductibilite qui compte est celle du moteur, pas
+celle de la traduction. Un nom fige finirait par etre retire et rendrait une
+panne franche sur un service qui tournait. `LUCY_MODEL` permet d'epingler une
+version si la traduction se met a varier de facon genante.
+
+### Ce qu'une recherche coute
+
+Une demande, c'est **environ 670 jetons en entree** (225 pour la consigne, 322
+pour le schema de sortie, jusqu'a 125 pour la phrase) et **une soixantaine en
+sortie**. Sur cette base, pour 10 000 recherches par mois :
+
+| Modele | Entree $/M | Sortie $/M | 10 000 recherches |
+| --- | --- | --- | --- |
+| Gemini 2.5 Flash-Lite | 0,10 | 0,40 | ~0,91 $ |
+| Gemini 3.1 Flash-Lite | 0,25 | 1,50 | ~2,58 $ |
+| Gemini 3.8 Flash | 0,75 | 3,75 | ~7,28 $ |
+
+L'ecart absolu est faible et le volume du MVP est sans commune mesure avec ces
+chiffres : quelques testeurs, quelques centaines de recherches, donc **moins
+d'un centime par mois**. Le cout n'est pas ce qui doit guider le choix du
+modele ici ; la qualite de la traduction en francais et la latence ressentie
+dans un champ de recherche le sont.
+
+### Le palier gratuit est exclu
+
+Google distingue nettement les deux paliers : sur le palier **gratuit**, le
+contenu soumis sert a ameliorer ses produits et **des relecteurs humains
+peuvent le lire**. Sur le palier **payant**, ni les invites ni les reponses ne
+servent a l'entrainement.
+
+Ce n'est pas un detail de confort. « Une creme pour la rosacee », « quelque
+chose pour mon acne » : la phrase de recherche **revele une condition
+cutanee**, alors que toute l'architecture du projet existe pour que ce type
+d'information ne quitte pas le telephone. Le palier gratuit annulerait cette
+precaution par un autre chemin. **Activer la facturation sur la cle avant la
+mise en ligne**, meme si le volume reste sous le seuil gratuit.
 
 ## Deploiement
 
@@ -110,7 +144,7 @@ cette raison.
 fly apps create lucy-api
 
 # 2. Poser la cle. Elle ne passe jamais par le depot ni par une couche d'image.
-fly secrets set ANTHROPIC_API_KEY=... --app lucy-api
+fly secrets set GEMINI_API_KEY=... --app lucy-api
 
 # 3. Deployer. `--ha=false` n'est pas un detail : sans lui, Fly cree deux
 #    machines, donc deux compteurs de debit en memoire, donc un plafond reel
@@ -128,7 +162,7 @@ curl https://lucy-api.fly.dev/sante     # -> {"statut":"ok","modele":"..."}
 > utilisateurs partiraient chez son proprietaire.
 
 Avant la premiere mise en ligne, **poser un plafond de depense mensuel sur la
-cle** dans la console Anthropic. C'est le seul garde-fou qui borne reellement la
+cle** dans la console Google. C'est le seul garde-fou qui borne reellement la
 facture ; la limitation de debit ci-dessus ne fait qu'ecarter l'accident.
 
 ### Ce que le deploiement suppose

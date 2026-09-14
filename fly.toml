@@ -4,7 +4,7 @@
 # monorepo entier comme contexte, pour le lien de workspace vers `@lucy/engine`.
 #
 # La cle d'API n'est pas ici. Elle se pose une fois, hors du depot :
-#   fly secrets set ANTHROPIC_API_KEY=...
+#   fly secrets set GEMINI_API_KEY=...
 
 app = 'lucy-api'
 
@@ -38,7 +38,7 @@ primary_region = 'cdg'
   # La machine s'eteint quand personne ne cherche et se rallume a la demande
   # suivante. Consequence assumee : le compteur de debit, tenu en memoire,
   # repart de zero a chaque reveil. Le garde-fou contre l'abus soutenu reste
-  # le plafond de depense pose sur la cle, cote console Anthropic.
+  # le plafond de depense pose sur la cle, cote Google AI Studio.
   auto_stop_machines = 'stop'
   auto_start_machines = true
   min_machines_running = 0
