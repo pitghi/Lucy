@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions, type BarcodeType } from 'expo-camera';
-import { Camera, Keyboard, PackageSearch, ScanLine, Type, WifiOff } from 'lucide-react-native';
+import { Camera, PackageSearch, ScanLine, WifiOff } from 'lucide-react-native';
 import { radius, space, TOUCH_MIN, type } from '../theme/index';
 import { usePalette } from '../theme/usePalette';
 import type { LookupOutcome } from '../data/productLookup';
@@ -16,20 +16,19 @@ import type { LookupOutcome } from '../data/productLookup';
 /**
  * Ecran de scan.
  *
- * L'audit de couverture a montre que quatre produits sur dix n'ont pas de
- * liste d'ingrédients exploitable dans les bases ouvertes. La saisie manuelle
- * de la liste INCI n'est donc pas un repli a dissimuler mais une voie
- * d'entree de premier plan : elle est presentee des l'ecran de scan, avant
- * tout echec, et non apres.
+ * L'ecran ne fait qu'une chose : lire un code-barres et dire ce qu'il en est.
+ * Il ne proposait rien de tel jusqu'ici — un scan qui n'aboutissait pas ne
+ * changeait rien a l'affichage, de sorte qu'un code lu mais introuvable et un
+ * code jamais lu se ressemblaient, et c'est la lecture optique qu'on accusait.
  *
- * Corollaire : un scan qui n'aboutit pas doit le dire. Tant que l'echec
- * restait muet, un code-barres lu mais introuvable et un code-barres jamais lu
- * se ressemblaient — et c'est la lecture optique qu'on accusait.
+ * La saisie manuelle de la liste INCI y figurait, alors que l'ecran de saisie
+ * n'existe pas : le bouton ouvrait un produit de demonstration. Un chemin qui
+ * ne mene pas ou il annonce coute plus cher que son absence, il est retire en
+ * attendant l'ecran reel (decision 5.7).
  */
 
 interface Props {
   onBarcode: (barcode: string) => void;
-  onManualEntry: () => void;
   /** Vrai pendant la recherche du produit scanne. */
   searching?: boolean;
   /** Code-barres en cours de recherche, affiché pour confirmer la lecture. */
@@ -79,7 +78,7 @@ function describeFailure(failure: Exclude<LookupOutcome, { statut: 'trouve' }>):
       Icon: PackageSearch,
       title: produit ? produit : 'Composition absente',
       detail:
-        'Ce produit est référencé, mais sa liste d’ingrédients est absente ou trop courte pour être analysée. Elle se saisit depuis l’emballage.',
+        'Ce produit est référencé, mais sa liste d’ingrédients est absente ou trop courte pour être analysée. Sans composition, aucun score ne peut être calculé.',
       retry: 'Scanner un autre produit',
     };
   }
@@ -90,14 +89,13 @@ function describeFailure(failure: Exclude<LookupOutcome, { statut: 'trouve' }>):
     detail:
       'Le code ' +
       failure.barcode +
-      ' a bien été lu, mais il ne figure dans aucune base ouverte. Sa liste d’ingrédients se saisit depuis l’emballage.',
+      ' a bien été lu, mais il ne figure dans aucune base ouverte.',
     retry: 'Scanner un autre produit',
   };
 }
 
 export function ScanScreen({
   onBarcode,
-  onManualEntry,
   searching = false,
   pendingCode = null,
   failure = null,
@@ -169,19 +167,6 @@ export function ScanScreen({
         >
           <Text style={[type.bodyMedium, { color: palette.onPrimary }]}>Autoriser</Text>
         </Pressable>
-
-        {/* Chemin alternatif toujours disponible : l'application reste
-            utilisable sans appareil photo. */}
-        <Pressable
-          onPress={onManualEntry}
-          accessibilityRole="button"
-          style={({ pressed }) => [styles.textButton, pressed && styles.pressed]}
-        >
-          <Keyboard size={16} color={palette.primary} strokeWidth={2} />
-          <Text style={[type.smallMedium, { color: palette.primary }]}>
-            Saisir la liste d'ingrédients
-          </Text>
-        </Pressable>
       </View>
     );
   }
@@ -233,41 +218,14 @@ export function ScanScreen({
         ) : null}
       </View>
 
-      {/* Barre d'action ancree au-dessus de la zone de geste systeme. */}
-      <View style={[styles.actions, { paddingBottom: insets.bottom + space.lg }]}>
-        {failure ? (
-          <Failure
-            failure={failure}
-            onDismiss={onDismiss}
-            onRetryLookup={onRetryLookup}
-            onManualEntry={onManualEntry}
-          />
-        ) : null}
-
-        {/* Le message d'echec porte deja son action de saisie : la barre
-            permanente ferait doublon juste en dessous. */}
-        <Pressable
-          onPress={onManualEntry}
-          accessibilityRole="button"
-          accessibilityLabel="Saisir ou photographier la liste d'ingrédients"
-          accessibilityHint="À utiliser quand le produit n'est pas reconnu ou sans code-barres"
-          style={({ pressed }) => [
-            styles.manualButton,
-            failure && styles.hidden,
-            pressed && styles.pressed,
-          ]}
-        >
-          <Type size={18} color="#FFFFFF" strokeWidth={2} />
-          <View style={styles.manualText}>
-            <Text style={[type.smallMedium, styles.headerText]}>
-              Saisir la liste d'ingrédients
-            </Text>
-            <Text style={[type.caption, styles.manualHint]}>
-              Produit absent de la base ou sans code-barres
-            </Text>
-          </View>
-        </Pressable>
-      </View>
+      {/* Le compte rendu d'echec est la seule chose qui s'ancre en bas, et il
+          n'y est que le temps d'etre lu : le reste du temps rien ne couvre le
+          cadrage. */}
+      {failure ? (
+        <View style={[styles.actions, { paddingBottom: insets.bottom + space.lg }]}>
+          <Failure failure={failure} onDismiss={onDismiss} onRetryLookup={onRetryLookup} />
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -275,20 +233,19 @@ export function ScanScreen({
 /**
  * Compte rendu d'un scan qui n'a pas ouvert de fiche.
  *
- * Il nomme le cas — code inconnu, composition absente, reseau — parce que la
- * suite differe : les deux premiers appellent une saisie, le troisieme une
- * nouvelle tentative. Aucun n'est presente comme une panne de l'application.
+ * Il nomme le cas — code inconnu, composition absente, reseau — parce que les
+ * trois ne disent pas la meme chose : les deux premiers portent sur le produit
+ * et le troisieme sur la connexion, et seul le troisieme vaut d'etre rejoue.
+ * Aucun n'est presente comme une panne de l'application.
  */
 function Failure({
   failure,
   onDismiss,
   onRetryLookup,
-  onManualEntry,
 }: {
   failure: Exclude<LookupOutcome, { statut: 'trouve' }>;
   onDismiss?: () => void;
   onRetryLookup?: () => void;
-  onManualEntry: () => void;
 }) {
   const palette = usePalette();
   const { Icon, title, detail, retry } = describeFailure(failure);
@@ -307,49 +264,35 @@ function Failure({
 
       <Text style={[type.small, { color: palette.textMuted }]}>{detail}</Text>
 
+      {/* Une seule suite possible tant que la saisie manuelle n'existe pas :
+          reprendre la lecture. Le reseau fait exception — le meme code vaut
+          la peine d'etre rejoue, et on peut aussi renoncer. */}
       <View style={styles.failureActions}>
-        {failure.statut === 'reseau' ? (
-          <Pressable
-            onPress={onRetryLookup}
-            accessibilityRole="button"
-            style={({ pressed }) => [
-              styles.failurePrimary,
-              { backgroundColor: palette.primary },
-              pressed && styles.pressed,
-            ]}
-          >
-            <Text style={[type.smallMedium, { color: palette.onPrimary }]}>{retry}</Text>
-          </Pressable>
-        ) : (
-          <Pressable
-            onPress={onManualEntry}
-            accessibilityRole="button"
-            style={({ pressed }) => [
-              styles.failurePrimary,
-              { backgroundColor: palette.primary },
-              pressed && styles.pressed,
-            ]}
-          >
-            <Keyboard size={16} color={palette.onPrimary} strokeWidth={2} />
-            <Text style={[type.smallMedium, { color: palette.onPrimary }]}>
-              Saisir la liste
-            </Text>
-          </Pressable>
-        )}
-
         <Pressable
-          onPress={onDismiss}
+          onPress={failure.statut === 'reseau' ? onRetryLookup : onDismiss}
           accessibilityRole="button"
           style={({ pressed }) => [
-            styles.failureSecondary,
-            { borderColor: palette.borderStrong },
+            styles.failurePrimary,
+            { backgroundColor: palette.primary },
             pressed && styles.pressed,
           ]}
         >
-          <Text style={[type.smallMedium, { color: palette.text }]}>
-            {failure.statut === 'reseau' ? 'Fermer' : retry}
-          </Text>
+          <Text style={[type.smallMedium, { color: palette.onPrimary }]}>{retry}</Text>
         </Pressable>
+
+        {failure.statut === 'reseau' ? (
+          <Pressable
+            onPress={onDismiss}
+            accessibilityRole="button"
+            style={({ pressed }) => [
+              styles.failureSecondary,
+              { borderColor: palette.borderStrong },
+              pressed && styles.pressed,
+            ]}
+          >
+            <Text style={[type.smallMedium, { color: palette.text }]}>Fermer</Text>
+          </Pressable>
+        ) : null}
       </View>
     </View>
   );
@@ -382,14 +325,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginTop: space.sm,
   },
-  textButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space.sm,
-    minHeight: TOUCH_MIN,
-  },
   pressed: { opacity: 0.7 },
-  hidden: { display: 'none' },
 
   overlay: { ...StyleSheet.absoluteFillObject },
   overlayTop: { flex: 1, backgroundColor: 'rgba(2, 6, 23, 0.55)' },
@@ -477,18 +413,4 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
 
-  manualButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space.md,
-    minHeight: TOUCH_MIN + 12,
-    paddingHorizontal: space.lg,
-    paddingVertical: space.md,
-    borderRadius: radius.lg,
-    backgroundColor: 'rgba(2, 6, 23, 0.78)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.18)',
-  },
-  manualText: { flex: 1, gap: 2 },
-  manualHint: { color: 'rgba(255, 255, 255, 0.65)' },
 });

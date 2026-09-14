@@ -177,12 +177,6 @@ export default function App() {
               failure={scan.failure}
               onDismiss={dismissScan}
               onRetryLookup={retryLookup}
-              // En attendant l'ecran de saisie, la saisie ouvre un produit de
-              // demonstration pour parcourir la fiche.
-              onManualEntry={() => {
-                dismissScan();
-                setSelected(DEMO_CATALOG[1] ?? null);
-              }}
             />
           ) : null}
           {tab === 'search' ? (

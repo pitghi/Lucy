@@ -481,10 +481,17 @@ produit reel reste inconnue. Sous 70 %, l'ecran annonce une **analyse
 partielle** assumee plutot qu'un score complet. Afficher une note calculee sur
 la moitie d'une formule serait une precision empruntee.
 
-### 5.7 La saisie de la liste INCI est au meme niveau que le scan — *acte*
+### 5.7 La saisie de la liste INCI est au meme niveau que le scan — *acte, suspendu a l'ecran*
 
 Consequence directe de 3.1. Elle est presentee des l'ecran de scan, avant tout
 echec, et non comme un recours apres echec.
+
+**Suspendu le 2026-09-14 [PR].** Le principe tient, mais l'ecran de saisie n'a
+jamais ete ecrit : le bouton ouvrait un produit de demonstration. Un chemin qui
+ne mene pas ou il annonce coute plus cher que son absence — d'autant plus
+depuis que les echecs de scan sont nommes (5.12) et y renvoyaient. Les appels a
+la saisie sont donc retires de l'ecran de scan ; ils reviennent avec l'ecran
+reel, qui reste la priorite fonctionnelle suivante (§7).
 
 ### 5.8 Navigation par etat local — *provisoire*
 
@@ -533,17 +540,22 @@ C'est la question ouverte du §7 sur le taux de presence du code-barres,
 tranchee du cote de l'interface. Un scan a quatre issues, pas deux, et les
 confondre reporte sur la camera un echec qui vient de la donnee :
 
-| Issue | Ce que l'ecran propose |
+| Issue | Ce que l'ecran dit et propose |
 | --- | --- |
 | Produit trouve | La fiche s'ouvre |
-| Code-barres absent de la base | Saisir la liste depuis l'emballage |
-| Produit reference sans composition exploitable | Saisir la liste depuis l'emballage |
-| Reseau indisponible | Reessayer le meme code |
+| Code-barres absent de la base | Le code est nomme, puis reprise de la lecture |
+| Produit reference sans composition exploitable | Le produit est nomme, puis reprise de la lecture |
+| Reseau indisponible | Reessayer le meme code, ou renoncer |
 
 Le seuil d'exploitabilite est celui de l'audit : cinq ingredients (3.1). Une
-panne reseau ne se conclut jamais en « produit inconnu » — le produit existe
-peut-etre, et envoyer recopier une etiquette pour une coupure de reseau fait
-perdre son temps.
+panne reseau ne se conclut jamais en « produit inconnu » : le produit existe
+peut-etre, et les deux cas n'appellent pas la meme suite — seul le reseau vaut
+d'etre rejoue.
+
+Les deux premiers cas devraient mener a une saisie de la liste ; ils n'y menent
+pas, faute d'ecran de saisie (5.7). L'ecran les nomme donc sans rien promettre,
+ce qui reste preferable au silence d'avant — mais c'est un parcours qui
+s'arrete la, et c'est la l'argument le plus fort pour ecrire cet ecran.
 
 Le code lu s'affiche des la lecture, avant meme le resultat : il prouve que la
 camera a fait son travail. Et la lecture est suspendue tant qu'un message
@@ -621,7 +633,7 @@ Rien n'a ete decide sur ces points ; ils ne sont pas des oublis.
 | **Deploiement du service de traduction** | `packages/api` porte la cle d'API pour la recherche en langage libre. Limitation de debit, authentification de l'application, budget par recherche et hebergement : non traites. |
 | **Alignement de `react-native`** | Le projet est en 0.76.5, le SDK 52 attend 0.76.9. Sans consequence sur les builds, mais c'est une dependance native : l'aligner changera l'empreinte `runtimeVersion` (1.6) et coutera un binaire de plus aux testeurs deja equipes. A faire au prochain build natif, pas seul. |
 | **Nom de l'application sur l'App Store** | « Lucy » etait pris : la fiche s'appelle « Lucy (cd6504) ». A changer avant d'ouvrir la beta externe, et lie a la question du nom de marque ci-dessus. |
-| **Ecran de saisie / OCR** | Identifie comme priorite fonctionnelle suivante (3.1), pas encore ecrit. |
+| **Ecran de saisie / OCR** | Priorite fonctionnelle suivante (3.1), toujours pas ecrit. Son absence coute desormais davantage : les appels a la saisie ont ete retires de l'ecran de scan (5.7), donc un produit non reconnu n'a plus aucune suite dans l'application. |
 
 ---
 
