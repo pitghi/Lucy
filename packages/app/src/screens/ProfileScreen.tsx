@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Check, Droplet, Heart, HeartCrack, Info, Lightbulb } from 'lucide-react-native';
+import { Check, Droplet, Heart, HeartCrack, Info, Lightbulb, Search } from 'lucide-react-native';
 import {
   suggestIntolerances,
   type Concern,
@@ -13,14 +13,16 @@ import {
 import { radius, space, TOUCH_MIN, type } from '../theme/index';
 import { usePalette } from '../theme/usePalette';
 import { Chip, ChipGroup } from '../components/Chip';
+import { JournalPicker } from '../components/JournalPicker';
 
 /**
  * Profil utilisateur.
  *
  * Volontairement court : l'objectif est quatre-vingt-dix secondes. Un
  * questionnaire long est abandonne, et un profil abandonne ne produit aucune
- * recommandation. Le profil s'affine ensuite tout seul, par le journal de
- * tolérance de la fiche produit, plutot que par un formulaire exhaustif.
+ * recommandation. Le profil s'affine ensuite par le journal de tolérance —
+ * renseigne depuis la fiche d'un produit ou en le cherchant au catalogue —
+ * plutot que par un formulaire exhaustif.
  */
 
 const SKIN_TYPES: Array<{ value: SkinType; label: string; hint: string }> = [
@@ -78,6 +80,25 @@ export function ProfileScreen({ initial, catalog = [], onSave }: Props) {
   const [preferredTexture, setPreferredTexture] = useState<'fluid' | 'rich' | null>(
     initial?.preferredTexture ?? null,
   );
+  const [picker, setPicker] = useState(false);
+
+  /** Le meme produit ne porte qu'un verdict : le dernier pose remplace l'autre. */
+  const sameProduct = (entry: ToleranceEntry, product: Product) =>
+    product.barcode ? entry.barcode === product.barcode : entry.name === product.name;
+
+  const recordVerdict = (product: Product, verdict: ToleranceEntry['verdict']) =>
+    setJournal((current) => [
+      {
+        ...(product.barcode ? { barcode: product.barcode } : {}),
+        name: product.name,
+        verdict,
+        date: new Date().toISOString().slice(0, 10),
+      },
+      ...current.filter((entry) => !sameProduct(entry, product)),
+    ]);
+
+  const clearVerdict = (product: Product) =>
+    setJournal((current) => current.filter((entry) => !sameProduct(entry, product)));
 
   // Le journal ne condamne aucun ingredient de lui-meme : il propose, quand
   // plusieurs rejets se recoupent, et l'utilisateur tranche.
@@ -314,13 +335,31 @@ export function ProfileScreen({ initial, catalog = [], onSave }: Props) {
             </Text>
           </View>
           <Text style={[type.small, { color: palette.textMuted }]}>
-            Renseigné depuis la fiche d'un produit. Ce qui ne vous a pas convenu n'est plus
-            proposé.
+            Ce qui ne vous a pas convenu n'est plus proposé. Cherchez ici les produits déjà
+            essayés, ou répondez depuis la fiche d'un produit.
           </Text>
+
+          {/* Le flacon deja fini n'est plus la pour etre scanne : sans cette
+              recherche, le journal resterait vide au moment ou il sert le plus. */}
+          <Pressable
+            onPress={() => setPicker(true)}
+            accessibilityRole="button"
+            accessibilityLabel="Rechercher un produit dans le catalogue"
+            style={({ pressed }) => [
+              styles.searchButton,
+              { backgroundColor: palette.card, borderColor: palette.primary },
+              pressed && styles.pressed,
+            ]}
+          >
+            <Search size={18} color={palette.primary} strokeWidth={2} />
+            <Text style={[type.bodyMedium, { color: palette.primary }]}>
+              Rechercher un produit
+            </Text>
+          </Pressable>
 
           {journal.length === 0 ? (
             <Text style={[type.caption, { color: palette.textSubtle }]}>
-              Ouvrez la fiche d'un produit et indiquez s'il vous a convenu.
+              Aucun produit déclaré pour l'instant.
             </Text>
           ) : (
             <View style={styles.journal}>
@@ -445,6 +484,15 @@ export function ProfileScreen({ initial, catalog = [], onSave }: Props) {
           </Text>
         </Pressable>
       </View>
+
+      <JournalPicker
+        visible={picker}
+        catalog={catalog}
+        journal={journal}
+        onRecord={recordVerdict}
+        onClear={clearVerdict}
+        onClose={() => setPicker(false)}
+      />
     </View>
   );
 }
@@ -466,6 +514,16 @@ const styles = StyleSheet.create({
     padding: space.lg,
     borderRadius: radius.lg,
     borderWidth: 1.5,
+  },
+  searchButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: space.sm,
+    minHeight: TOUCH_MIN,
+    borderRadius: radius.pill,
+    borderWidth: 1.5,
+    paddingHorizontal: space.lg,
   },
   journal: { gap: space.sm },
   journalRow: {
