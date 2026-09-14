@@ -596,13 +596,21 @@ Etat des canaux de mise a jour releve au passage, en interrogeant le serveur
 `u.expo.dev` — qui repond sans authentification, ce qui permet de voir ce que
 les appareils recoivent vraiment plutot que ce qu'on croit avoir publie :
 
-- canal `production` : existe, **aucune mise a jour publiee**. Les appareils
-  tournent donc sur le bundle embarque du build 2, et c'est la cible de
-  rollback pour la premiere OTA — `eas update:roll-back-to-embedded`, pas
-  `update:republish`, faute de groupe anterieur ;
+- canal `production` : existe, et ne sert **rien** pour l'empreinte calculee
+  ici (`d959927b…`), sur iOS comme sur Android ;
 - canal `preview` : **n'existe pas**, aucun build interne n'ayant ete fait. La
   prudence qui consisterait a livrer d'abord en interne n'est pas disponible
   sans un build `preview` prealable.
+
+Le premier point a d'abord ete lu comme « aucune OTA n'a jamais ete publiee ».
+C'est faux, et la verification qui le montre vaut d'etre retenue : une empreinte
+inventee renvoie exactement le meme `204 NO_UPDATE_AVAILABLE` que la vraie. Le
+serveur ne repond pas « rien n'est publie » mais « rien pour l'empreinte que tu
+m'as donnee » — un `204` ne distingue pas une absence de publication d'une
+publication qui n'atteint personne, faute de la bonne empreinte ou d'une
+branche que le canal ecoute. Une OTA ayant bien ete lancee sur ce projet, c'est
+l'un de ces deux cas, et il reste a trancher lequel : **la cible de rollback est
+indeterminee jusque-la**, et rien ne doit etre publie avant.
 
 L'empreinte `runtimeVersion` est inchangee par la PR #8 — verifie, pas suppose :
 la liste des sources de l'empreinte ne contient aucun fichier de

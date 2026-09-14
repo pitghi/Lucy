@@ -104,13 +104,36 @@ Lecture des reponses :
 
 | Reponse | Ce que ca veut dire |
 |---|---|
-| `204` + `expo-reason-code: NO_UPDATE_AVAILABLE` | Rien de publie pour cette empreinte. Les appareils tournent sur le bundle embarque — **la cible de rollback est l'embarque**. |
-| `200` multipart avec un manifeste | Une mise a jour est servie. Son `id` est la cible de rollback. |
-| `404 There is no channel named …` | Le canal n'existe pas : aucun build n'a jamais ete fait avec ce profil. Publier dessus ne servirait personne. |
+| `200` multipart avec un manifeste | **Concluant.** Une mise a jour est servie a cette empreinte sur ce canal. Son `id` est la cible de rollback. |
+| `404 There is no channel named …` | **Concluant.** Le canal n'existe pas : aucun build n'a jamais ete fait avec ce profil, publier dessus ne servirait personne. |
+| `204` + `expo-reason-code: NO_UPDATE_AVAILABLE` | **Ne conclut rien.** Voir ci-dessous. |
 
-Un `204` peut aussi vouloir dire que l'empreinte locale ne correspond pas a
-celle du binaire distribue. Les deux lectures menent au meme geste — verifier
-avant de croire que la livraison est arrivee (§4).
+**Le `204` ne prouve pas qu'il n'y a rien de publie.** Verifie le 2026-09-14
+sur ce projet : une empreinte inventee (`deadbeef…`) et la vraie renvoient le
+meme `204 NO_UPDATE_AVAILABLE`. Le serveur dit seulement « rien pour
+*l'empreinte que tu m'as donnee* », et il le dit aussi quand l'empreinte est
+fausse. Trois causes mènent au meme `204` :
+
+1. rien n'a effectivement ete publie sur ce canal ;
+2. quelque chose a ete publie, mais sous une autre empreinte que celle
+   calculee ici — l'update ne rejoindra jamais les appareils ;
+3. quelque chose a ete publie sur une **branche** que ce canal n'ecoute pas
+   (le cas `--auto`, §3) — meme consequence.
+
+Les cas 2 et 3 sont les pannes silencieuses que ce skill existe pour attraper :
+la commande a reussi, le tableau de bord montre un groupe publie, et personne
+ne recoit rien. **Un `204` impose donc d'aller voir le tableau de bord** —
+branche du canal `production`, et `runtimeVersion` du dernier groupe publie —
+ou d'interroger l'API avec un compte :
+
+```bash
+cd packages/app
+npx --yes eas-cli@latest channel:view production   # branche(s) ecoutee(s)
+npx --yes eas-cli@latest update:list --branch production --limit 5
+```
+
+Cette requete `curl` sert donc a **confirmer une livraison**, jamais a prouver
+une absence.
 
 ## 3. Publier
 
@@ -178,11 +201,19 @@ l'empreinte (§0) et ne pas publier a l'aveugle.
 A confirmer plutot qu'a croire : ces faits vieillissent.
 
 - Projet EAS `5adbde8f-36c2-48be-bcf3-8d499a610044`, proprietaire `pitghi`.
-- Canal **`production`** : existe (cree par le build 2), **aucune mise a jour
-  publiee**. Les appareils tournent sur le bundle embarque du build 2 — donc
-  cible de rollback = embarque.
-- Canal **`preview`** : **n'existe pas**, aucun build interne n'a ete fait.
-  `npm run update:preview` n'atteindrait personne.
+- Canaux existants : **`production`** seul. `preview`, `main`, `default`,
+  `develop`, `staging`, `test` renvoient tous `404` — donc `npm run
+  update:preview` n'atteindrait personne, et livrer d'abord en interne
+  demanderait un build `preview` prealable.
+- Le canal `production` renvoie `204` pour l'empreinte
+  `d959927b6227ad6b4afb92c79ac50b36d194784c`, sur iOS comme sur Android. **Cela
+  ne dit pas qu'il n'y a rien de publie** (cf. §2) : une OTA a bien ete lancee
+  a la main sur ce projet. Reste a etablir, tableau de bord en main, si elle
+  porte une autre empreinte ou une branche que le canal n'ecoute pas — dans les
+  deux cas elle n'atteint personne, et c'est le premier point a regler.
+- **Cible de rollback : indeterminee** tant que ce point n'est pas tranche. S'il
+  n'existe aucun groupe servi, c'est l'embarque du build 2 ; s'il en existe un,
+  c'est son `id`. Ne pas publier avant de le savoir.
 - Le **build 1** a ete compile sans `expo-updates` : il ne recevra jamais rien,
   et cela ne se rattrape pas (decision 1.6).
 - `react-native` est en 0.76.5 quand le SDK 52 attend 0.76.9. L'aligner change
