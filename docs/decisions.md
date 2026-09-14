@@ -426,6 +426,36 @@ Sa valeur reelle est ailleurs : croisee sur un volume suffisant, elle permet de
 correlations individuelles. C'est la seule donnee du projet qu'aucun concurrent
 ne possede — d'ou la collecte immediate, meme sans exploitation.
 
+### 4.6 Le journal se remplit aussi depuis le profil, par recherche au catalogue — *acte*
+
+La fiche produit etait la seule entree du journal (4.3). Elle suppose d'avoir
+l'emballage sous la main, alors que ce qu'on a deja essaye est justement ce
+qu'on n'a plus : le flacon est fini, jete, ou range ailleurs. Le journal
+restait donc vide au moment ou il sert le plus — avant la premiere serie de
+recommandations, quand il pourrait ecarter d'emblee ce qui a deja echoue.
+
+La section « Produits essayes » du profil porte donc un bouton **Rechercher un
+produit**, qui ouvre une recherche par marque et par nom sur le catalogue, avec
+les deux verdicts directement dans la liste.
+
+**Ce n'est pas la recherche de l'onglet dedie**, et la difference est de
+nature, pas de degre. Celle-ci repond a « ou est ce produit precis », un
+rapprochement de chaines qui se fait **localement**, sans appel reseau : la
+recherche en langage libre envoie la phrase a un service pour la traduire en
+criteres, ce qui serait ici un cout — et une dependance au reseau — sans
+contrepartie. Aucune donnee ne quitte l'appareil pour remplir le journal.
+
+**Ecartee : ouvrir la fiche produit pour poser le verdict.** Le parcours entier
+tient sa valeur d'etre bref. Ouvrir une fiche pour repondre a une question
+qu'on vient de poser ajoute deux ecrans par produit, et le profil se remplit
+typiquement de trois ou quatre produits d'affilee. Le verdict se pose donc dans
+la liste, et reposer le verdict actif le retire — seul moyen de corriger une
+erreur sans quitter la recherche.
+
+Le catalogue de demonstration ne couvre pas le marche : l'etat vide le dit et
+renvoie au scan, plutot que de laisser croire que le produit cherche n'existe
+pas.
+
 ---
 
 ## 5. Design d'interface
