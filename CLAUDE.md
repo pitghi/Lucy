@@ -56,7 +56,7 @@ npm run typecheck --workspace @lucy/engine
 npm run demo    --workspace @lucy/engine      # moteur en action sur des formules types
 
 npm start       --workspace @lucy/api         # service de traduction sur :8787
-npm test        --workspace @lucy/api         # 16 tests, sans reseau
+npm test        --workspace @lucy/api         # 20 tests, sans reseau
 
 npm run ios     --workspace @lucy/app         # simulateur iOS (macOS requis)
 npm run android --workspace @lucy/app

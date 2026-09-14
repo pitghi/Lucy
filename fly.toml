@@ -4,13 +4,12 @@
 # monorepo entier comme contexte, pour le lien de workspace vers `@lucy/engine`.
 #
 # La cle d'API n'est pas ici. Elle se pose une fois, hors du depot :
-#   fly secrets set GEMINI_API_KEY=...
+#   fly secrets set MISTRAL_API_KEY=...
 
 app = 'lucy-api'
 
 # Paris. Le service ne recoit ni profil ni donnee de sante, mais la phrase de
-# recherche reste une donnee personnelle : la traiter en Europe evite d'avoir a
-# justifier un transfert qui n'apporte rien.
+# recherche reste une donnee personnelle.
 primary_region = 'cdg'
 
 [build]
@@ -18,6 +17,12 @@ primary_region = 'cdg'
 
 [env]
   PORT = '8787'
+
+  # Point d'entree europeen du fournisseur. La phrase de recherche peut
+  # reveler une condition cutanee : la traiter dans l'Union evite d'avoir a
+  # justifier un transfert qui n'apporte rien. Combine a la region ci-dessus,
+  # le traitement est europeen de bout en bout.
+  LUCY_MISTRAL_REGION = 'eu'
 
   # L'adresse du client est lue dans cet en-tete, que le proxy Fly **ecrase**
   # a l'entree. Un en-tete simplement transmis, comme `x-forwarded-for`, serait
@@ -38,7 +43,7 @@ primary_region = 'cdg'
   # La machine s'eteint quand personne ne cherche et se rallume a la demande
   # suivante. Consequence assumee : le compteur de debit, tenu en memoire,
   # repart de zero a chaque reveil. Le garde-fou contre l'abus soutenu reste
-  # le plafond de depense pose sur la cle, cote Google AI Studio.
+  # le plafond de depense pose sur la cle, cote console Mistral.
   auto_stop_machines = 'stop'
   auto_start_machines = true
   min_machines_running = 0

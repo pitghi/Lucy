@@ -11,8 +11,8 @@
     "test": "node --experimental-strip-types --test test/*.test.ts"
   },
   "dependencies": {
-    "@google/genai": "^2.22.0",
     "@lucy/engine": "*",
+    "@mistralai/mistralai": "^2.7.0",
     "zod": "^3.24.0"
   },
   "devDependencies": {

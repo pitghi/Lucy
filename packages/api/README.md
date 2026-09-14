@@ -35,18 +35,19 @@ la validation reste, parce que c'est elle qui fait foi.
 ## Lancer
 
 ```bash
-export GEMINI_API_KEY=...             # Google AI Studio
+export MISTRAL_API_KEY=...            # console Mistral (La Plateforme)
 npm start --workspace @lucy/api       # ecoute sur :8787
-npm test  --workspace @lucy/api       # 16 tests, sans reseau
+npm test  --workspace @lucy/api       # 20 tests, sans reseau
 ```
 
 Variables :
 
 | Variable | Defaut | Role |
 | --- | --- | --- |
-| `GEMINI_API_KEY` | — | Cle du modele. **Obligatoire** : sans elle le service refuse de demarrer. Jamais dans le depot ni dans l'image. |
+| `MISTRAL_API_KEY` | — | Cle du modele. **Obligatoire** : sans elle le service refuse de demarrer. Jamais dans le depot ni dans l'image. |
 | `PORT` | `8787` | Port d'ecoute. |
-| `LUCY_MODEL` | `gemini-flash-latest` | Modele de traduction. |
+| `LUCY_MODEL` | `mistral-small-latest` | Modele de traduction. |
+| `LUCY_MISTRAL_REGION` | `eu` | Region de traitement : `eu`, `global` ou `us`. |
 | `LUCY_RATE_LIMIT` | `10` | Demandes par minute et par adresse. `0` desactive. |
 | `LUCY_IP_HEADER` | — | En-tete portant l'adresse du client, derriere un proxy. |
 | `LUCY_CORS_ORIGIN` | — | Origine autorisee pour l'apercu web. Ferme par defaut. |
@@ -68,7 +69,7 @@ Deux limites assumees, qui tiennent a ce choix :
   qu'elle est inactive.
 
 Le garde-fou contre l'abus soutenu n'est donc pas ce compteur mais le **plafond
-de depense pose sur la cle**, cote Google AI Studio. Le compteur ecarte
+de depense pose sur la cle**, cote console Mistral. Le compteur ecarte
 l'accident et le curieux ; il ne remplace pas la limite qui borne la facture.
 
 `LUCY_IP_HEADER` ne doit designer qu'un en-tete que le proxy **ecrase** a
@@ -91,13 +92,13 @@ en laissant croire qu'elle a compris.
 
 ## Cout et modele
 
-Le modele par defaut est `gemini-flash-latest`, un alias maintenu par Google.
-Un alias plutot qu'une version figee : le modele ne produit ni note ni
-classement — il traduit une phrase en criteres, et c'est le moteur de regles
-qui decide ensuite. La reproductibilite qui compte est celle du moteur, pas
-celle de la traduction. Un nom fige finirait par etre retire et rendrait une
-panne franche sur un service qui tournait. `LUCY_MODEL` permet d'epingler une
-version si la traduction se met a varier de facon genante.
+Le modele par defaut est `mistral-small-latest`. Un alias plutot qu'une version
+figee : le modele ne produit ni note ni classement — il traduit une phrase en
+criteres, et c'est le moteur de regles qui decide ensuite. La reproductibilite
+qui compte est celle du moteur, pas celle de la traduction. Un nom fige
+finirait par etre retire et rendrait une panne franche sur un service qui
+tournait. `LUCY_MODEL` permet d'epingler une version si la traduction se met a
+varier de facon genante.
 
 ### Ce qu'une recherche coute
 
@@ -107,9 +108,9 @@ sortie**. Sur cette base, pour 10 000 recherches par mois :
 
 | Modele | Entree $/M | Sortie $/M | 10 000 recherches |
 | --- | --- | --- | --- |
-| Gemini 2.5 Flash-Lite | 0,10 | 0,40 | ~0,91 $ |
-| Gemini 3.1 Flash-Lite | 0,25 | 1,50 | ~2,58 $ |
-| Gemini 3.8 Flash | 0,75 | 3,75 | ~7,28 $ |
+| `ministral-3-3b-25-12` | 0,10 | 0,10 | ~0,73 $ |
+| `mistral-small-latest` | 0,15 | 0,60 | ~1,37 $ |
+| `mistral-large-latest` | 0,50 | 1,50 | ~4,25 $ |
 
 L'ecart absolu est faible et le volume du MVP est sans commune mesure avec ces
 chiffres : quelques testeurs, quelques centaines de recherches, donc **moins
@@ -117,19 +118,33 @@ d'un centime par mois**. Le cout n'est pas ce qui doit guider le choix du
 modele ici ; la qualite de la traduction en francais et la latence ressentie
 dans un champ de recherche le sont.
 
-### Le palier gratuit est exclu
+`ministral-3-3b-25-12` diviserait la note par deux, pour 64 centimes d'ecart
+mensuel a 10 000 recherches. La consigne n'est pas triviale — ignorer une
+texture ou une odeur, resister a une phrase qui se fait passer pour une
+instruction — et un modele de 3 milliards de parametres peut y echouer. A
+mesurer sur de vraies demandes avant de descendre, pas a decider sur une
+grille tarifaire.
 
-Google distingue nettement les deux paliers : sur le palier **gratuit**, le
-contenu soumis sert a ameliorer ses produits et **des relecteurs humains
-peuvent le lire**. Sur le palier **payant**, ni les invites ni les reponses ne
-servent a l'entrainement.
+### Le palier gratuit, et la case a decocher
 
-Ce n'est pas un detail de confort. « Une creme pour la rosacee », « quelque
-chose pour mon acne » : la phrase de recherche **revele une condition
+Le plan **Experiment** de Mistral est gratuit et tres large au regard de
+l'usage : une recherche coute environ 730 jetons, le plafond mensuel se compte
+en milliards. Il couvre la phase de test sans depenser un centime.
+
+**Mais il faut refuser l'entrainement, explicitement.** Sur le plan gratuit,
+les entrees et sorties alimentent les programmes d'entrainement **par defaut** ;
+l'opposition se fait dans la console, menu **Privacy** de l'espace
+d'administration. Ce n'est pas un detail de confort : « une creme pour la
+rosacee », « quelque chose pour mon acne » — la phrase **revele une condition
 cutanee**, alors que toute l'architecture du projet existe pour que ce type
-d'information ne quitte pas le telephone. Le palier gratuit annulerait cette
-precaution par un autre chemin. **Activer la facturation sur la cle avant la
-mise en ligne**, meme si le volume reste sous le seuil gratuit.
+d'information ne quitte pas le telephone. Le profil ne part pas ; la phrase,
+elle, part.
+
+**A verifier avant de brancher de vrais testeurs** : que l'option existe bien
+sur le plan Experiment. La documentation confirme le droit d'opposition pour
+les clients de l'API sans distinguer explicitement gratuit et payant. Si elle
+n'y est pas, le plan payant (Scale), ou les entrees et sorties ne servent pas a
+l'entrainement, coute moins de 3 $ par mois a 10 000 recherches.
 
 ## Deploiement
 
@@ -144,7 +159,7 @@ cette raison.
 fly apps create lucy-api
 
 # 2. Poser la cle. Elle ne passe jamais par le depot ni par une couche d'image.
-fly secrets set GEMINI_API_KEY=... --app lucy-api
+fly secrets set MISTRAL_API_KEY=... --app lucy-api
 
 # 3. Deployer. `--ha=false` n'est pas un detail : sans lui, Fly cree deux
 #    machines, donc deux compteurs de debit en memoire, donc un plafond reel
@@ -162,7 +177,7 @@ curl https://lucy-api.fly.dev/sante     # -> {"statut":"ok","modele":"..."}
 > utilisateurs partiraient chez son proprietaire.
 
 Avant la premiere mise en ligne, **poser un plafond de depense mensuel sur la
-cle** dans la console Google. C'est le seul garde-fou qui borne reellement la
+cle** dans la console Mistral. C'est le seul garde-fou qui borne reellement la
 facture ; la limitation de debit ci-dessus ne fait qu'ecarter l'accident.
 
 ### Ce que le deploiement suppose
@@ -171,9 +186,11 @@ facture ; la limitation de debit ci-dessus ne fait qu'ecarter l'accident.
   la demande suivante. Le demarrage a froid ajoute quelques secondes a la
   premiere recherche, largement sous le delai d'attente de l'application
   (12 s). Le prix de ce choix est le compteur de debit remis a zero au reveil.
-- **Region Paris** (`cdg`). Le service ne recoit ni profil ni donnee de sante,
-  mais la phrase de recherche reste une donnee personnelle : la traiter en
-  Europe evite d'avoir a justifier un transfert qui n'apporte rien.
+- **Traitement en Europe de bout en bout.** Le service tourne a Paris (`cdg`)
+  et appelle le point d'entree europeen de Mistral (`api.eu.mistral.ai`, via
+  `LUCY_MISTRAL_REGION=eu`). La phrase de recherche ne sort pas de l'Union.
+  Si l'abonnement n'ouvre pas ce point d'entree, `global` fonctionne — c'est
+  un recul assume, pas un reglage anodin.
 - **HTTPS impose.** L'application n'appellera pas en clair, et iOS le
   refuserait de toute facon (App Transport Security).
 

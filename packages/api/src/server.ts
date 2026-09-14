@@ -1,5 +1,6 @@
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
-import { ApiError, GoogleGenAI } from '@google/genai';
+import { Mistral } from '@mistralai/mistralai';
+import { MistralError } from '@mistralai/mistralai/models/errors';
 import { translate, DEFAULT_MODEL, MAX_INPUT_CHARS, TranslationUnusable } from './query.ts';
 import { adresseClient, creerLimiteDebit } from './debit.ts';
 
@@ -42,18 +43,29 @@ const IP_HEADER = (process.env.LUCY_IP_HEADER ?? '').toLowerCase();
 const limite = creerLimiteDebit(RATE_LIMIT);
 
 /**
- * Le SDK ne lit aucune variable d'environnement de lui-meme : sans cette cle,
- * le service demarrerait et echouerait a chaque recherche. Mieux vaut refuser
- * de demarrer — une machine qui ne repond pas se voit dans les journaux et au
- * controle de sante, une panne par requete ne se voit que chez l'utilisateur.
+ * Sans cle, le service demarrerait et echouerait a chaque recherche. Mieux
+ * vaut refuser de demarrer — une machine qui ne demarre pas se voit dans les
+ * journaux et au controle de sante, une panne par requete ne se voit que chez
+ * l'utilisateur.
  */
-const API_KEY = process.env.GEMINI_API_KEY;
+const API_KEY = process.env.MISTRAL_API_KEY;
 if (!API_KEY && process.env.NODE_ENV !== 'test') {
-  console.error('GEMINI_API_KEY absente : le service ne peut pas traduire.');
+  console.error('MISTRAL_API_KEY absente : le service ne peut pas traduire.');
   process.exit(1);
 }
 
-const client = new GoogleGenAI({ apiKey: API_KEY ?? '' });
+/**
+ * Region de traitement.
+ *
+ * `eu` par defaut : la phrase de recherche peut reveler une condition cutanee
+ * — « une creme pour la rosacee » — alors que le profil, lui, ne quitte jamais
+ * l'appareil. La traiter dans l'Union evite d'avoir a justifier un transfert
+ * qui n'apporte rien. A basculer sur `global` si l'abonnement n'ouvre pas le
+ * point d'entree europeen ; c'est un recul, pas un reglage anodin.
+ */
+const REGION = (process.env.LUCY_MISTRAL_REGION ?? 'eu') as 'eu' | 'global' | 'us';
+
+const client = new Mistral({ apiKey: API_KEY ?? '', server: REGION });
 
 function send(res: ServerResponse, status: number, body: unknown): void {
   const payload = JSON.stringify(body);
@@ -122,11 +134,11 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
   } catch (error) {
     // Le quota du fournisseur et le plafond local se presentent de la meme
     // facon a l'application : dans les deux cas elle invite a patienter.
-    if (error instanceof ApiError && error.status === 429) {
+    if (error instanceof MistralError && error.statusCode === 429) {
       return send(res, 429, { erreur: 'trop de demandes' });
     }
-    if (error instanceof ApiError) {
-      console.error('erreur API', error.status, error.message);
+    if (error instanceof MistralError) {
+      console.error('erreur API', error.statusCode, error.message);
       return send(res, 502, { erreur: 'service de traduction indisponible' });
     }
     // Sortie inexploitable : une panne, pas une demande incomprise. La
@@ -170,7 +182,9 @@ if (process.env.NODE_ENV !== 'test') {
   }
 
   server.listen(PORT, () => {
-    console.log(`Lucy — traduction des demandes sur :${PORT} (modele ${MODEL})`);
+    console.log(
+      `Lucy — traduction des demandes sur :${PORT} (modele ${MODEL}, region ${REGION})`,
+    );
     console.log(`Demandes tronquees a ${MAX_INPUT_CHARS} caracteres.`);
     console.log(
       RATE_LIMIT > 0

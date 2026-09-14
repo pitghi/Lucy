@@ -1,4 +1,4 @@
-import type { GoogleGenAI } from '@google/genai';
+import type { Mistral } from '@mistralai/mistralai';
 import * as z from 'zod/v4';
 import { parseSearchQuery, type SearchQuery } from '@lucy/engine';
 
@@ -60,8 +60,8 @@ const CritereSchema = z.object({
  * meme forme divergent toujours, et c'est la description des champs qui porte
  * l'essentiel des consignes donnees au modele.
  *
- * `$schema` est retire : l'API n'accepte qu'un sous-ensemble de JSON Schema et
- * ce mot-cle n'en fait pas partie.
+ * `$schema` est retire : les API de sortie structuree n'acceptent qu'un
+ * sous-ensemble de JSON Schema, dont ce mot-cle ne fait pas partie.
  */
 const SCHEMA_JSON = (() => {
   const { $schema: _ignore, ...reste } = z.toJSONSchema(CritereSchema) as Record<string, unknown>;
@@ -94,8 +94,8 @@ export interface TranslateResult {
   empty: boolean;
 }
 
-/** Modele par defaut. Voir le README pour le choix de l'alias. */
-export const DEFAULT_MODEL = 'gemini-flash-latest';
+/** Modele par defaut. Voir le README pour l'arbitrage cout / qualite. */
+export const DEFAULT_MODEL = 'mistral-small-latest';
 
 /**
  * Marge de sortie.
@@ -119,28 +119,37 @@ export class TranslationUnusable extends Error {}
  * de criteres — ce changement de fournisseur en est la demonstration.
  */
 export async function translate(
-  client: GoogleGenAI,
+  client: Mistral,
   text: string,
   model = DEFAULT_MODEL,
 ): Promise<TranslateResult> {
   const demande = text.slice(0, MAX_INPUT_CHARS);
 
-  const response = await client.models.generateContent({
+  const response = await client.chat.complete({
     model,
-    contents: `<demande>${demande}</demande>`,
-    config: {
-      systemInstruction: SYSTEM,
-      responseMimeType: 'application/json',
-      responseJsonSchema: SCHEMA_JSON,
-      maxOutputTokens: MAX_OUTPUT_TOKENS,
-      // La traduction d'une demande n'a pas a varier d'un appel a l'autre :
-      // deux fois la meme phrase doivent donner les memes criteres, sans quoi
-      // une recherche qui a fonctionne devient impossible a reproduire.
-      temperature: 0,
+    messages: [
+      { role: 'system', content: SYSTEM },
+      { role: 'user', content: `<demande>${demande}</demande>` },
+    ],
+    responseFormat: {
+      type: 'json_schema',
+      jsonSchema: {
+        name: 'criteres_de_recherche',
+        schemaDefinition: SCHEMA_JSON,
+        // Le schema est impose, pas suggere : sans cela le modele reste libre
+        // d'ajouter un champ ou d'en omettre un, et la traduction redevient du
+        // texte a deviner.
+        strict: true,
+      },
     },
+    maxTokens: MAX_OUTPUT_TOKENS,
+    // La traduction d'une demande n'a pas a varier d'un appel a l'autre :
+    // deux fois la meme phrase doivent donner les memes criteres, sans quoi
+    // une recherche qui a fonctionne devient impossible a reproduire.
+    temperature: 0,
   });
 
-  const brut = response.text;
+  const brut = lireContenu(response.choices?.[0]?.message?.content);
 
   // Une sortie absente ou illisible n'est pas une demande incomprise : c'est le
   // service qui a echoue. Les confondre afficherait « je n'ai pas compris
@@ -164,4 +173,21 @@ export async function translate(
   const query = parseSearchQuery(parsed);
 
   return { query, empty: Object.keys(query).length === 0 };
+}
+
+/**
+ * Ramene le contenu d'une reponse a du texte.
+ *
+ * L'API peut rendre une chaine ou une suite de fragments. Le second cas ne
+ * devrait pas se produire pour une sortie structuree, mais le type l'autorise :
+ * mieux vaut le traiter que le supposer absent.
+ */
+function lireContenu(contenu: string | Array<{ type: string }> | null | undefined): string {
+  if (typeof contenu === 'string') return contenu;
+  if (!Array.isArray(contenu)) return '';
+
+  return contenu
+    .filter((fragment): fragment is { type: 'text'; text: string } => fragment.type === 'text')
+    .map((fragment) => fragment.text)
+    .join('');
 }
