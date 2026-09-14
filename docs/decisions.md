@@ -113,6 +113,15 @@ alignee apres un binaire distribue impose de meme un nouveau binaire.
 l'execution : brancher l'onglet Recherche sur l'API deployee suivra donc une
 mise a jour, sans nouveau binaire.
 
+Avec une reserve decouverte a la mise en service : **le bloc `env` de
+`eas.json` ne vaut que pour les builds**. `eas update` prend ses variables
+ailleurs — environnements EAS, ou environnement d'ou la commande part. Une mise
+a jour publiee sans precaution repart avec la valeur de repli
+`http://localhost:8787`, et l'onglet Recherche retombe en panne. La publication
+reussit, aucune erreur n'est levee : seules les recherches cessent de
+fonctionner, chez les testeurs. Le README de l'application donne la forme a
+employer.
+
 ---
 
 ### 1.7 Hebergement du service de traduction : une machine, plafond par adresse — *acte*

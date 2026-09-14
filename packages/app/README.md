@@ -80,11 +80,32 @@ besoin de relancer l'application.
 l'execution. Il suit donc les mises a jour : brancher l'onglet Recherche sur
 l'API deployee ne demande pas un nouveau binaire.
 
-Il est desormais renseigne dans les trois profils de `eas.json`. Le service et
-sa procedure de mise en ligne sont decrits dans
+Il est renseigne dans les trois profils de `eas.json`. Le service et sa
+procedure de mise en ligne sont decrits dans
 [`packages/api/README.md`](../api/README.md) — **l'URL y figure a deux
 endroits**, `fly.toml` et `eas.json`, et changer l'une sans l'autre enverrait
 les recherches des utilisateurs a cote.
+
+### Le bloc `env` de `eas.json` ne vaut que pour les builds
+
+`eas update` ne le lit pas. Il prend ses variables dans les environnements EAS,
+stockes sur les serveurs d'Expo, ou dans l'environnement d'ou la commande est
+lancee. Une mise a jour publiee sans precaution repart donc avec la valeur de
+repli `http://localhost:8787` — et l'onglet Recherche retombe en panne, sans
+que rien n'echoue au moment de la publication.
+
+Le piege est d'autant plus vicieux que la publication reussit : il n'y a pas
+d'erreur, juste des recherches qui cessent de fonctionner chez les testeurs.
+
+Passer la valeur explicitement :
+
+```bash
+EXPO_PUBLIC_LUCY_API=https://lucy-api.fly.dev \
+  npx eas-cli update --branch production --message "..."
+```
+
+Ou, pour ne plus y penser, la declarer une fois dans les environnements EAS
+(`eas env:create`), en gardant `eas.json` aligne sur la meme valeur.
 
 **Prevenir les testeurs** que le catalogue est local : un code-barres absent
 renvoie vers la saisie manuelle. C'est le comportement voulu (decision 5.7),
