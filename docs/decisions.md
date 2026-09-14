@@ -74,6 +74,45 @@ ecrasee : le premier binaire annoncait la phrase courte, sans la garantie
 qu'aucune image n'est conservee. C'est l'inspection du `.app` construit, non la
 configuration, qui l'a montre.
 
+### 1.5 Identifiant de paquet : `com.pitghi.lucy` — *acte* **[PR]**
+
+`com.lucy.app`, retenu au depart, etait deja enregistre par une autre equipe
+Apple. Le premier build de production s'est arrete dessus, avant toute creation
+de certificat. L'identifiant suit desormais le compte Expo qui porte le projet.
+
+Android bascule aussi, alors que rien ne l'y obligeait : rien n'est publie sur
+le Play Store, et laisser les deux plateformes diverger sur un identifiant
+qu'Apple ne permet plus de changer apres publication couterait plus tard ce
+qu'une ligne coute maintenant.
+
+Le **nom** de l'application est un autre espace de noms, lui aussi unique sur
+tout l'App Store. « Lucy » etait pris : App Store Connect a genere « Lucy
+(cd6504) ». Celui-la se change librement, contrairement a l'identifiant.
+
+### 1.6 Mises a jour en vol, avec empreinte des dependances natives — *acte*
+
+`expo-updates` permet de livrer une modification purement JavaScript sans
+repasser par Apple. Deux canaux, calques sur les profils de build : `production`
+pour TestFlight, `preview` pour les builds internes. Sans cette separation, un
+essai destine aux appareils declares partirait aux testeurs.
+
+`runtimeVersion` suit la politique `fingerprint` plutot que `appVersion`.
+`appVersion` demande de se souvenir d'incrementer la version des qu'une
+dependance native change ; cet oubli livre un bundle qui appelle un module
+absent du binaire, soit un plantage au demarrage sur une application deja
+distribuee, que l'OTA ne peut plus rattraper. Une empreinte calculee sur les
+dependances natives ecarte ce cas par construction, au prix d'un nouveau build
+a chaque changement natif — ce qui est precisement le comportement correct.
+
+Consequence a retenir : le build 1 a ete compile sans `expo-updates` et ne
+recevra jamais de mise a jour. Le client de mise a jour est dans le binaire ou
+n'y est pas, et cela ne se rattrape pas apres coup. Toute dependance native
+alignee apres un binaire distribue impose de meme un nouveau binaire.
+
+`EXPO_PUBLIC_LUCY_API` est fige dans le bundle a la compilation, pas lu a
+l'execution : brancher l'onglet Recherche sur l'API deployee suivra donc une
+mise a jour, sans nouveau binaire.
+
 ---
 
 ---
@@ -510,11 +549,40 @@ Rien n'a ete decide sur ces points ; ils ne sont pas des oublis.
 | **Nom et positionnement** | « Lucy » est le nom du depot, pas une decision de marque. |
 | **Taux de presence du code-barres** | L'audit a mesure la presence de la **liste d'ingredients**, pas celle du code-barres. Un scan qui ne trouve pas le produit et un scan qui le trouve sans sa composition appellent deux traitements differents. |
 | **Deploiement du service de traduction** | `packages/api` porte la cle d'API pour la recherche en langage libre. Limitation de debit, authentification de l'application, budget par recherche et hebergement : non traites. |
+| **Alignement de `react-native`** | Le projet est en 0.76.5, le SDK 52 attend 0.76.9. Sans consequence sur les builds, mais c'est une dependance native : l'aligner changera l'empreinte `runtimeVersion` (1.6) et coutera un binaire de plus aux testeurs deja equipes. A faire au prochain build natif, pas seul. |
+| **Nom de l'application sur l'App Store** | « Lucy » etait pris : la fiche s'appelle « Lucy (cd6504) ». A changer avant d'ouvrir la beta externe, et lie a la question du nom de marque ci-dessus. |
 | **Ecran de saisie / OCR** | Identifie comme priorite fonctionnelle suivante (3.1), pas encore ecrit. |
 
 ---
 
 ## 8. Historique des sessions
+
+### 2026-09-14 — premiere distribution TestFlight
+
+Point de depart : `main` sur la recherche en langage libre, aucun build de
+production.
+
+1. **Build 1** arrete par Apple : `com.lucy.app` deja pris (1.5). Identifiant
+   change, build reconstruit, certificat de distribution et profil generes.
+2. **`expo-updates` installe et configure** (1.6), en constatant que le build 1
+   ne pourrait jamais en beneficier.
+3. **Build 2** construit depuis `main`, soumis a App Store Connect. Groupe
+   TestFlight interne cree, trois testeurs.
+
+Deux lecons de sequencement, toutes deux du meme genre : certaines decisions ne
+se prennent pas apres coup. Un identifiant de paquet ne se change plus une fois
+l'application publiee. Un client de mise a jour absent du binaire ne s'ajoute
+pas a distance. Dans les deux cas le cout de l'oubli n'est pas une correction
+mais un binaire de plus, et un aller-retour par la file d'attente d'Apple.
+
+Le meme raisonnement vaut pour `react-native`, laisse en 0.76.5 alors que le
+SDK 52 attend 0.76.9. L'ecart ne genait pas le build ; l'aligner apres coup
+changera l'empreinte et coutera un binaire. La question reste ouverte (§7).
+
+Le binaire distribue porte deux limites annoncees aux testeurs plutot que
+corrigees : l'onglet Recherche echoue faute de service `@lucy/api` deploye, et
+les notes ne sont pas calibrees. Un testeur prevenu remonte des informations
+utiles ; un testeur surpris remonte trois fois la meme fausse panne.
 
 ### 2026-09-07 — photographies produit
 
