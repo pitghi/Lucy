@@ -48,7 +48,7 @@ Variables :
 | --- | --- | --- |
 | `MISTRAL_API_KEY` | — | Cle du modele. **Obligatoire** : sans elle le service refuse de demarrer. Jamais dans le depot ni dans l'image. |
 | `PORT` | `8787` | Port d'ecoute. |
-| `LUCY_MODEL` | `mistral-small-latest` | Modele de traduction. |
+| `LUCY_MODEL` | `ministral-3b-2512` | Modele de traduction. |
 | `LUCY_MISTRAL_REGION` | `eu` | Region de traitement : `eu`, `global` ou `us`. |
 | `LUCY_RATE_LIMIT` | `10` | Demandes par minute et par adresse. `0` desactive. |
 | `LUCY_IP_HEADER` | — | En-tete portant l'adresse du client, derriere un proxy. |
@@ -94,13 +94,28 @@ en laissant croire qu'elle a compris.
 
 ## Cout et modele
 
-Le modele par defaut est `mistral-small-latest`. Un alias plutot qu'une version
-figee : le modele ne produit ni note ni classement — il traduit une phrase en
-criteres, et c'est le moteur de regles qui decide ensuite. La reproductibilite
-qui compte est celle du moteur, pas celle de la traduction. Un nom fige
-finirait par etre retire et rendrait une panne franche sur un service qui
-tournait. `LUCY_MODEL` permet d'epingler une version si la traduction se met a
-varier de facon genante.
+Le modele par defaut est `ministral-3b-2512`, designe par son identifiant date
+et non par un alias `-latest` : c'est sous ces noms que la page des limites de
+l'abonnement enumere les modeles, et c'est elle qui dit a quoi la cle donne
+droit. Un alias absent de cette page n'offre aucune garantie.
+
+**Il n'est pas retenu pour son prix mais pour son debit.** Sur le plan
+d'evaluation, les quotas ne suivent pas la grille tarifaire :
+
+| Modele | Jetons/minute | Requetes/seconde |
+| --- | --- | --- |
+| `ministral-3b-2512` | 1 300 000 | 12,50 |
+| `ministral-8b-2512` | 625 000 | 3,13 |
+| `mistral-large-2512` | 250 000 | 1,00 |
+| `mistral-small-2603` | 20 000 | 1,00 |
+
+`mistral-small-2603` est le plus contraint de la liste : 20 000 jetons par
+minute, soit une trentaine de recherches. `ministral-3b-2512` en autorise
+soixante-cinq fois plus. C'est le repli a retenir si la traduction se revele
+insuffisante — plus capable, mais nettement plus serre.
+
+Ces chiffres sont ceux d'un abonnement donne : **verifier sur la page des
+limites** plutot que de les supposer.
 
 ### Ce qu'une recherche coute
 
@@ -110,9 +125,9 @@ sortie**. Sur cette base, pour 10 000 recherches par mois :
 
 | Modele | Entree $/M | Sortie $/M | 10 000 recherches |
 | --- | --- | --- | --- |
-| `ministral-3-3b-25-12` | 0,10 | 0,10 | ~0,73 $ |
-| `mistral-small-latest` | 0,15 | 0,60 | ~1,37 $ |
-| `mistral-large-latest` | 0,50 | 1,50 | ~4,25 $ |
+| `ministral-3b-2512` | 0,10 | 0,10 | ~0,73 $ |
+| `mistral-small-2603` | 0,15 | 0,60 | ~1,37 $ |
+| `mistral-large-2512` | 0,50 | 1,50 | ~4,25 $ |
 
 L'ecart absolu est faible et le volume du MVP est sans commune mesure avec ces
 chiffres : quelques testeurs, quelques centaines de recherches, donc **moins
@@ -120,12 +135,11 @@ d'un centime par mois**. Le cout n'est pas ce qui doit guider le choix du
 modele ici ; la qualite de la traduction en francais et la latence ressentie
 dans un champ de recherche le sont.
 
-`ministral-3-3b-25-12` diviserait la note par deux, pour 64 centimes d'ecart
-mensuel a 10 000 recherches. La consigne n'est pas triviale — ignorer une
-texture ou une odeur, resister a une phrase qui se fait passer pour une
-instruction — et un modele de 3 milliards de parametres peut y echouer. A
-mesurer sur de vraies demandes avant de descendre, pas a decider sur une
-grille tarifaire.
+Le modele retenu se trouve etre aussi le moins cher, mais c'est une
+coincidence : le debit l'a departage, pas le prix. La consigne n'est pas
+triviale — ignorer une texture ou une odeur, resister a une phrase qui se fait
+passer pour une instruction — et un modele de 3 milliards de parametres peut y
+echouer. `scripts/verifier.sh` est la pour le constater sur une vraie demande.
 
 ### Le palier gratuit, et la case a decocher
 

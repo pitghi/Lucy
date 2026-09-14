@@ -94,8 +94,20 @@ export interface TranslateResult {
   empty: boolean;
 }
 
-/** Modele par defaut. Voir le README pour l'arbitrage cout / qualite. */
-export const DEFAULT_MODEL = 'mistral-small-latest';
+/**
+ * Modele par defaut.
+ *
+ * Identifiant date plutot qu'alias `-latest` : la page des limites de
+ * l'abonnement designe les modeles par ces noms, et ce sont eux qui font foi
+ * pour savoir ce a quoi la cle donne droit.
+ *
+ * `ministral-3b` n'est pas retenu pour son prix mais pour son debit : sur le
+ * plan d'evaluation, il autorise 1 300 000 jetons par minute contre 20 000 a
+ * `mistral-small-2603`, soit soixante-cinq fois plus, et 12,5 requetes par
+ * seconde contre une. Le repli en cas de traduction insuffisante est
+ * `mistral-small-2603`, plus capable mais nettement plus contraint.
+ */
+export const DEFAULT_MODEL = 'ministral-3b-2512';
 
 /**
  * Marge de sortie.

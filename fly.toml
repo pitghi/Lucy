@@ -29,6 +29,10 @@ primary_region = 'cdg'
   # choisi par l'appelant et rendrait la limite de debit contournable.
   LUCY_IP_HEADER = 'fly-client-ip'
 
+  # Identifiant date, tel que l'enumere la page des limites de l'abonnement.
+  # Retenu pour son debit, non pour son prix : voir le README du service.
+  LUCY_MODEL = 'ministral-3b-2512'
+
   # Dix recherches par minute et par adresse. Un usage normal en fait quelques
   # unes ; ce plafond protege la facture sans se voir.
   LUCY_RATE_LIMIT = '10'

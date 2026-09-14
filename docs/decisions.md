@@ -156,16 +156,26 @@ n'est pas ecrite.
 
 ### 1.8 Fournisseur du modele de traduction : Mistral, traitement europeen — *acte*
 
-Le service de traduction appelle l'API Mistral, modele `mistral-small-latest`,
+Le service de traduction appelle l'API Mistral, modele `ministral-3b-2512`,
 **sur le point d'entree europeen** (`api.eu.mistral.ai`). Combine a
 l'hebergement parisien du service (1.7), le traitement est europeen de bout en
 bout.
 
-Un alias plutot qu'une version figee : le modele ne produit ni note ni
-classement. Il traduit une phrase en criteres, et le moteur de regles decide
-ensuite — c'est la reproductibilite du moteur qui est opposable a une marque,
-pas celle de la traduction. Un nom de version fige finirait par etre retire et
-rendrait une panne franche sur un service qui tournait.
+Le modele est designe par son identifiant date, et non par un alias `-latest` :
+c'est sous ces noms que la page des limites de l'abonnement enumere les modeles
+auxquels la cle donne droit, et un alias absent de cette page n'offre aucune
+garantie. Le modele ne produit d'ailleurs ni note ni classement — il traduit
+une phrase en criteres, et le moteur de regles decide ensuite. C'est la
+reproductibilite du moteur qui est opposable a une marque, pas celle de la
+traduction.
+
+**Le debit a departage les modeles, pas le prix.** Sur le plan d'evaluation,
+les quotas ne suivent pas la grille tarifaire : `ministral-3b-2512` autorise
+1 300 000 jetons par minute et 12,5 requetes par seconde, quand
+`mistral-small-2603` — plus capable, et premier choix sur le papier — plafonne
+a 20 000 jetons par minute, soit une trentaine de recherches. Le modele le plus
+petit se trouve etre aussi le moins cher, mais c'est une coincidence de plus,
+pas la raison du choix.
 
 **Ce qui a departage les fournisseurs n'est pas le prix.** Une demande
 represente environ 670 jetons en entree et 60 en sortie, soit moins de 3 $ par
@@ -196,10 +206,11 @@ pour les clients de l'API sans distinguer explicitement gratuit et payant. Si
 elle n'y est pas, le plan payant s'impose — pour moins de 3 $ par mois, la
 question ne merite pas d'etre discutee.
 
-Ce que ce choix laisse ouvert : **la qualite de la traduction selon le
-modele**. `ministral-3-3b-25-12` diviserait la note par deux, mais la consigne
+Ce que ce choix laisse ouvert : **la qualite de la traduction**. La consigne
 n'est pas triviale — ignorer une texture ou une odeur, resister a une phrase
-qui se fait passer pour une instruction. A mesurer sur de vraies demandes (§7).
+qui se fait passer pour une instruction — et un modele de 3 milliards de
+parametres peut y echouer. Le repli est `mistral-small-2603`, au prix d'un
+debit soixante-cinq fois moindre. A mesurer sur de vraies demandes (§7).
 
 ## 2. Methode d'evaluation
 
@@ -635,7 +646,7 @@ Rien n'a ete decide sur ces points ; ils ne sont pas des oublis.
 | **Authentification de l'application aupres du service** | Le point d'entree de `packages/api` est public : qui connait l'URL peut l'appeler. Un jeton embarque dans le binaire s'en extrait comme une cle d'API. L'attestation d'application (App Attest, Play Integrity) est la reponse serieuse ; non traitee. En attendant, le plafond par adresse (1.7) et le plafond de depense sur la cle tiennent lieu de protection. |
 | **Budget par recherche** | Mesure en volume de jetons (~670 en entree, ~60 en sortie), soit moins de 3 $ par mois pour 10 000 recherches chez tous les fournisseurs examines. Ce qui n'est pas mesure, c'est la latence ressentie dans un champ de recherche. |
 | **Opposition a l'entrainement sur le plan gratuit** | Le plan Experiment de Mistral alimente l'entrainement par defaut ; l'opposition se fait dans la console (1.8). Reste a verifier que l'option existe bien sur ce plan, la documentation ne distinguant pas explicitement gratuit et payant. A faire avant de brancher de vrais testeurs, sinon passer au plan payant. |
-| **Choix du modele de traduction** | `mistral-small-latest` par defaut. `ministral-3-3b-25-12` diviserait le cout par deux, mais la consigne demande d'ignorer textures et odeurs et de resister a une phrase qui se fait passer pour une instruction. Non mesure sur de vraies demandes. |
+| **Qualite de traduction de `ministral-3b-2512`** | Retenu pour son debit sur le plan d'evaluation (1.8), pas pour sa capacite. La consigne demande d'ignorer textures et odeurs et de resister a une phrase qui se fait passer pour une instruction ; un modele de 3 milliards de parametres peut y echouer. Non mesure sur de vraies demandes. Repli : `mistral-small-2603`, soixante-cinq fois moins de debit. |
 | **Alignement de `react-native`** | Le projet est en 0.76.5, le SDK 52 attend 0.76.9. Sans consequence sur les builds, mais c'est une dependance native : l'aligner changera l'empreinte `runtimeVersion` (1.6) et coutera un binaire de plus aux testeurs deja equipes. A faire au prochain build natif, pas seul. |
 | **Nom de l'application sur l'App Store** | « Lucy » etait pris : la fiche s'appelle « Lucy (cd6504) ». A changer avant d'ouvrir la beta externe, et lie a la question du nom de marque ci-dessus. |
 | **Ecran de saisie / OCR** | Identifie comme priorite fonctionnelle suivante (3.1), pas encore ecrit. |
