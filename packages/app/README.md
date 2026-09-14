@@ -48,6 +48,38 @@ retenu au depart, etait deja pris par une autre equipe : le premier build de
 production s'est arrete dessus. Un identifiant ne se change plus une fois
 l'application publiee, donc celui-ci est acquis.
 
+## Mises a jour en vol (OTA)
+
+`expo-updates` est installe et configure. Une modification purement
+JavaScript — texte, mise en page, regle de scoring, appel reseau — part sans
+repasser par Apple :
+
+```bash
+npm run update:production --workspace @lucy/app   # canal des builds TestFlight
+npm run update:preview    --workspace @lucy/app   # canal des builds internes
+```
+
+**Le build 1, deja soumis, n'en beneficie pas.** Il a ete compile sans
+`expo-updates` : il n'embarque aucun client de mise a jour et n'ira jamais rien
+chercher. Le mecanisme ne prend effet qu'a partir du binaire suivant, et cela
+ne se rattrape pas apres coup.
+
+`runtimeVersion` suit la politique `fingerprint` : une empreinte des
+dependances natives, recalculee a chaque build. Un bundle n'est propose qu'aux
+binaires dont l'empreinte correspond. C'est ce qui evite la panne la plus
+penible de l'OTA — un bundle qui appelle un module natif absent du binaire,
+donc un plantage au demarrage sans recours. En pratique : ajouter ou retirer un
+module natif change l'empreinte et impose un nouveau build, automatiquement,
+sans avoir a y penser.
+
+La mise a jour se telecharge en arriere-plan et s'applique au lancement
+suivant. Un testeur qui signale un correctif absent a probablement simplement
+besoin de relancer l'application.
+
+`EXPO_PUBLIC_LUCY_API` est fige dans le bundle a la compilation, pas lu a
+l'execution. Il suit donc les mises a jour : brancher l'onglet Recherche sur
+l'API deployee ne demandera pas un nouveau binaire.
+
 **Prevenir les testeurs** que le catalogue est local : un code-barres absent
 renvoie vers la saisie manuelle. C'est le comportement voulu (decision 5.7),
 pas une panne, mais sans cet avertissement il sera remonte comme telle.

@@ -12,7 +12,9 @@
     "build:simulator": "npx --yes eas-cli@latest build --platform ios --profile simulator",
     "build:preview": "npx --yes eas-cli@latest build --platform ios --profile preview",
     "build:ios": "npx --yes eas-cli@latest build --platform ios --profile production",
-    "submit:ios": "npx --yes eas-cli@latest submit --platform ios --profile production --latest"
+    "submit:ios": "npx --yes eas-cli@latest submit --platform ios --profile production --latest",
+    "update:preview": "npx --yes eas-cli@latest update --branch preview",
+    "update:production": "npx --yes eas-cli@latest update --branch production"
   },
   "dependencies": {
     "@expo-google-fonts/inter": "^0.2.3",
@@ -23,6 +25,7 @@
     "expo-camera": "~16.0.0",
     "expo-font": "~13.0.0",
     "expo-status-bar": "~2.0.0",
+    "expo-updates": "~0.27.5",
     "lucide-react-native": "^0.469.0",
     "react": "18.3.1",
     "react-dom": "18.3.1",
