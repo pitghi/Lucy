@@ -205,15 +205,29 @@ A confirmer plutot qu'a croire : ces faits vieillissent.
   `develop`, `staging`, `test` renvoient tous `404` — donc `npm run
   update:preview` n'atteindrait personne, et livrer d'abord en interne
   demanderait un build `preview` prealable.
-- Le canal `production` renvoie `204` pour l'empreinte
-  `d959927b6227ad6b4afb92c79ac50b36d194784c`, sur iOS comme sur Android. **Cela
-  ne dit pas qu'il n'y a rien de publie** (cf. §2) : une OTA a bien ete lancee
-  a la main sur ce projet. Reste a etablir, tableau de bord en main, si elle
-  porte une autre empreinte ou une branche que le canal n'ecoute pas — dans les
-  deux cas elle n'atteint personne, et c'est le premier point a regler.
-- **Cible de rollback : indeterminee** tant que ce point n'est pas tranche. S'il
-  n'existe aucun groupe servi, c'est l'embarque du build 2 ; s'il en existe un,
-  c'est son `id`. Ne pas publier avant de le savoir.
+- **Aucune OTA n'a jamais ete publiee** — lu au tableau de bord, carte
+  *Updates* : « No updates yet ». C'est la source directe ; le `204` du canal
+  `production`, lui, ne le prouvait pas (§2). Ce qui a ete fait sur ce projet,
+  c'est l'installation d'`expo-updates` (commit `f146b77`), pas une
+  publication. **Cible de rollback : le bundle embarque**, donc
+  `update:roll-back-to-embedded`, jamais `update:republish`.
+- Trois builds iOS production : `d3b8cd8`, `f146b77`, `07183c3`. Le dernier
+  **n'existe dans aucune branche du depot** — binaire de production
+  irreproductible, a recuperer ou a refaire depuis un commit connu.
+- **Derniere soumission App Store en echec** (le workflow `EAS Submit — iOS` a
+  echoue apres 42 min) : ce build n'est pas sur TestFlight.
+
+### Transfert vers l'organisation — consequence a ne pas rater
+
+Le projet a ete transfere du compte personnel `pitghi` vers l'organisation.
+`app.json` porte encore `"owner": "pitghi"` et doit passer au slug de l'org.
+
+**Ce changement modifie l'empreinte** — mesure : `owner: "pitghi"` donne
+`d959927b6227ad6b4afb92c79ac50b36d194784c`, un autre owner donne autre chose.
+Les binaires deja distribues deviennent donc definitivement sourds aux OTA, et
+un nouveau build est obligatoire. Relever la nouvelle empreinte apres le
+changement, et prevenir les testeurs qu'ils doivent installer le nouveau
+binaire.
 - Le **build 1** a ete compile sans `expo-updates` : il ne recevra jamais rien,
   et cela ne se rattrape pas (decision 1.6).
 - `react-native` est en 0.76.5 quand le SDK 52 attend 0.76.9. L'aligner change
