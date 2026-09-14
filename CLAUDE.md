@@ -57,6 +57,7 @@ npm run demo    --workspace @lucy/engine      # moteur en action sur des formule
 
 npm start       --workspace @lucy/api         # service de traduction sur :8787
 npm test        --workspace @lucy/api         # 20 tests, sans reseau
+./packages/api/scripts/verifier.sh            # verifie une instance qui tourne
 
 npm run ios     --workspace @lucy/app         # simulateur iOS (macOS requis)
 npm run android --workspace @lucy/app
@@ -79,6 +80,7 @@ packages/engine/   moteur pur TypeScript, sans dependance
   src/data/        referentiel de 185 ingredients, chacun source
   scripts/         audit de couverture et collecte d'echantillon
 packages/api/      service de traduction des demandes en criteres (porte la cle)
+  scripts/         verification d'une instance en local ou en ligne
 packages/app/      application React Native / Expo
 docs/              decisions, methodologie, plan MVP, apercu
 design-system/     design system et ecarts assumes

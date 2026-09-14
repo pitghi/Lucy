@@ -38,6 +38,8 @@ la validation reste, parce que c'est elle qui fait foi.
 export MISTRAL_API_KEY=...            # console Mistral (La Plateforme)
 npm start --workspace @lucy/api       # ecoute sur :8787
 npm test  --workspace @lucy/api       # 20 tests, sans reseau
+
+./scripts/verifier.sh                 # verifie une instance qui tourne
 ```
 
 Variables :
@@ -167,8 +169,15 @@ fly secrets set MISTRAL_API_KEY=... --app lucy-api
 fly deploy --ha=false
 
 # 4. Verifier.
-curl https://lucy-api.fly.dev/sante     # -> {"statut":"ok","modele":"..."}
+./packages/api/scripts/verifier.sh https://lucy-api.fly.dev
 ```
+
+`/sante` ne prouve rien d'utile : il repond avant tout appel au modele. Le
+script pousse une phrase entiere a travers le service, ce qui met en jeu d'un
+coup la validite de la cle, la disponibilite du modele sur l'abonnement,
+l'ouverture du point d'entree regional et l'acceptation du schema de sortie —
+les quatre choses qui peuvent echouer en ligne alors que tout passait en
+local. Il verifie aussi que le plafond par adresse se declenche.
 
 > **Si `fly apps create lucy-api` echoue parce que le nom est pris**, changez-le
 > a **deux** endroits : `app` dans `fly.toml`, et `EXPO_PUBLIC_LUCY_API` dans
