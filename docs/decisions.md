@@ -511,10 +511,17 @@ produit reel reste inconnue. Sous 70 %, l'ecran annonce une **analyse
 partielle** assumee plutot qu'un score complet. Afficher une note calculee sur
 la moitie d'une formule serait une precision empruntee.
 
-### 5.7 La saisie de la liste INCI est au meme niveau que le scan — *acte*
+### 5.7 La saisie de la liste INCI est au meme niveau que le scan — *acte, suspendu a l'ecran*
 
 Consequence directe de 3.1. Elle est presentee des l'ecran de scan, avant tout
 echec, et non comme un recours apres echec.
+
+**Suspendu le 2026-09-14 [PR].** Le principe tient, mais l'ecran de saisie n'a
+jamais ete ecrit : le bouton ouvrait un produit de demonstration. Un chemin qui
+ne mene pas ou il annonce coute plus cher que son absence — d'autant plus
+depuis que les echecs de scan sont nommes (5.12) et y renvoyaient. Les appels a
+la saisie sont donc retires de l'ecran de scan ; ils reviennent avec l'ecran
+reel, qui reste la priorite fonctionnelle suivante (§7).
 
 ### 5.8 Navigation par etat local — *provisoire*
 
@@ -545,6 +552,80 @@ d'etiquettes qu'il en centre.
 La photo est decorative au sens de l'accessibilite : le nom et la marque sont
 lus juste a cote, et « photo de l'emballage » n'ajouterait qu'une redite au
 lecteur d'ecran.
+
+### 5.11 Le code-barres scanne interroge Open Beauty Facts — *acte*
+
+Le scan ne cherchait que dans le catalogue de demonstration, quatorze produits.
+Tout le reste du rayon repartait sans rien : ni fiche, ni message. Vu de
+l'utilisateur, la lecture optique etait en panne alors qu'elle lisait
+correctement — c'est la recherche qui n'avait nulle part ou chercher.
+
+Le code-barres interroge desormais Open Beauty Facts, la meme base et la meme
+cle de jointure que les photographies (3.7), avec un cache de session. Le
+catalogue local passe en premier : il repond hors ligne et sans delai.
+
+### 5.12 Un scan qui n'aboutit pas nomme son cas — *acte*
+
+C'est la question ouverte du §7 sur le taux de presence du code-barres,
+tranchee du cote de l'interface. Un scan a quatre issues, pas deux, et les
+confondre reporte sur la camera un echec qui vient de la donnee :
+
+| Issue | Ce que l'ecran dit et propose |
+| --- | --- |
+| Produit trouve | La fiche s'ouvre |
+| Code-barres absent de la base | Le code est nomme, puis reprise de la lecture |
+| Produit reference sans composition exploitable | Le produit est nomme, puis reprise de la lecture |
+| Reseau indisponible | Reessayer le meme code, ou renoncer |
+
+Le seuil d'exploitabilite est celui de l'audit : cinq ingredients (3.1). Une
+panne reseau ne se conclut jamais en « produit inconnu » : le produit existe
+peut-etre, et les deux cas n'appellent pas la meme suite — seul le reseau vaut
+d'etre rejoue.
+
+Les deux premiers cas devraient mener a une saisie de la liste ; ils n'y menent
+pas, faute d'ecran de saisie (5.7). L'ecran les nomme donc sans rien promettre,
+ce qui reste preferable au silence d'avant — mais c'est un parcours qui
+s'arrete la, et c'est la l'argument le plus fort pour ecrire cet ecran.
+
+Le code lu s'affiche des la lecture, avant meme le resultat : il prouve que la
+camera a fait son travail. Et la lecture est suspendue tant qu'un message
+d'echec est a l'ecran — sur un simple delai, le meme code repartait en boucle
+et recouvrait le message avant qu'il soit lu.
+
+### 5.13 Le zero de tete d'un code-barres ne survit pas a iOS — *acte*
+
+Constate dans la source de `expo-camera` : AVFoundation restitue les UPC-A en
+EAN-13 prefixes d'un zero, et la bibliotheque retire ce zero de **tout** EAN-13
+qui en porte un, y compris un EAN-13 nord-americain qui le portait
+legitimement. Android rend le code tel qu'imprime. Le meme emballage arrive
+donc a douze ou treize chiffres selon le telephone, alors que la base ne
+connait qu'une des deux ecritures.
+
+La recherche essaie donc les deux, la seconde seulement si la premiere est
+absente — l'API plafonne a une dizaine de requetes par minute (3.4).
+
+Ecarte : normaliser tous les codes sur treize chiffres. Cela supposerait que la
+base stocke toujours la forme longue, ce qui n'est pas verifie, et les EAN-8 du
+catalogue montrent que les formes courtes y existent bel et bien.
+
+### 5.14 La categorie d'un produit scanne est deduite, et c'est une approximation — *provisoire*
+
+Le moteur a besoin d'une categorie : un produit rince expose la peau bien moins
+longtemps qu'un soin laisse en place, et la note s'en ressent. Open Beauty
+Facts ne la donne pas sous une forme exploitable — les categories sont
+contributives et arrivent dans la langue du contributeur, un gel nettoyant
+CeraVe etant classe « Reinigingsgel ». La deduction croise donc categories et
+nom, sur des racines assez specifiques pour ne pas confondre un « Aqua-Gel »
+hydratant avec un gel moussant.
+
+Dans le doute, `leave_on_face` : c'est l'hypothese la plus exposante. S'y
+tromper sous-estime une note, se tromper dans l'autre sens la surestime — et
+une note trop genereuse est la faute que tout le projet cherche a corriger.
+
+**Provisoire** parce qu'une categorie devinee qui deplace une note sans le dire
+contredit la regle de visibilite de l'incertitude. La sortie est d'afficher la
+categorie retenue sur la fiche et de permettre sa correction ; ce n'est pas
+fait. Voir §7.
 
 ---
 
@@ -577,11 +658,12 @@ Rien n'a ete decide sur ces points ; ils ne sont pas des oublis.
 | **Plafond du score d'adequation** | Le premier produit recommande affiche 100/100/100. Conforme au modele (base 60 + bonus plafonne a 40), mais trois fois 100 fait suspect a l'oeil. Un plafond a 95 garderait de la granularite en haut d'echelle. Non tranche. |
 | **Modele economique** | Non aborde. Determine ce qui est acceptable en matiere de partenariats marques, donc la credibilite du classement. |
 | **Nom et positionnement** | « Lucy » est le nom du depot, pas une decision de marque. |
-| **Taux de presence du code-barres** | L'audit a mesure la presence de la **liste d'ingredients**, pas celle du code-barres. Un scan qui ne trouve pas le produit et un scan qui le trouve sans sa composition appellent deux traitements differents. |
+| **Taux de presence du code-barres** | Traite cote interface (5.12) : les deux cas sont desormais distingues a l'ecran. Reste non mesure — l'audit portait sur la **liste d'ingredients**, pas sur le code-barres, donc on ignore quelle part des scans aboutit reellement en rayon. |
+| **Categorie d'un produit scanne** | Deduite des categories et du nom Open Beauty Facts (5.14), donc approximative, alors qu'elle deplace la note. Elle devrait s'afficher sur la fiche et pouvoir etre corrigee. Non fait. |
 | **Deploiement du service de traduction** | `packages/api` porte la cle d'API pour la recherche en langage libre. Limitation de debit, authentification de l'application, budget par recherche et hebergement : non traites. |
 | **Alignement de `react-native`** | Le projet est en 0.76.5, le SDK 52 attend 0.76.9. Sans consequence sur les builds, mais c'est une dependance native : l'aligner changera l'empreinte `runtimeVersion` (1.6) et coutera un binaire de plus aux testeurs deja equipes. A faire au prochain build natif, pas seul. |
 | **Nom de l'application sur l'App Store** | « Lucy » etait pris : la fiche s'appelle « Lucy (cd6504) ». A changer avant d'ouvrir la beta externe, et lie a la question du nom de marque ci-dessus. |
-| **Ecran de saisie / OCR** | Identifie comme priorite fonctionnelle suivante (3.1), pas encore ecrit. |
+| **Ecran de saisie / OCR** | Priorite fonctionnelle suivante (3.1), toujours pas ecrit. Son absence coute desormais davantage : les appels a la saisie ont ete retires de l'ecran de scan (5.7), donc un produit non reconnu n'a plus aucune suite dans l'application. |
 
 ---
 

@@ -18,7 +18,7 @@ dependance, aucune couche d'adaptation n'est necessaire.
 
 | Ecran | Role |
 | --- | --- |
-| `ScanScreen` | Lecture du code-barres, et saisie de la liste INCI presentee au meme niveau |
+| `ScanScreen` | Lecture du code-barres, recherche du produit, et compte rendu quand elle n'aboutit pas |
 | `ProductScreen` | Trois scores separes, puis leurs motifs sources et la composition estimee |
 | `ProfileScreen` | Type de peau, preoccupations, ingredients non toleres |
 | `RecommendationsScreen` | Classement pour le profil, avec le motif de chaque position |
@@ -80,8 +80,10 @@ besoin de relancer l'application.
 l'execution. Il suit donc les mises a jour : brancher l'onglet Recherche sur
 l'API deployee ne demandera pas un nouveau binaire.
 
-**Prevenir les testeurs** que le catalogue est local : un code-barres absent
-renvoie vers la saisie manuelle. C'est le comportement voulu (decision 5.7),
+**Prevenir les testeurs** qu'un produit peut n'etre pas reconnu : le scan
+interroge Open Beauty Facts, base contributive dont la couverture est
+partielle (3.1). L'ecran dit alors lequel des trois cas s'applique — code
+absent, composition manquante, reseau indisponible. C'est un etat ordinaire,
 pas une panne, mais sans cet avertissement il sera remonte comme telle.
 
 Le profil `simulator` a ete valide : build 1 construit par EAS depuis un
@@ -123,10 +125,11 @@ Les quatre regles structurantes :
 - **React Navigation.** La navigation est un etat local, suffisant pour ce
   premier jet. La regle `deep-linking` impose qu'une fiche produit soit
   atteignable par une URL : a brancher avant toute mise en ligne.
-- **Lecture optique de la liste INCI.** L'audit de couverture a montre que
+- **Ecran de saisie de la liste INCI.** L'audit de couverture a montre que
   quatre produits sur dix n'ont pas de liste exploitable dans les bases
-  ouvertes. L'ecran de scan y renvoie deja, mais l'ecran de saisie lui-meme
-  reste a ecrire. C'est la priorite fonctionnelle suivante.
+  ouvertes. L'ecran de scan renvoyait vers une saisie qui n'existe pas ; le
+  renvoi a ete retire en attendant l'ecran reel, qui reste la priorite
+  fonctionnelle suivante (5.7).
 - **Persistance du profil et du journal de tolerance.**
 - **Verification sur appareil reel** des surfaces tactiles, de l'agrandissement
   systeme du texte et du mode « animations reduites ».
