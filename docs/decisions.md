@@ -925,12 +925,59 @@ un en-tete que l'appelant peut poser lui-meme rendrait la limite decorative.
 Seul un en-tete que le proxy ecrase fait foi, et le defaut du code reste
 l'adresse de la connexion.
 
+#### Ou l'on s'est arrete
+
+Le code est pousse et eprouve : 89 tests du moteur, 16 tests de la fonction
+sous Deno, typecheck propre. **Rien n'est deploye.** Ce qui reste demande un
+compte et ne se fait pas depuis une session distante :
+
+1. Creer le projet Supabase pour Lucy — ce sera le second du palier gratuit,
+   Maurice occupant le premier.
+2. Passer `supabase/rate_limit.sql` dans l'editeur SQL du tableau de bord.
+3. Poser les secrets : `MISTRAL_API_KEY`, et `LUCY_IP_SALT` (sans sel, une
+   empreinte d'adresse IPv4 se retrouve par force brute).
+4. Deployer : `supabase functions deploy recherche-criteres --no-verify-jwt`.
+5. Verifier par `./supabase/verifier.sh <url>` — pas par un simple appel de
+   sante, qui ne prouve rien.
+6. Declarer `EXPO_PUBLIC_LUCY_API` dans les environnements EAS, **jamais dans
+   `eas.json`** (1.6).
+7. Construire un nouveau binaire : le transfert du projet vers l'organisation
+   a change l'empreinte, les appareils actuels ne recevront plus d'OTA.
+
+Deux choses ne sont pas eprouvees, faute d'acces : **le deploiement lui-meme et
+le SQL**, et **la valeur de `x-region`**, qui depend des regions ouvertes sur
+le projet. Le reste l'est.
+
+#### Ce que la soiree a appris
+
+Trois defauts ont ete trouves par la documentation du projet, pas par les
+tests. `eas.json` puis `app.json` entrent dans l'empreinte `runtimeVersion` :
+y declarer une variable, ou corriger un `owner` devenu faux, met les binaires
+distribues hors de portee des mises a jour — sans qu'aucune commande echoue.
+Le skill `ota`, ecrit la veille, a rattrape le premier cas ; il porte
+desormais les deux.
+
+Le quatrieme defaut, lui, n'a ete trouve par personne : le `.dockerignore`
+excluait le manifeste de l'application, dont `npm ci` a besoin, et la
+construction de l'image n'a echoue que sur la machine de l'auteur. La
+strategie d'installation avait ete verifiee a la main, jamais au travers d'une
+vraie construction. La lecon n'est pas « tester davantage » mais « ne pas
+confondre une verification de la logique avec une verification du procede » —
+et c'est pourquoi Deno a ete installe avant d'ecrire la fonction, plutot que de
+la relire.
+
 **Fin de soiree : l'hebergement change.** Fly.io ayant supprime son palier
 gratuit, le service part sur Supabase (1.9). Le deploiement Fly aura donc tenu
 quelques heures — le temps de verifier que le service fonctionnait de bout en
 bout, ce qui n'etait pas rien : c'est la qu'on a su que le schema de sortie
 passait, que le modele tenait la consigne et que le plafond se declenchait.
 Rien de ce qui a ete eprouve n'est perdu ; seul l'emballage change.
+
+Le portage a impose trois choix qui n'etaient pas visibles avant de l'ecrire,
+consignes en 1.9 : la validation part en copie generee, avec un test qui casse
+si elle diverge ; un compteur en panne refuse au lieu de laisser passer ; le
+point d'entree reste ouvert, parce qu'exiger un jeton reviendrait a embarquer
+une cle publique dans le bundle.
 
 Deux defauts ont ete trouves par le journal lui-meme plutot que par les tests.
 `eas.json` puis `app.json` entrent dans l'empreinte `runtimeVersion` : y
