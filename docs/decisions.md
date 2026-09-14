@@ -113,6 +113,33 @@ alignee apres un binaire distribue impose de meme un nouveau binaire.
 l'execution : brancher l'onglet Recherche sur l'API deployee suivra donc une
 mise a jour, sans nouveau binaire.
 
+### 1.7 Image de build epinglee sur Xcode 26, sans migrer le SDK — *provisoire*
+
+Apple refuse depuis avril 2026 tout binaire compile avec un SDK anterieur a
+iOS 26 : le build 2 a ete rejete au televersement (`ITMS-90725`). Le controle
+est automatique, il n'y a rien a negocier.
+
+L'image par defaut du SDK Expo 52 porte Xcode 16. Deux sorties possibles :
+migrer en SDK 54 au minimum, ce qu'Expo recommande, ou demander explicitement
+une image Xcode 26 dans `eas.json`, ce qu'Expo permet en prevenant que « toutes
+les versions de SDK ne seront pas compatibles ».
+
+La seconde a ete tentee d'abord, parce qu'elle coutait un build contre plusieurs
+heures, et qu'un echec aurait tranche la question au lieu de la laisser
+ouverte. Elle a reussi : le build 3 compile sous `macos-sequoia-15.6-xcode-26.2`
+avec `react-native` en 0.76.9.
+
+L'image est **epinglee** et non `latest` : `latest` suit les mises a jour
+d'Expo et rendrait un build non reproductible, alors que la version de Node
+l'est deja. Parmi les images Xcode 26 disponibles, la plus ancienne est la
+moins risquee pour un SDK qui date de deux ans.
+
+Statut *provisoire* et non *acte* : c'est un sursis, pas une solution. La
+combinaison SDK 52 / Xcode 26 n'est pas celle qu'Expo teste, et la prochaine
+montee de dependance native peut la casser. La migration reste ouverte (§7).
+Condition de revue : tout echec de compilation natif doit faire soupconner
+cette combinaison avant toute autre chose.
+
 ---
 
 ---
@@ -549,7 +576,7 @@ Rien n'a ete decide sur ces points ; ils ne sont pas des oublis.
 | **Nom et positionnement** | « Lucy » est le nom du depot, pas une decision de marque. |
 | **Taux de presence du code-barres** | L'audit a mesure la presence de la **liste d'ingredients**, pas celle du code-barres. Un scan qui ne trouve pas le produit et un scan qui le trouve sans sa composition appellent deux traitements differents. |
 | **Deploiement du service de traduction** | `packages/api` porte la cle d'API pour la recherche en langage libre. Limitation de debit, authentification de l'application, budget par recherche et hebergement : non traites. |
-| **Alignement de `react-native`** | Le projet est en 0.76.5, le SDK 52 attend 0.76.9. Sans consequence sur les builds, mais c'est une dependance native : l'aligner changera l'empreinte `runtimeVersion` (1.6) et coutera un binaire de plus aux testeurs deja equipes. A faire au prochain build natif, pas seul. |
+| **Migration du SDK Expo** | Le projet est en SDK 52, la version courante est la 57. Expo recommande la 54 au minimum pour Xcode 26 ; l'image epinglee (1.7) n'est qu'un sursis. `react-native` a ete aligne en 0.76.9 a cette occasion, la question ne porte plus que sur le SDK. |
 | **Nom de l'application sur l'App Store** | « Lucy » etait pris : la fiche s'appelle « Lucy (cd6504) ». A changer avant d'ouvrir la beta externe, et lie a la question du nom de marque ci-dessus. |
 | **Ecran de saisie / OCR** | Identifie comme priorite fonctionnelle suivante (3.1), pas encore ecrit. |
 
