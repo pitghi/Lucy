@@ -156,6 +156,10 @@ Il ecarte l'accident et le curieux, pas un abus soutenu. **Ce qui borne la
 facture est le plafond de depense pose sur la cle**, cote console Mistral, et
 non ce compteur. Confondre les deux serait se croire protege.
 
+> **Revoque le 2026-09-14 par 1.9.** L'arbitrage tenait tant qu'il fallait
+> choisir entre un plafond approximatif et une base a proteger. L'hebergement
+> retenu en apportant une, le compteur passe en table et devient exact.
+
 L'adresse du client est lue dans `fly-client-ip`, que le proxy **ecrase** a
 l'entree. Un en-tete seulement transmis — `x-forwarded-for` sur un service
 joignable en direct — est choisi par l'appelant : la limite se contournerait en
@@ -248,6 +252,53 @@ Ce que cela ne prouve pas : quatre demandes ne sont pas une mesure. Les
 formulations relachees, les negations et les demandes portant sur plusieurs
 produits ne sont pas eprouvees (§7). Le repli reste `mistral-small-2603`, au
 prix d'un debit soixante-cinq fois moindre.
+
+### 1.9 Le service passe sur Supabase, et le compteur de debit en base — *acte*
+
+Fly.io a supprime son palier gratuit en octobre 2024 : les nouveaux comptes
+disposent d'un essai (deux heures de machine, ou sept jours) puis paient a
+l'usage. La depense reelle pour ce service reste faible — de l'ordre de
+2 $ par mois en fonctionnement continu, quelques centimes avec l'extinction
+automatique — mais elle s'ajoute a une plateforme de plus a tenir, alors que
+`packages/api` est la seule brique serveur du projet et que l'autre projet de
+l'auteur tourne deja sur Supabase.
+
+Le service est donc porte en Edge Function Supabase, et **le compteur de debit
+passe en table**.
+
+**Ce second point n'est pas une consequence du premier, et il importe de ne pas
+les confondre.** Les projets Supabase gratuits se mettent en pause apres sept
+jours sans activite en base ; un service sans etat serait inactif par
+construction et s'eteindrait tout seul au bout d'une semaine. Ecrire en base
+pour l'en empecher, et seulement pour cela, serait de la plomberie destinee a
+faire croire a une plateforme qu'on l'utilise comme elle l'attend — un mauvais
+motif, et le signe qu'on force un outil.
+
+Le motif retenu est autre : **le compteur en memoire etait defectueux**, et
+1.7 le disait deja. Il repart de zero a chaque reveil de la machine et ne vaut
+que pour une instance, ce qui le rend impuissant contre un abus soutenu. En
+table, il devient exact, persistant, et vrai quel que soit le nombre
+d'instances. Cela corrige un defaut reel, qui existerait sur n'importe quel
+hebergement. Que le projet reste actif par la meme occasion est un effet, pas
+une raison — et la distinction se verifie ainsi : si le service changeait
+encore d'hebergeur demain, le compteur en table resterait justifie.
+
+Ce qui entre en base, et rien d'autre :
+
+- une **empreinte d'adresse IP**, hachee avec un sel, jamais l'adresse ;
+- un compteur et un horodatage, purges au-dela de la fenetre.
+
+**Aucune phrase de recherche n'est journalisee**, aucun profil, aucune
+intolerance. La regle posee en 1.8 — le service ne fait entrer aucune donnee
+de sante dans l'infrastructure — tient sans amenagement : ce qui est stocke est
+un compteur anonymise, pas une demande.
+
+Ce que ce choix coute : **la region n'est plus garantie par le serveur**. Les
+Edge Functions s'executent au plus pres de l'appelant, et forcer l'Europe passe
+par un en-tete envoye **par l'application**. La garantie posee en 1.8 se
+deplace donc du serveur vers le client — quelqu'un qui retirerait cet en-tete
+sans savoir pourquoi il est la ferait repartir les phrases ailleurs, sans que
+rien ne casse. A surveiller comme tel, et consigne en question ouverte.
 
 ## 2. Methode d'evaluation
 
@@ -797,6 +848,7 @@ Rien n'a ete decide sur ces points ; ils ne sont pas des oublis.
 | **Opposition a l'entrainement sur le plan gratuit** | Le plan Experiment de Mistral alimente l'entrainement par defaut ; l'opposition se fait dans la console (1.8). Reste a verifier que l'option existe bien sur ce plan, la documentation ne distinguant pas explicitement gratuit et payant. A faire avant de brancher de vrais testeurs, sinon passer au plan payant. |
 | **Qualite de traduction de `ministral-3b-2512`** | Quatre demandes eprouvees a la mise en service, toutes correctes (voir 1.8). C'est un signal, pas une mesure : rien n'est eprouve sur les formulations relachees, les negations, ni les demandes portant sur plusieurs produits. A reprendre sur de vraies demandes de testeurs. Repli : `mistral-small-2603`, soixante-cinq fois moins de debit. |
 | **Desaccord d'`owner` entre `app.json` et le projet EAS** | `app.json` declare `owner: pitghi`, le projet EAS appartient a `pitghis-team`. Les commandes `eas env:*` echouent la-dessus. Corriger `app.json` changerait l'empreinte `runtimeVersion` — `app.json` y entre en entier — donc mettrait les binaires distribues hors de portee des mises a jour. A corriger **au prochain build natif**, avec l'alignement de `react-native` ci-dessous, pas seul. En attendant : declarer les variables depuis le tableau de bord Expo, ou les passer en prefixe de commande. |
+| **Region d'execution des Edge Functions** | Depuis 1.9, le traitement europeen depend d'un en-tete envoye par l'application, non plus de la configuration du serveur. Retirer cet en-tete ferait repartir les phrases hors d'Europe sans qu'aucun test n'echoue. Il n'existe aucun garde-fou contre cela. |
 | **Alignement de `react-native`** | Le projet est en 0.76.5, le SDK 52 attend 0.76.9. Sans consequence sur les builds, mais c'est une dependance native : l'aligner changera l'empreinte `runtimeVersion` (1.6) et coutera un binaire de plus aux testeurs deja equipes. A faire au prochain build natif, pas seul. |
 | **Nom de l'application sur l'App Store** | « Lucy » etait pris : la fiche s'appelle « Lucy (cd6504) ». A changer avant d'ouvrir la beta externe, et lie a la question du nom de marque ci-dessus. |
 | **Ecran de saisie / OCR** | Priorite fonctionnelle suivante (3.1), toujours pas ecrit. Son absence coute desormais davantage : les appels a la saisie ont ete retires de l'ecran de scan (5.7), donc un produit non reconnu n'a plus aucune suite dans l'application. |
@@ -853,6 +905,22 @@ Deuxieme point de vigilance, moins visible : l'adresse du client. La lire dans
 un en-tete que l'appelant peut poser lui-meme rendrait la limite decorative.
 Seul un en-tete que le proxy ecrase fait foi, et le defaut du code reste
 l'adresse de la connexion.
+
+**Fin de soiree : l'hebergement change.** Fly.io ayant supprime son palier
+gratuit, le service part sur Supabase (1.9). Le deploiement Fly aura donc tenu
+quelques heures — le temps de verifier que le service fonctionnait de bout en
+bout, ce qui n'etait pas rien : c'est la qu'on a su que le schema de sortie
+passait, que le modele tenait la consigne et que le plafond se declenchait.
+Rien de ce qui a ete eprouve n'est perdu ; seul l'emballage change.
+
+Deux defauts ont ete trouves par le journal lui-meme plutot que par les tests.
+`eas.json` puis `app.json` entrent dans l'empreinte `runtimeVersion` : y
+declarer une variable, ou corriger un `owner` desormais faux, met les binaires
+distribues hors de portee des mises a jour — sans qu'aucune commande echoue.
+Le skill `ota`, ecrit la veille, a rattrape le premier cas. Le second etait
+inevitable : le transfert du projet vers l'organisation impose un nouveau
+binaire, et c'est ce qui a decide d'y joindre l'alignement de `react-native`,
+en attente depuis le matin pour exactement cette raison.
 
 ### 2026-09-14 — recherche au catalogue depuis le profil
 
