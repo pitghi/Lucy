@@ -1,6 +1,7 @@
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import Anthropic from '@anthropic-ai/sdk';
 import { translate, MAX_INPUT_CHARS } from './query.ts';
+import { adresseClient, creerLimiteDebit } from './debit.ts';
 
 /**
  * Service de traduction des demandes en criteres.
@@ -28,6 +29,17 @@ const CORS_ORIGIN = process.env.LUCY_CORS_ORIGIN ?? '';
 
 /** Corps maximal accepte, largement au-dessus d'une phrase de recherche. */
 const MAX_BODY_BYTES = 4 * 1024;
+
+/** Appels acceptes par minute et par adresse. Zero desactive la limite. */
+const RATE_LIMIT = Number(process.env.LUCY_RATE_LIMIT ?? 10);
+
+/**
+ * En-tete portant l'adresse du client reel, derriere un proxy. Vide par
+ * defaut : voir `adresseClient` pour ce qu'il est prudent d'y mettre.
+ */
+const IP_HEADER = (process.env.LUCY_IP_HEADER ?? '').toLowerCase();
+
+const limite = creerLimiteDebit(RATE_LIMIT);
 
 const client = new Anthropic();
 
@@ -69,6 +81,14 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
     return send(res, 404, { erreur: 'route inconnue' });
   }
 
+  // La limite s'applique avant la lecture du corps et avant tout appel au
+  // modele : ce qu'elle protege, c'est la depense, pas le serveur. `/sante`
+  // en est exclu, sinon les verifications de l'hebergeur consommeraient le
+  // quota de leur propre adresse et finiraient par se voir refuser.
+  if (!limite.autorise(adresseClient(req, IP_HEADER))) {
+    return send(res, 429, { erreur: 'trop de demandes' });
+  }
+
   let text: unknown;
   try {
     const raw = await readBody(req);
@@ -107,9 +127,34 @@ export const server = createServer((req, res) => {
   });
 });
 
+/**
+ * Arret propre.
+ *
+ * L'hebergement eteint la machine des qu'elle est inactive et la rallume a la
+ * demande suivante : les arrets sont frequents, pas exceptionnels. Sans ce
+ * traitement, Node quitte immediatement sur SIGTERM et coupe la traduction en
+ * cours — une recherche perdue a chaque mise en veille. Le delai de grace
+ * borne l'attente : une requete bloquee ne doit pas retenir la machine.
+ */
+function arretPropre(signal: NodeJS.Signals): void {
+  console.log(`${signal} recu, arret apres les demandes en cours.`);
+  const couperet = setTimeout(() => process.exit(0), 10_000);
+  couperet.unref();
+  server.close(() => process.exit(0));
+}
+
 if (process.env.NODE_ENV !== 'test') {
+  for (const signal of ['SIGINT', 'SIGTERM'] as const) {
+    process.on(signal, () => arretPropre(signal));
+  }
+
   server.listen(PORT, () => {
     console.log(`Lucy — traduction des demandes sur :${PORT} (modele ${MODEL})`);
     console.log(`Demandes tronquees a ${MAX_INPUT_CHARS} caracteres.`);
+    console.log(
+      RATE_LIMIT > 0
+        ? `Limite : ${RATE_LIMIT} demandes par minute et par adresse.`
+        : 'Limite de debit desactivee.',
+    );
   });
 }

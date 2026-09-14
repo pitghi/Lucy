@@ -37,10 +37,45 @@ la validation reste, parce que c'est elle qui fait foi.
 ```bash
 export ANTHROPIC_API_KEY=...          # ou `ant auth login`
 npm start --workspace @lucy/api       # ecoute sur :8787
-npm test  --workspace @lucy/api       # 6 tests, sans reseau
+npm test  --workspace @lucy/api       # 16 tests, sans reseau
 ```
 
-Variables : `PORT` (8787), `LUCY_MODEL` (`claude-opus-5`).
+Variables :
+
+| Variable | Defaut | Role |
+| --- | --- | --- |
+| `ANTHROPIC_API_KEY` | — | Cle du modele. Jamais dans le depot ni dans l'image. |
+| `PORT` | `8787` | Port d'ecoute. |
+| `LUCY_MODEL` | `claude-opus-5` | Modele de traduction. |
+| `LUCY_RATE_LIMIT` | `10` | Demandes par minute et par adresse. `0` desactive. |
+| `LUCY_IP_HEADER` | — | En-tete portant l'adresse du client, derriere un proxy. |
+| `LUCY_CORS_ORIGIN` | — | Origine autorisee pour l'apercu web. Ferme par defaut. |
+
+## Limitation de debit
+
+Le service porte la cle d'API : une URL publique sans plafond est une cle
+ouverte a qui la trouve, et la facture suit. Dix demandes par minute et par
+adresse, en fenetre glissante, en memoire, sans dependance ni base — le service
+reste sans etat, ce qui est precisement ce qui lui permet de ne faire entrer
+aucune donnee de sante dans l'infrastructure. Au-dela, il renvoie `429`, que
+l'application sait deja presenter (« Trop de recherches »).
+
+Deux limites assumees, qui tiennent a ce choix :
+
+- **Le compteur est par instance.** A une machine, le cas actuel, le plafond
+  est exact. Plusieurs instances le multiplieraient d'autant.
+- **Il repart de zero au reveil de la machine**, l'hebergement l'eteignant des
+  qu'elle est inactive.
+
+Le garde-fou contre l'abus soutenu n'est donc pas ce compteur mais le **plafond
+de depense pose sur la cle**, cote console Anthropic. Le compteur ecarte
+l'accident et le curieux ; il ne remplace pas la limite qui borne la facture.
+
+`LUCY_IP_HEADER` ne doit designer qu'un en-tete que le proxy **ecrase** a
+l'entree — `fly-client-ip` chez Fly. Un en-tete seulement transmis, comme
+`x-forwarded-for` sur un service joignable en direct, est choisi par
+l'appelant : la limite se contournerait alors en changeant une ligne de
+requete. Sans cette variable, l'adresse de la connexion fait foi.
 
 ## Interface
 
@@ -64,6 +99,70 @@ demandes avant de le figer.
 
 ## Deploiement
 
-Non traite. Le service tient dans un conteneur ou une fonction, mais rien n'est
-ecrit a ce sujet, et les questions qui vont avec — limitation de debit,
-authentification de l'application, budget — sont ouvertes.
+Sur [Fly.io](https://fly.io), depuis la **racine du depot** : le `Dockerfile` a
+besoin du monorepo entier comme contexte, le service important `@lucy/engine`
+par le lien de workspace. `fly.toml` et `Dockerfile` sont a la racine pour
+cette raison.
+
+```bash
+# 1. Reserver le nom. Cette etape echoue si le nom est deja pris — c'est
+#    voulu, voir l'avertissement ci-dessous.
+fly apps create lucy-api
+
+# 2. Poser la cle. Elle ne passe jamais par le depot ni par une couche d'image.
+fly secrets set ANTHROPIC_API_KEY=... --app lucy-api
+
+# 3. Deployer. `--ha=false` n'est pas un detail : sans lui, Fly cree deux
+#    machines, donc deux compteurs de debit en memoire, donc un plafond reel
+#    deux fois plus haut que celui qui est configure.
+fly deploy --ha=false
+
+# 4. Verifier.
+curl https://lucy-api.fly.dev/sante     # -> {"statut":"ok","modele":"..."}
+```
+
+> **Si `fly apps create lucy-api` echoue parce que le nom est pris**, changez-le
+> a **deux** endroits : `app` dans `fly.toml`, et `EXPO_PUBLIC_LUCY_API` dans
+> `packages/app/eas.json`. Ne laissez jamais l'application pointer vers un nom
+> `.fly.dev` que vous ne possedez pas : les phrases de recherche des
+> utilisateurs partiraient chez son proprietaire.
+
+Avant la premiere mise en ligne, **poser un plafond de depense mensuel sur la
+cle** dans la console Anthropic. C'est le seul garde-fou qui borne reellement la
+facture ; la limitation de debit ci-dessus ne fait qu'ecarter l'accident.
+
+### Ce que le deploiement suppose
+
+- **Une seule machine**, qui s'eteint quand personne ne cherche et se rallume a
+  la demande suivante. Le demarrage a froid ajoute quelques secondes a la
+  premiere recherche, largement sous le delai d'attente de l'application
+  (12 s). Le prix de ce choix est le compteur de debit remis a zero au reveil.
+- **Region Paris** (`cdg`). Le service ne recoit ni profil ni donnee de sante,
+  mais la phrase de recherche reste une donnee personnelle : la traiter en
+  Europe evite d'avoir a justifier un transfert qui n'apporte rien.
+- **HTTPS impose.** L'application n'appellera pas en clair, et iOS le
+  refuserait de toute facon (App Transport Security).
+
+### Brancher l'application
+
+`EXPO_PUBLIC_LUCY_API` est fige dans le bundle **a la compilation**, pas lu a
+l'execution. Il est renseigne dans les trois profils de `eas.json`, donc un
+nouveau build — ou une mise a jour en vol sur un binaire qui porte
+`expo-updates` — suffit a brancher l'onglet Recherche.
+
+Pour un essai en local depuis un telephone, l'adresse de boucle locale ne
+convient pas : `localhost` designe le telephone lui-meme. Il faut l'adresse de
+la machine sur le reseau local.
+
+```bash
+EXPO_PUBLIC_LUCY_API=http://192.168.x.x:8787 npm run ios --workspace @lucy/app
+```
+
+### Ce qui reste ouvert
+
+**L'authentification de l'application.** Le point d'entree est public : qui
+connait l'URL peut l'appeler. Un jeton embarque dans le binaire s'en extrait
+comme une cle d'API et ne ferait que ralentir ; le plafond par adresse et le
+plafond de depense sont, en l'etat, ce qui tient lieu de protection. Une
+attestation d'application (App Attest, Play Integrity) est la reponse serieuse,
+et elle n'est pas ecrite.

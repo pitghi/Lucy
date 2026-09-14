@@ -51,9 +51,12 @@ regression, meme s'il simplifie le code ou l'interface :
 ```bash
 npm install                                   # racine du monorepo
 
-npm test        --workspace @lucy/engine      # 60 tests
+npm test        --workspace @lucy/engine      # 87 tests
 npm run typecheck --workspace @lucy/engine
 npm run demo    --workspace @lucy/engine      # moteur en action sur des formules types
+
+npm start       --workspace @lucy/api         # service de traduction sur :8787
+npm test        --workspace @lucy/api         # 16 tests, sans reseau
 
 npm run ios     --workspace @lucy/app         # simulateur iOS (macOS requis)
 npm run android --workspace @lucy/app
@@ -75,10 +78,16 @@ packages/engine/   moteur pur TypeScript, sans dependance
   src/reco/        recommandation par regles
   src/data/        referentiel de 185 ingredients, chacun source
   scripts/         audit de couverture et collecte d'echantillon
+packages/api/      service de traduction des demandes en criteres (porte la cle)
 packages/app/      application React Native / Expo
 docs/              decisions, methodologie, plan MVP, apercu
 design-system/     design system et ecarts assumes
+Dockerfile         image du service ; contexte de build = le monorepo entier
+fly.toml           deploiement du service (Fly.io, region Paris)
 ```
+
+Le deploiement du service est decrit dans
+[`packages/api/README.md`](packages/api/README.md).
 
 ## Conventions
 

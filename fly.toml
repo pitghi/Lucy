@@ -1,0 +1,65 @@
+# Deploiement du service de traduction des demandes (`@lucy/api`).
+#
+# `fly deploy` se lance depuis la racine du depot : le Dockerfile a besoin du
+# monorepo entier comme contexte, pour le lien de workspace vers `@lucy/engine`.
+#
+# La cle d'API n'est pas ici. Elle se pose une fois, hors du depot :
+#   fly secrets set ANTHROPIC_API_KEY=...
+
+app = 'lucy-api'
+
+# Paris. Le service ne recoit ni profil ni donnee de sante, mais la phrase de
+# recherche reste une donnee personnelle : la traiter en Europe evite d'avoir a
+# justifier un transfert qui n'apporte rien.
+primary_region = 'cdg'
+
+[build]
+  dockerfile = 'Dockerfile'
+
+[env]
+  PORT = '8787'
+
+  # L'adresse du client est lue dans cet en-tete, que le proxy Fly **ecrase**
+  # a l'entree. Un en-tete simplement transmis, comme `x-forwarded-for`, serait
+  # choisi par l'appelant et rendrait la limite de debit contournable.
+  LUCY_IP_HEADER = 'fly-client-ip'
+
+  # Dix recherches par minute et par adresse. Un usage normal en fait quelques
+  # unes ; ce plafond protege la facture sans se voir.
+  LUCY_RATE_LIMIT = '10'
+
+[http_service]
+  internal_port = 8787
+
+  # Le service ne repond qu'en HTTPS. L'application n'appellera pas en clair,
+  # et iOS le refuserait de toute facon (App Transport Security).
+  force_https = true
+
+  # La machine s'eteint quand personne ne cherche et se rallume a la demande
+  # suivante. Consequence assumee : le compteur de debit, tenu en memoire,
+  # repart de zero a chaque reveil. Le garde-fou contre l'abus soutenu reste
+  # le plafond de depense pose sur la cle, cote console Anthropic.
+  auto_stop_machines = 'stop'
+  auto_start_machines = true
+  min_machines_running = 0
+
+  # Une seule machine, donc un seul compteur : le plafond ci-dessus est exact.
+  # Passer a plusieurs instances le multiplierait d'autant, sans etat partage.
+  # Ce fichier ne suffit pas a le garantir : deployer avec `--ha=false`, sans
+  # quoi Fly en cree deux.
+  processes = ['app']
+
+  [[http_service.checks]]
+    path = '/sante'
+    method = 'GET'
+    interval = '30s'
+    timeout = '5s'
+    # Le demarrage a froid demande quelques secondes : verifier plus tot ne
+    # ferait que declarer malade une machine qui se reveille normalement.
+    grace_period = '15s'
+
+[[vm]]
+  # Le service est sans etat, sans base, et passe l'essentiel de son temps a
+  # attendre une reponse du modele. La plus petite machine suffit.
+  size = 'shared-cpu-1x'
+  memory = '256mb'

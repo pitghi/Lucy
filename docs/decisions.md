@@ -115,6 +115,43 @@ mise a jour, sans nouveau binaire.
 
 ---
 
+### 1.7 Hebergement du service de traduction : une machine, plafond par adresse — *acte*
+
+`packages/api` porte la cle d'API — elle ne peut pas vivre dans le binaire,
+d'ou elle s'extrait en quelques minutes. Le service est deploye sur Fly.io,
+region Paris, en **une seule machine** qui s'eteint quand personne ne cherche.
+
+Une machine, et non plusieurs : le compteur de debit est tenu **en memoire**,
+donc un deploiement a plusieurs instances multiplierait le plafond reel
+d'autant. Le tenir ailleurs supposerait une base, c'est-a-dire un endroit ou
+des demandes s'accumulent — exactement ce que le service evite par
+construction, puisque c'est son absence d'etat qui garantit qu'aucune donnee de
+sante n'entre dans l'infrastructure. Entre un plafond approximatif et un etat
+partage a proteger, le plafond approximatif coute moins cher.
+
+Consequence assumee : le compteur repart de zero a chaque reveil de la machine.
+Il ecarte l'accident et le curieux, pas un abus soutenu. **Ce qui borne la
+facture est le plafond de depense pose sur la cle**, cote console Anthropic, et
+non ce compteur. Confondre les deux serait se croire protege.
+
+L'adresse du client est lue dans `fly-client-ip`, que le proxy **ecrase** a
+l'entree. Un en-tete seulement transmis — `x-forwarded-for` sur un service
+joignable en direct — est choisi par l'appelant : la limite se contournerait en
+changeant une ligne de requete. C'est pourquoi le defaut du code est l'adresse
+de la connexion, et non un en-tete.
+
+Region Paris : le service ne recoit ni profil ni intolerance, mais la phrase de
+recherche reste une donnee personnelle. La traiter en Europe evite d'avoir a
+justifier un transfert qui n'apporte rien.
+
+**Reste ouverte l'authentification de l'application** (§7). Le point d'entree
+est public : qui connait l'URL peut l'appeler. Un jeton embarque dans le binaire
+s'en extrait comme une cle d'API et ne ferait que ralentir ; l'attestation
+d'application (App Attest, Play Integrity) est la reponse serieuse, et elle
+n'est pas ecrite.
+
+---
+
 ---
 
 ## 2. Methode d'evaluation
@@ -548,7 +585,8 @@ Rien n'a ete decide sur ces points ; ils ne sont pas des oublis.
 | **Modele economique** | Non aborde. Determine ce qui est acceptable en matiere de partenariats marques, donc la credibilite du classement. |
 | **Nom et positionnement** | « Lucy » est le nom du depot, pas une decision de marque. |
 | **Taux de presence du code-barres** | L'audit a mesure la presence de la **liste d'ingredients**, pas celle du code-barres. Un scan qui ne trouve pas le produit et un scan qui le trouve sans sa composition appellent deux traitements differents. |
-| **Deploiement du service de traduction** | `packages/api` porte la cle d'API pour la recherche en langage libre. Limitation de debit, authentification de l'application, budget par recherche et hebergement : non traites. |
+| **Authentification de l'application aupres du service** | Le point d'entree de `packages/api` est public : qui connait l'URL peut l'appeler. Un jeton embarque dans le binaire s'en extrait comme une cle d'API. L'attestation d'application (App Attest, Play Integrity) est la reponse serieuse ; non traitee. En attendant, le plafond par adresse (1.7) et le plafond de depense sur la cle tiennent lieu de protection. |
+| **Budget par recherche** | Le cout d'une traduction n'a pas ete mesure sur de vraies demandes, donc le plafond de depense mensuel est pose au juge. Un modele plus petit suffit probablement (voir le README du service), mais l'arbitrage latence / cout / qualite n'est pas fait. |
 | **Alignement de `react-native`** | Le projet est en 0.76.5, le SDK 52 attend 0.76.9. Sans consequence sur les builds, mais c'est une dependance native : l'aligner changera l'empreinte `runtimeVersion` (1.6) et coutera un binaire de plus aux testeurs deja equipes. A faire au prochain build natif, pas seul. |
 | **Nom de l'application sur l'App Store** | « Lucy » etait pris : la fiche s'appelle « Lucy (cd6504) ». A changer avant d'ouvrir la beta externe, et lie a la question du nom de marque ci-dessus. |
 | **Ecran de saisie / OCR** | Identifie comme priorite fonctionnelle suivante (3.1), pas encore ecrit. |
@@ -556,6 +594,34 @@ Rien n'a ete decide sur ces points ; ils ne sont pas des oublis.
 ---
 
 ## 8. Historique des sessions
+
+### 2026-09-14 — mise en ligne du service de traduction
+
+Point de depart : un testeur constate que l'onglet Recherche affiche
+« Recherche indisponible » sur le build TestFlight. Ce n'etait pas une panne
+reseau de son telephone. Le bundle avait ete compile sans
+`EXPO_PUBLIC_LUCY_API`, donc avec la valeur de repli `http://localhost:8787` —
+sur un telephone, `localhost` designe le telephone lui-meme. La limite etait
+connue et annoncee (voir la session precedente) ; ce qui ne l'etait pas, c'est
+qu'elle se presenterait a l'utilisateur comme un defaut de connexion.
+
+Ce qui a ete fait (1.7) : limitation de debit par adresse, image conteneur,
+configuration Fly.io, et `EXPO_PUBLIC_LUCY_API` renseigne dans les trois
+profils de build.
+
+La question qui a occupe le plus de temps n'est pas l'hebergement mais **ce que
+la limitation de debit protege reellement**. Un compteur en memoire sur une
+machine qui s'eteint des qu'elle est inactive ne borne pas une facture : il
+repart de zero a chaque reveil. Le tenir ailleurs supposerait une base, donc un
+endroit ou des demandes s'accumulent — ce que le service evite par
+construction. L'arbitrage retenu est de garder le compteur approximatif et de
+poser la limite qui compte **sur la cle**, cote console Anthropic. Ecrire
+l'inverse aurait donne l'impression d'un garde-fou la ou il n'y en a pas.
+
+Deuxieme point de vigilance, moins visible : l'adresse du client. La lire dans
+un en-tete que l'appelant peut poser lui-meme rendrait la limite decorative.
+Seul un en-tete que le proxy ecrase fait foi, et le defaut du code reste
+l'adresse de la connexion.
 
 ### 2026-09-14 — premiere distribution TestFlight
 

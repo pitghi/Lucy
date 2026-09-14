@@ -78,7 +78,13 @@ besoin de relancer l'application.
 
 `EXPO_PUBLIC_LUCY_API` est fige dans le bundle a la compilation, pas lu a
 l'execution. Il suit donc les mises a jour : brancher l'onglet Recherche sur
-l'API deployee ne demandera pas un nouveau binaire.
+l'API deployee ne demande pas un nouveau binaire.
+
+Il est desormais renseigne dans les trois profils de `eas.json`. Le service et
+sa procedure de mise en ligne sont decrits dans
+[`packages/api/README.md`](../api/README.md) — **l'URL y figure a deux
+endroits**, `fly.toml` et `eas.json`, et changer l'une sans l'autre enverrait
+les recherches des utilisateurs a cote.
 
 **Prevenir les testeurs** que le catalogue est local : un code-barres absent
 renvoie vers la saisie manuelle. C'est le comportement voulu (decision 5.7),

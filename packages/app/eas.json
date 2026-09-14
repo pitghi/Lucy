@@ -13,18 +13,27 @@
       "distribution": "internal",
       "ios": {
         "simulator": true
+      },
+      "env": {
+        "EXPO_PUBLIC_LUCY_API": "https://lucy-api.fly.dev"
       }
     },
     "preview": {
       "extends": "base",
       "distribution": "internal",
-      "channel": "preview"
+      "channel": "preview",
+      "env": {
+        "EXPO_PUBLIC_LUCY_API": "https://lucy-api.fly.dev"
+      }
     },
     "production": {
       "extends": "base",
       "distribution": "store",
       "autoIncrement": true,
-      "channel": "production"
+      "channel": "production",
+      "env": {
+        "EXPO_PUBLIC_LUCY_API": "https://lucy-api.fly.dev"
+      }
     }
   },
   "submit": {

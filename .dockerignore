@@ -1,0 +1,19 @@
+# L'application mobile ne participe pas a l'image du service.
+packages/app
+
+**/node_modules
+**/.git
+**/.expo
+**/dist
+**/*.log
+
+# Les tests ne sont pas embarques : ils tournent avant le deploiement,
+# pas dedans. Meme chose pour la demonstration et les scripts d'audit du
+# moteur, qui n'ont rien a faire dans un service en ligne.
+**/test
+packages/engine/demo
+packages/engine/scripts
+
+# Rien qui porte un secret ne doit pouvoir entrer dans une couche d'image.
+**/.env
+**/.env.*
