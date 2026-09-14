@@ -48,6 +48,23 @@ retenu au depart, etait deja pris par une autre equipe : le premier build de
 production s'est arrete dessus. Un identifiant ne se change plus une fois
 l'application publiee, donc celui-ci est acquis.
 
+## Image de build : Xcode 26 impose
+
+Apple refuse depuis avril 2026 tout binaire compile avec un SDK anterieur a
+iOS 26 (erreur `ITMS-90725` au televersement). L'image par defaut du SDK Expo 52
+porte Xcode 16, d'ou `ios.image` epingle sur `macos-sequoia-15.6-xcode-26.2`
+dans le profil `base` de `eas.json`.
+
+C'est un contournement, pas une solution : Expo previent que toutes les
+versions de SDK ne sont pas compatibles avec Xcode 26 et recommande de migrer
+en SDK 54 au minimum. La migration reste ouverte (§7 du journal). Tant qu'elle
+n'est pas faite, un echec de compilation apres une montee de dependance doit
+faire soupconner cette combinaison avant toute autre chose.
+
+L'image est **epinglee** et non `latest` : `latest` suit les mises a jour
+d'Expo et rendrait un build non reproductible, au meme titre que la version de
+Node l'est deja.
+
 ## Mises a jour en vol (OTA)
 
 `expo-updates` est installe et configure. Une modification purement
