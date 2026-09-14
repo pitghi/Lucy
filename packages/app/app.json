@@ -19,13 +19,13 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.lucy.app",
+      "bundleIdentifier": "com.pitghi.lucy",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
-      "package": "com.lucy.app",
+      "package": "com.pitghi.lucy",
       "permissions": [
         "android.permission.CAMERA"
       ],

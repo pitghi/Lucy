@@ -41,8 +41,12 @@ npm run submit:ios      --workspace @lucy/app  # envoi du dernier build
 
 Le premier build de production demande les identifiants Apple et genere le
 certificat de distribution et le profil d'approvisionnement ; EAS les conserve
-ensuite. `com.lucy.app` doit etre disponible sur App Store Connect — s'il est
-pris, changer `ios.bundleIdentifier` **avant** le premier build.
+ensuite.
+
+L'identifiant est `com.pitghi.lucy`, sur iOS comme sur Android. `com.lucy.app`,
+retenu au depart, etait deja pris par une autre equipe : le premier build de
+production s'est arrete dessus. Un identifiant ne se change plus une fois
+l'application publiee, donc celui-ci est acquis.
 
 **Prevenir les testeurs** que le catalogue est local : un code-barres absent
 renvoie vers la saisie manuelle. C'est le comportement voulu (decision 5.7),
