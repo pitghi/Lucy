@@ -178,8 +178,6 @@ n'est pas ecrite.
 
 ---
 
----
-
 ### 1.8 Fournisseur du modele de traduction : Mistral, traitement europeen — *acte*
 
 Le service de traduction appelle l'API Mistral, modele `ministral-3b-2512`,
@@ -318,6 +316,35 @@ par un en-tete envoye **par l'application**. La garantie posee en 1.8 se
 deplace donc du serveur vers le client — quelqu'un qui retirerait cet en-tete
 sans savoir pourquoi il est la ferait repartir les phrases ailleurs, sans que
 rien ne casse. A surveiller comme tel, et consigne en question ouverte.
+
+---
+
+### 1.10 Image de build epinglee sur Xcode 26, sans migrer le SDK — *provisoire*
+
+Apple refuse depuis avril 2026 tout binaire compile avec un SDK anterieur a
+iOS 26 : le build 2 a ete rejete au televersement (`ITMS-90725`). Le controle
+est automatique, il n'y a rien a negocier.
+
+L'image par defaut du SDK Expo 52 porte Xcode 16. Deux sorties possibles :
+migrer en SDK 54 au minimum, ce qu'Expo recommande, ou demander explicitement
+une image Xcode 26 dans `eas.json`, ce qu'Expo permet en prevenant que « toutes
+les versions de SDK ne seront pas compatibles ».
+
+La seconde a ete tentee d'abord, parce qu'elle coutait un build contre plusieurs
+heures, et qu'un echec aurait tranche la question au lieu de la laisser
+ouverte. Elle a reussi : le build 3 compile sous `macos-sequoia-15.6-xcode-26.2`
+avec `react-native` en 0.76.9.
+
+L'image est **epinglee** et non `latest` : `latest` suit les mises a jour
+d'Expo et rendrait un build non reproductible, alors que la version de Node
+l'est deja. Parmi les images Xcode 26 disponibles, la plus ancienne est la
+moins risquee pour un SDK qui date de deux ans.
+
+Statut *provisoire* et non *acte* : c'est un sursis, pas une solution. La
+combinaison SDK 52 / Xcode 26 n'est pas celle qu'Expo teste, et la prochaine
+montee de dependance native peut la casser. La migration reste ouverte (§7).
+Condition de revue : tout echec de compilation natif doit faire soupconner
+cette combinaison avant toute autre chose.
 
 ## 2. Methode d'evaluation
 
@@ -862,13 +889,12 @@ Rien n'a ete decide sur ces points ; ils ne sont pas des oublis.
 | **Nom et positionnement** | « Lucy » est le nom du depot, pas une decision de marque. |
 | **Taux de presence du code-barres** | Traite cote interface (5.12) : les deux cas sont desormais distingues a l'ecran. Reste non mesure — l'audit portait sur la **liste d'ingredients**, pas sur le code-barres, donc on ignore quelle part des scans aboutit reellement en rayon. |
 | **Categorie d'un produit scanne** | Deduite des categories et du nom Open Beauty Facts (5.14), donc approximative, alors qu'elle deplace la note. Elle devrait s'afficher sur la fiche et pouvoir etre corrigee. Non fait. |
-| **Authentification de l'application aupres du service** | Le point d'entree de `packages/api` est public : qui connait l'URL peut l'appeler. Un jeton embarque dans le binaire s'en extrait comme une cle d'API. L'attestation d'application (App Attest, Play Integrity) est la reponse serieuse ; non traitee. En attendant, le plafond par adresse (1.7) et le plafond de depense sur la cle tiennent lieu de protection. |
+| **Authentification de l'application aupres du service** | Le point d'entree de la fonction `recherche-criteres` est public : qui connait l'URL peut l'appeler. Un jeton embarque dans le binaire s'en extrait comme une cle d'API. L'attestation d'application (App Attest, Play Integrity) est la reponse serieuse ; non traitee. En attendant, le plafond par adresse (1.9) et le plafond de depense sur la cle tiennent lieu de protection. |
 | **Budget par recherche** | Mesure en volume de jetons (~670 en entree, ~60 en sortie), soit moins de 3 $ par mois pour 10 000 recherches chez tous les fournisseurs examines. Ce qui n'est pas mesure, c'est la latence ressentie dans un champ de recherche. |
 | **Opposition a l'entrainement sur le plan gratuit** | Le plan Experiment de Mistral alimente l'entrainement par defaut ; l'opposition se fait dans la console (1.8). Reste a verifier que l'option existe bien sur ce plan, la documentation ne distinguant pas explicitement gratuit et payant. A faire avant de brancher de vrais testeurs, sinon passer au plan payant. |
 | **Qualite de traduction de `ministral-3b-2512`** | Quatre demandes eprouvees a la mise en service, toutes correctes (voir 1.8). C'est un signal, pas une mesure : rien n'est eprouve sur les formulations relachees, les negations, ni les demandes portant sur plusieurs produits. A reprendre sur de vraies demandes de testeurs. Repli : `mistral-small-2603`, soixante-cinq fois moins de debit. |
-| **Desaccord d'`owner` entre `app.json` et le projet EAS** | `app.json` declare `owner: pitghi`, le projet EAS appartient a `pitghis-team`. Les commandes `eas env:*` echouent la-dessus. Corriger `app.json` changerait l'empreinte `runtimeVersion` — `app.json` y entre en entier — donc mettrait les binaires distribues hors de portee des mises a jour. A corriger **au prochain build natif**, avec l'alignement de `react-native` ci-dessous, pas seul. En attendant : declarer les variables depuis le tableau de bord Expo, ou les passer en prefixe de commande. |
 | **Region d'execution des Edge Functions** | Depuis 1.9, le traitement europeen depend d'un en-tete envoye par l'application, non plus de la configuration du serveur. Retirer cet en-tete ferait repartir les phrases hors d'Europe sans qu'aucun test n'echoue. Il n'existe aucun garde-fou contre cela. |
-| **Alignement de `react-native`** | Le projet est en 0.76.5, le SDK 52 attend 0.76.9. Sans consequence sur les builds, mais c'est une dependance native : l'aligner changera l'empreinte `runtimeVersion` (1.6) et coutera un binaire de plus aux testeurs deja equipes. A faire au prochain build natif, pas seul. |
+| **Migration du SDK Expo** | Le projet est en SDK 52, la version courante est la 57. Expo recommande la 54 au minimum pour Xcode 26 ; l'image epinglee (1.10) n'est qu'un sursis. `react-native` a ete aligne en 0.76.9 a cette occasion, la question ne porte plus que sur le SDK. |
 | **Nom de l'application sur l'App Store** | « Lucy » etait pris : la fiche s'appelle « Lucy (cd6504) ». A changer avant d'ouvrir la beta externe, et lie a la question du nom de marque ci-dessus. |
 | **Ecran de saisie / OCR** | Priorite fonctionnelle suivante (3.1), toujours pas ecrit. Son absence coute desormais davantage : les appels a la saisie ont ete retires de l'ecran de scan (5.7), donc un produit non reconnu n'a plus aucune suite dans l'application. |
 

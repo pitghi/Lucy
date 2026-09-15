@@ -6,7 +6,10 @@
   },
   "build": {
     "base": {
-      "node": "22.13.1"
+      "node": "22.13.1",
+      "ios": {
+        "image": "macos-sequoia-15.6-xcode-26.2"
+      }
     },
     "simulator": {
       "extends": "base",
