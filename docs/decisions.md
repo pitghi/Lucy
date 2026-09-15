@@ -319,6 +319,54 @@ rien ne casse. A surveiller comme tel, et consigne en question ouverte.
 
 ---
 
+### 1.11 La recommandation passe au modele, profil compris — *acte, revoque 4.1 et 1.8*
+
+L'onglet Recherche ne classe plus le catalogue : il demande a un modele de
+chercher en ligne et de recommander, en lui transmettant le profil declare.
+C'est une decision de l'auteur, prise en connaissance de ce qu'elle coute, et
+consignee ici parce qu'elle contredit trois regles posees plus haut.
+
+**Ce qui l'a motivee.** La recherche tournait sur **quatorze produits en dur**,
+tous `leave_on_face`, quand le scan interroge Open Beauty Facts et ses millions
+de references. Le premier essai reel l'a montre sans ambiguite : une protection
+solaire rendue pour « une creme apaisante » n'etait pas une erreur de jugement
+du moteur, c'etait le moins mauvais de quatorze.
+
+**Ce qu'elle revoque.**
+
+- **4.1 — moteur de regles, pas d'apprentissage.** Un classement produit par un
+  modele n'est ni rejouable ni opposable a une marque. `temperature: 0` rend la
+  meme demande stable, ce qui n'est pas la meme chose qu'un motif verifiable.
+- **1.8 — le profil ne quitte pas l'appareil.** Type de peau, preoccupations,
+  intolerances et produits ecartes partent desormais chez le fournisseur. Ce
+  sont des donnees de sante au sens du RGPD. Le point d'entree europeen et
+  `store: false` limitent la portee ; ils ne suppriment pas le transfert, et la
+  base legale reste a etablir avant tout utilisateur reel (§7).
+- **Les trois scores ne suivent pas.** Un produit trouve sur le web n'a pas de
+  liste INCI dans le referentiel : ni concentration estimee, ni tolerance, ni
+  environnement. L'onglet Recherche rend donc autre chose que le reste de
+  l'application.
+
+**Deux garanties passent du code au prompt**, et c'est le point le plus couteux.
+Le moteur ecartait un produit contenant un INCI non tolere, et ne reproposait
+jamais un produit juge mauvais au journal — deterministe, verifiable, teste.
+Le modele ne connait pas la composition de ce qu'il propose : il ne peut donc
+rien garantir, et ces deux regles ne tiennent plus que par une consigne qu'il
+peut ignorer, comme il a ignore « n'emets un critere que si la phrase le
+contient » (§7).
+
+**Ce qui est conserve.** Le service exige des sources : une suggestion sans
+adresse verifiable est rendue telle quelle, sources vides, plutot que maquillee.
+Le modele a interdiction d'emettre une note chiffree — en inventer rendrait les
+scores du reste de l'application incomparables. Et le conseil medical reste
+exclu (6.2), renvoye au dermatologue dans les reserves.
+
+Le service de traduction `recherche-criteres` **reste en place et deploye** : la
+bascule est un choix d'interface, pas une suppression, et revenir en arriere ne
+demande qu'un changement de point d'entree.
+
+---
+
 ### 1.10 Image de build epinglee sur Xcode 26, sans migrer le SDK — *provisoire*
 
 Apple refuse depuis avril 2026 tout binaire compile avec un SDK anterieur a
