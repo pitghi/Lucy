@@ -14,7 +14,20 @@ const CLE = Deno.env.get('LUCY_RECO_MISTRAL_KEY') || Deno.env.get('MISTRAL_API_K
 
 const mistral = new Mistral({
   apiKey: CLE,
-  server: (Deno.env.get('LUCY_MISTRAL_REGION') ?? 'eu') as 'eu' | 'global' | 'us',
+  /**
+   * **Point d'entree mondial, et non europeen.**
+   *
+   * Mesure, sans cle : sur `api.eu.mistral.ai`, `/v1/chat/completions` repond
+   * 401 — la route existe — mais `/v1/conversations` et `/v1/agents` repondent
+   * 404. L'API Conversations, donc le connecteur de recherche en ligne,
+   * n'existe pas en Europe. Aucun modele n'y change rien : la route n'y est
+   * pas.
+   *
+   * Sortir d'Europe est donc le prix de la recherche en ligne, et il est paye
+   * en connaissance de cause (1.11). La traduction, elle, reste sur le point
+   * d'entree europeen : elle n'a pas besoin de connecteur.
+   */
+  server: (Deno.env.get('LUCY_RECO_REGION') ?? 'global') as 'eu' | 'global' | 'us',
 });
 
 const base = createClient(

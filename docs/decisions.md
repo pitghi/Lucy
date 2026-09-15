@@ -361,6 +361,39 @@ Le modele a interdiction d'emettre une note chiffree — en inventer rendrait le
 scores du reste de l'application incomparables. Et le conseil medical reste
 exclu (6.2), renvoye au dermatologue dans les reserves.
 
+**Le traitement sort d'Europe, et ce n'est pas un choix de confort.** Mesure
+faite sans cle, une route inexistante repondant 404 la ou une route protegee
+repond 401 :
+
+| | `/v1/chat/completions` | `/v1/conversations` | `/v1/agents` |
+| --- | --- | --- | --- |
+| `api.eu.mistral.ai` | 401 | **404** | **404** |
+| `api.mistral.ai` | 401 | 401 | 401 |
+
+L'API Conversations, donc le connecteur de recherche en ligne, **n'existe pas
+sur le point d'entree europeen**. Aucun modele n'y change rien : la route n'y
+est pas. Chercher en ligne et traiter en Europe sont incompatibles chez ce
+fournisseur, a cette date.
+
+Mistral avait ete preferee a Gemini pour ce point d'entree europeen (1.8) : la
+raison qui l'avait fait choisir ne s'applique donc plus au chemin de
+recommandation. La phrase **et le profil** partent sur le point d'entree
+mondial. `store: false` limite la retention, pas la localisation.
+
+Une correction de raisonnement merite d'etre consignee, parce qu'elle
+reviendra : la region du point d'entree **ne limite pas les produits
+recommandes**. Le modele europeen connait les cosmetiques coreens comme
+l'autre. Ce qui manquait en Europe n'etait pas le catalogue, c'etait la
+recherche.
+
+Deux sorties ont ete examinees et ecartees pour l'instant, sans etre fermees :
+chercher nous-memes depuis la fonction Supabase, qui tourne en `eu-west-3`,
+puis passer les resultats au modele europeen ; et, pour la composition
+seulement, interroger directement les sources connues — Open Beauty Facts,
+sites de marque, bases INCI — sans modele du tout, ce qui serait a la fois plus
+exact et moins cher. La seconde reste la meilleure reponse technique au probleme
+de la composition, et devra etre reprise.
+
 Le service de traduction `recherche-criteres` **reste en place et deploye** : la
 bascule est un choix d'interface, pas une suppression, et revenir en arriere ne
 demande qu'un changement de point d'entree.
