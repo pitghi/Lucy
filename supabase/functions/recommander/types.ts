@@ -42,9 +42,37 @@ export interface Suggestion {
   marque: string;
   /** Pourquoi il repond a la demande **et** au profil. */
   pourquoi: string;
-  /** Adresse d'ou le modele tient l'information. Vide si la recherche n'en a pas rendu. */
+  /**
+   * Code-barres, si le modele l'a trouve.
+   *
+   * C'est ce qui vaut le plus : Open Beauty Facts l'indexe, et le scan
+   * l'exploite deja. Chercher par le nom est approximatif dans les deux sens —
+   * mesure sur dix produits courants, la composition ne sort que quatre fois,
+   * et deux de ces quatre sont une autre variante que celle demandee.
+   */
+  codeBarres?: string;
+  /**
+   * Liste INCI lue en ligne par le modele, telle quelle.
+   *
+   * Repli quand le code-barres manque. Moins sure qu'Open Beauty Facts, d'ou
+   * `sourceComposition` : une note calculee sur une composition doit pouvoir
+   * dire d'ou elle la tient, sinon elle ne se conteste pas.
+   */
+  inci?: string;
+  /** Page d'ou la liste INCI a ete tiree. */
+  sourceComposition?: string;
+  /** Adresses consultees pour la recommandation elle-meme. */
   sources: string[];
 }
+
+/** D'ou vient la composition d'un produit suggere, et ce qu'elle vaut. */
+export type ProvenanceComposition =
+  /** Open Beauty Facts par code-barres : exact. */
+  | 'openbeautyfacts'
+  /** Une page lue par le modele : plausible, non verifie. */
+  | 'web'
+  /** Rien de trouve : le produit ne se note pas, et se signale comme tel. */
+  | 'introuvable';
 
 export interface ReponseReco {
   suggestions: Suggestion[];

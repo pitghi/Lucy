@@ -126,3 +126,48 @@ Deno.test('la sortie se lit meme en morceaux', () => {
   });
   assertEquals(t, '{"a":1}');
 });
+
+Deno.test('un code-barres qui n a pas la forme d un EAN est ecarte', () => {
+  const r = validerReponse({
+    suggestions: [
+      { nom: 'A', marque: 'B', pourquoi: '', codeBarres: 'reference interne', sources: [] },
+      { nom: 'C', marque: 'D', pourquoi: '', codeBarres: '3337875598897', sources: [] },
+    ],
+    reserves: [],
+  });
+  assertEquals(r.suggestions[0].codeBarres, undefined);
+  assertEquals(r.suggestions[1].codeBarres, '3337875598897');
+});
+
+Deno.test('une composition trop courte n est pas une composition', () => {
+  const r = validerReponse({
+    suggestions: [{ nom: 'A', marque: 'B', pourquoi: '', inci: 'AQUA', sources: [] }],
+    reserves: [],
+  });
+  assertEquals(r.suggestions[0].inci, undefined);
+});
+
+Deno.test('une liste INCI plausible est conservee avec sa page', () => {
+  const liste = 'AQUA, GLYCERIN, CETEARYL ALCOHOL, NIACINAMIDE, PHENOXYETHANOL';
+  const r = validerReponse({
+    suggestions: [{
+      nom: 'A', marque: 'B', pourquoi: '',
+      inci: liste, sourceComposition: 'https://exemple.test/fiche', sources: [],
+    }],
+    reserves: [],
+  });
+  assertEquals(r.suggestions[0].inci, liste);
+  assertEquals(r.suggestions[0].sourceComposition, 'https://exemple.test/fiche');
+});
+
+Deno.test('une page de composition qui n est pas une adresse est ecartee', () => {
+  const r = validerReponse({
+    suggestions: [{
+      nom: 'A', marque: 'B', pourquoi: '',
+      inci: 'AQUA, GLYCERIN, CETEARYL ALCOHOL, NIACINAMIDE', sourceComposition: 'de memoire',
+      sources: [],
+    }],
+    reserves: [],
+  });
+  assertEquals(r.suggestions[0].sourceComposition, undefined);
+});

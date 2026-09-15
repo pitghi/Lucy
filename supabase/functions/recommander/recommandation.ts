@@ -62,6 +62,14 @@ Interdits :
   incomparables.
 - Aucun produit dont tu n'as pas trouve la trace en ligne.
 
+Pour chaque produit, rapporte ce qui permet d'en verifier la composition :
+- son **code-barres** (EAN) si tu le trouves — c'est ce qui vaut le plus, il
+  identifie une reference precise et non une gamme ;
+- a defaut, sa **liste INCI** telle qu'elle est ecrite sur la page ou tu l'as
+  lue, sans la reordonner ni la completer, et l'adresse de cette page.
+Ne reconstitue jamais une liste d'ingredients de memoire : une composition
+inventee ferait calculer une note fausse sur un produit reel. Laisse vide.
+
 Dis dans les reserves ce que tu n'as pas pu verifier — une composition que tu
 n'as pas trouvee, une disponibilite que tu ignores, une demande trop vague pour
 etre servie. Une recommandation qui tait ses angles morts se lit comme un
@@ -86,13 +94,27 @@ const SCHEMA = {
             description:
               'En quoi ce produit repond a la demande et au profil. Deux phrases au plus.',
           },
+          codeBarres: {
+            description: 'Code-barres EAN du produit. Null si tu ne l as pas trouve.',
+            anyOf: [{ type: 'string' }, { type: 'null' }],
+          },
+          inci: {
+            description:
+              'Liste INCI telle qu ecrite sur la page lue, sans reordonnancement. '
+              + 'Null si tu ne l as pas trouvee. Ne jamais la reconstituer de memoire.',
+            anyOf: [{ type: 'string' }, { type: 'null' }],
+          },
+          sourceComposition: {
+            description: 'Adresse de la page d ou vient la liste INCI. Null si pas de liste.',
+            anyOf: [{ type: 'string' }, { type: 'null' }],
+          },
           sources: {
             type: 'array',
             items: { type: 'string' },
             description: 'Adresses consultees. Tableau vide si la recherche n en a pas rendu.',
           },
         },
-        required: ['nom', 'marque', 'pourquoi', 'sources'],
+        required: ['nom', 'marque', 'pourquoi', 'codeBarres', 'inci', 'sourceComposition', 'sources'],
         additionalProperties: false,
       },
     },
@@ -155,10 +177,23 @@ export function validerReponse(brut: unknown): ReponseReco {
     // Un produit sans nom n'est pas une recommandation ; l'ecarter en silence
     // vaut mieux que d'afficher une ligne vide que personne ne peut verifier.
     if (!nom) continue;
+    // Un code-barres n'est retenu que s'il a la forme d'un EAN : une chaine
+    // approximative ferait interroger Open Beauty Facts pour rien, ou pire,
+    // tomberait sur un autre produit.
+    const code = typeof e.codeBarres === 'string' ? e.codeBarres.replace(/\D/g, '') : '';
+    const inci = typeof e.inci === 'string' ? e.inci.trim() : '';
+
     suggestions.push({
       nom,
       marque,
       pourquoi: typeof e.pourquoi === 'string' ? e.pourquoi.trim() : '',
+      ...(code.length >= 8 && code.length <= 14 ? { codeBarres: code } : {}),
+      // Une liste trop courte n'est pas une composition : c'est un debut de
+      // phrase. La retenir ferait calculer une note sur presque rien.
+      ...(inci.length >= 20 ? { inci } : {}),
+      ...(typeof e.sourceComposition === 'string' && /^https?:\/\//.test(e.sourceComposition)
+        ? { sourceComposition: e.sourceComposition }
+        : {}),
       sources: (Array.isArray(e.sources) ? e.sources : []).filter(
         (u): u is string => typeof u === 'string' && /^https?:\/\//.test(u),
       ),
