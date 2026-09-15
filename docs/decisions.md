@@ -893,7 +893,8 @@ Rien n'a ete decide sur ces points ; ils ne sont pas des oublis.
 | **Budget par recherche** | Mesure en volume de jetons (~670 en entree, ~60 en sortie), soit moins de 3 $ par mois pour 10 000 recherches chez tous les fournisseurs examines. Ce qui n'est pas mesure, c'est la latence ressentie dans un champ de recherche. |
 | **Opposition a l'entrainement sur le plan gratuit** | Le plan Experiment de Mistral alimente l'entrainement par defaut ; l'opposition se fait dans la console (1.8). Reste a verifier que l'option existe bien sur ce plan, la documentation ne distinguant pas explicitement gratuit et payant. A faire avant de brancher de vrais testeurs, sinon passer au plan payant. |
 | **Qualite de traduction de `ministral-3b-2512`** | Quatre demandes eprouvees a la mise en service, toutes correctes (voir 1.8). C'est un signal, pas une mesure : rien n'est eprouve sur les formulations relachees, les negations, ni les demandes portant sur plusieurs produits. A reprendre sur de vraies demandes de testeurs. Repli : `mistral-small-2603`, soixante-cinq fois moins de debit. |
-| **Region d'execution des Edge Functions** | Depuis 1.9, le traitement europeen depend d'un en-tete envoye par l'application, non plus de la configuration du serveur. Retirer cet en-tete ferait repartir les phrases hors d'Europe sans qu'aucun test n'echoue. Il n'existe aucun garde-fou contre cela. |
+| **Region d'execution des Edge Functions** | Depuis 1.9, le traitement europeen depend d'un en-tete envoye par l'application, non plus de la configuration du serveur. Le projet est en `eu-west-3`, donc l'en-tete et la base concordent aujourd'hui — mais retirer cet en-tete ferait repartir les phrases hors d'Europe sans qu'aucun test n'echoue. Il n'existe aucun garde-fou contre cela. |
+| **Un sel absent degrade en silence** | `LUCY_IP_SALT` manquant fait tomber `traduction.ts` sur une chaine vide, donc sur des empreintes d'adresses que la force brute remonte en quelques minutes — sans qu'aucune commande echoue ni qu'aucun test casse. Le compteur, lui, refuse de servir quand il tombe : deux garde-fous, deux postures opposees. Le sel est pose sur le projet actuel ; rien n'empeche un prochain d'en repartir sans. |
 | **Migration du SDK Expo** | Le projet est en SDK 52, la version courante est la 57. Expo recommande la 54 au minimum pour Xcode 26 ; l'image epinglee (1.10) n'est qu'un sursis. `react-native` a ete aligne en 0.76.9 a cette occasion, la question ne porte plus que sur le SDK. |
 | **Nom de l'application sur l'App Store** | « Lucy » etait pris : la fiche s'appelle « Lucy (cd6504) ». A changer avant d'ouvrir la beta externe, et lie a la question du nom de marque ci-dessus. |
 | **Ecran de saisie / OCR** | Priorite fonctionnelle suivante (3.1), toujours pas ecrit. Son absence coute desormais davantage : les appels a la saisie ont ete retires de l'ecran de scan (5.7), donc un produit non reconnu n'a plus aucune suite dans l'application. |
@@ -951,28 +952,49 @@ un en-tete que l'appelant peut poser lui-meme rendrait la limite decorative.
 Seul un en-tete que le proxy ecrase fait foi, et le defaut du code reste
 l'adresse de la connexion.
 
-#### Ou l'on s'est arrete
+#### La mise en service, le lendemain
 
-Le code est pousse et eprouve : 89 tests du moteur, 16 tests de la fonction
-sous Deno, typecheck propre. **Rien n'est deploye.** Ce qui reste demande un
-compte et ne se fait pas depuis une session distante :
+Le service est en ligne. Projet `lucy` en region `eu-west-3`, compteur en base,
+secrets poses, fonction deployee, et `EXPO_PUBLIC_LUCY_API` declare dans les
+environnements EAS **production** et **preview** — pas dans `eas.json`, dont
+l'empreinte reste donc celle du binaire distribue.
 
-1. Creer le projet Supabase pour Lucy — ce sera le second du palier gratuit,
-   Maurice occupant le premier.
-2. Passer `supabase/rate_limit.sql` dans l'editeur SQL du tableau de bord.
-3. Poser les secrets : `MISTRAL_API_KEY`, et `LUCY_IP_SALT` (sans sel, une
-   empreinte d'adresse IPv4 se retrouve par force brute).
-4. Deployer : `supabase functions deploy recherche-criteres --no-verify-jwt`.
-5. Verifier par `./supabase/verifier.sh <url>` — pas par un simple appel de
-   sante, qui ne prouve rien.
-6. Declarer `EXPO_PUBLIC_LUCY_API` dans les environnements EAS, **jamais dans
-   `eas.json`** (1.6).
-7. Construire un nouveau binaire : le transfert du projet vers l'organisation
-   a change l'empreinte, les appareils actuels ne recevront plus d'OTA.
+`verifier.sh` passe ses trois etapes sur l'instance deployee. La phrase
+d'epreuve rend `category: leave_on_face`, `targetConcern: redness`,
+`avoidFragrance: true` : quatre criteres justes, rien d'invente. Le plafond se
+declenche exactement au onzieme appel de la minute.
 
-Deux choses ne sont pas eprouvees, faute d'acces : **le deploiement lui-meme et
-le SQL**, et **la valeur de `x-region`**, qui depend des regions ouvertes sur
-le projet. Le reste l'est.
+Les deux inconnues de la veille sont levees, et pas de la meme maniere.
+**`x-region` tombe juste sans qu'on ait rien fait** : le projet a ete cree en
+`eu-west-3`, la valeur que le client impose deja, donc la garantie de
+traitement europeen tient de bout en bout. **Le SQL, lui, etait faux.**
+
+Reste la septieme etape : construire un nouveau binaire. Le transfert du projet
+vers l'organisation a change l'empreinte `runtimeVersion`, donc les appareils
+actuels ne recevront plus d'OTA — la variable qu'on vient de declarer ne les
+atteindra pas.
+
+#### Le compteur refusait son propre appelant
+
+`revoke all on function ... from public` retire aussi le droit a
+`service_role`, qui le tenait par `public` et non en propre. L'Edge Function se
+voyait donc repondre `42501 permission denied` par le compteur qu'elle venait
+d'installer — et comme elle refuse plutot que de laisser passer (1.9), **tout**
+le service repondait 503.
+
+Le symptome designait l'hebergement : point d'entree injoignable, fonction mal
+deployee, verification JWT restee active. La cause etait la derniere ligne du
+SQL. Aucun test ne pouvait l'attraper : les seize tests de la fonction tournent
+sous Deno avec un compteur simule, et le SQL n'est execute nulle part avant la
+mise en ligne.
+
+Meme forme que le `.dockerignore` de la veille — une verification de la logique
+prise pour une verification du procede. A ceci pres que celle-ci s'est vue en
+une minute, parce que `verifier.sh` existait : le script a nomme l'etape qui
+echouait au lieu de rendre un echec global, et l'appel direct de
+`verifier_debit` par PostgREST a donne le code d'erreur exact. Le correctif est
+desormais dans `rate_limit.sql`, avec sa raison — sans quoi le prochain
+deploiement y retomberait.
 
 #### Ce que la soiree a appris
 
