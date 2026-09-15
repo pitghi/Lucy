@@ -149,6 +149,30 @@ cd packages/app
 npx --yes eas-cli@latest update --branch production -m "Recherche au catalogue depuis le profil (#8)"
 ```
 
+**`eas update` ne lit pas le bloc `env` de `eas.json`.** Il prend ses
+variables dans les environnements EAS, ou dans l'environnement d'ou la commande
+part. Une publication sans precaution repart donc avec la valeur de repli
+`http://localhost:8787` pour `EXPO_PUBLIC_LUCY_API`, et l'onglet Recherche
+retombe en panne chez les testeurs — sans qu'aucune commande echoue. Verifier
+que la variable existe (`eas env:list --environment production`) ou la passer
+en prefixe :
+
+```bash
+EXPO_PUBLIC_LUCY_API=https://<ref>.supabase.co/functions/v1 \
+  npx --yes eas-cli@latest update --branch production -m "..."
+```
+
+Corollaire a ne pas contourner : cette variable **ne doit pas** etre declaree
+dans `eas.json`, qui entre dans l'empreinte. L'y mettre casse l'OTA pour tous
+les binaires deja distribues (mesure faite le 14 : `d959927b…` devenait `b9d2d0098…`).
+
+Les commandes `eas env:*` echouent actuellement sur un desaccord d'`owner`
+entre `app.json` (`pitghi`) et le projet EAS (`pitghis-team`). **Ne pas
+corriger `app.json` pour les faire passer** : il entre dans l'empreinte en
+entier, et le remede couterait ce qu'il pretend eviter. Declarer les variables
+depuis le tableau de bord Expo, ou les passer en prefixe comme ci-dessus ;
+le desaccord se corrigera au prochain build natif.
+
 **Ne pas utiliser `--auto`** : il prend le nom de la branche git comme branche
 EAS. Depuis `main`, il publierait sur une branche `main` que le canal
 `production` n'ecoute pas — publication silencieusement sans effet.

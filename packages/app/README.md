@@ -95,7 +95,44 @@ besoin de relancer l'application.
 
 `EXPO_PUBLIC_LUCY_API` est fige dans le bundle a la compilation, pas lu a
 l'execution. Il suit donc les mises a jour : brancher l'onglet Recherche sur
-l'API deployee ne demandera pas un nouveau binaire.
+l'API deployee ne demande pas un nouveau binaire.
+
+Elle se declare dans les **environnements EAS**, et surtout **pas** dans le
+bloc `env` de `eas.json`.
+
+### Pourquoi pas dans `eas.json`
+
+`eas.json` entre dans l'empreinte `runtimeVersion` (voir le skill `ota`). Y
+ajouter trois lignes change l'empreinte, donc rend les binaires deja distribues
+**ineligibles a toute mise a jour en vol**. La livraison part, la commande
+reussit, et aucun appareil ne la recoit. Mesure plutot que suppose : le bloc
+`env` faisait passer l'empreinte de `d959927b…` a `b9d2d0098…`, quand le build
+distribue aux testeurs porte la premiere.
+
+### Ou la declarer
+
+Une fois, dans chaque environnement EAS — ce qui couvre les builds **et** les
+mises a jour, sans toucher a l'empreinte :
+
+```bash
+cd packages/app
+npx --yes eas-cli@latest env:create --name EXPO_PUBLIC_LUCY_API \
+  --value https://<ref>.supabase.co/functions/v1 --environment production --visibility plaintext
+npx --yes eas-cli@latest env:create --name EXPO_PUBLIC_LUCY_API \
+  --value https://<ref>.supabase.co/functions/v1 --environment preview --visibility plaintext
+```
+
+Tant que ce n'est pas fait, passer la valeur explicitement a chaque
+publication, sans quoi la mise a jour repart avec le repli
+`http://localhost:8787` :
+
+```bash
+EXPO_PUBLIC_LUCY_API=https://<ref>.supabase.co/functions/v1 \
+  npx --yes eas-cli@latest update --branch production -m "..."
+```
+
+Le piege est vicieux : la publication reussit, rien n'echoue, et ce sont les
+recherches des testeurs qui cessent de fonctionner.
 
 **Prevenir les testeurs** qu'un produit peut n'etre pas reconnu : le scan
 interroge Open Beauty Facts, base contributive dont la couverture est

@@ -51,9 +51,15 @@ regression, meme s'il simplifie le code ou l'interface :
 ```bash
 npm install                                   # racine du monorepo
 
-npm test        --workspace @lucy/engine      # 60 tests
 npm run typecheck --workspace @lucy/engine
 npm run demo    --workspace @lucy/engine      # moteur en action sur des formules types
+
+npm test        --workspace @lucy/engine      # 89 tests, copie partagee comprise
+
+# Service de traduction (Edge Function Supabase)
+supabase functions serve recherche-criteres   # instance locale
+./supabase/verifier.sh                        # verifie une instance qui tourne
+cd supabase/functions/recherche-criteres && deno test --allow-env  # 16 tests
 
 npm run ios     --workspace @lucy/app         # simulateur iOS (macOS requis)
 npm run android --workspace @lucy/app
@@ -79,14 +85,23 @@ packages/engine/   moteur pur TypeScript, sans dependance
   src/data/        referentiel de 185 ingredients, chacun source
   scripts/         audit de couverture et collecte d'echantillon
 packages/app/      application React Native / Expo
+supabase/          service de traduction (porte la cle) et compteur de debit
+  functions/       Edge Functions Deno
+  _shared/         copie GENEREE du moteur — voir sync-moteur.sh
 docs/              decisions, methodologie, plan MVP, apercu
 design-system/     design system et ecarts assumes
 ```
+
+Le deploiement du service est decrit dans
+[`supabase/README.md`](supabase/README.md).
 
 ## Conventions
 
 - **Le moteur n'a aucune dependance** et n'en prend pas. Il tourne sous Node
   avec `--experimental-strip-types`, d'ou les imports avec extension `.ts`.
+- **`supabase/functions/_shared/` est genere**, jamais edite a la main.
+  Modifier `packages/engine/src/reco/query.ts` impose de relancer
+  `./supabase/sync-moteur.sh` — un test du moteur casse sinon.
 - **L'application importe le moteur directement**, sans couche d'adaptation.
   Ses imports sont **sans extension** : c'est la convention Metro.
 - **Toute entree du referentiel porte au moins une source** et une plage
