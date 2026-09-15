@@ -984,6 +984,83 @@ Rien n'a ete decide sur ces points ; ils ne sont pas des oublis.
 
 ## 8. Historique des sessions
 
+### 2026-09-15 — Supabase branche, puis changement de cap
+
+Point de depart : « qu'est-ce qui reste a faire pour brancher Supabase ». Les
+sept etapes consignees la veille ont ete faites, et la chaine est eprouvee de
+bout en bout — de la phrase tapee sur un iPhone jusqu'aux trois scores.
+
+**Ce qui a ete mis en service.** Projet `lucy` en `eu-west-3`, compteur de
+debit en base, secrets poses, fonction `recherche-criteres` deployee,
+`EXPO_PUBLIC_LUCY_API` declare dans les environnements EAS, build 4 televerse
+par Transporter. Deux PR mergees, une troisieme en attente de relecture.
+
+**Trois defauts que seule la mise en service pouvait reveler.** Le `revoke` de
+fin de SQL retirait a `service_role` le droit d'executer son propre compteur :
+symptome 503 sur tout le service, cause deux lignes plus bas dans le fichier.
+`supabase/.temp/` non ignore aurait bloque chaque build, `eas.json` portant
+`requireCommit` — la CLI ne cree ce repertoire qu'au premier deploiement reel.
+Et `LUCY_IP_SALT` absent degrade en silence au lieu de refuser, a l'inverse de
+la posture tenue par le compteur trois lignes plus loin ; consigne, non corrige.
+
+**Ce qui a fait changer de cap.** L'auteur a vu a l'ecran ce que ni les tests ni
+`verifier.sh` n'avaient signale : « rougeurs » parmi les criteres compris, alors
+que sa phrase ne le contenait pas. Quatre sondes ont isole le declencheur —
+« apaisante » seul suffit — et en ont revele un second : « une creme hydratante
+sans parfum » classee `leave_on_body`, donc zero resultat sur un catalogue a
+100 % soin visage. La lecon porte au-dela des deux defauts : l'accord entre le
+script et l'application avait ete pris pour une preuve de justesse, alors qu'il
+ne prouvait que leur coherence. Les deux rendaient la meme chose, et cette chose
+etait en partie inventee.
+
+Le vrai manque etait ailleurs : la recherche tournait sur **quatorze produits en
+dur** quand le scan interroge Open Beauty Facts. D'ou la decision 1.11 — la
+recommandation passe au modele, qui cherche en ligne et recoit le profil.
+
+**Quatre mesures ont remplace quatre suppositions**, et trois ont invalide un
+plan :
+
+1. Open Beauty Facts interroge par le **nom** rend une composition quatre fois
+   sur dix, et deux de ces quatre sont une autre reference que celle demandee.
+   D'ou le code-barres demande au modele, et `nomTrouve` pour pouvoir refuser
+   une composition qui n'est pas la bonne.
+2. `/v1/conversations` et `/v1/agents` repondent **404 sur le point d'entree
+   europeen**, 401 sur le mondial. La recherche en ligne et le traitement
+   europeen sont incompatibles chez ce fournisseur.
+3. `Model ministral-3b-2512 currently does not support builtin connectors` —
+   reponse de l'API. La question n'etait donc pas celle du modele choisi.
+4. Le probe 401/404 sans cle a suffi pour les deux premieres : une route
+   protegee et une route absente ne se repondent pas pareil.
+
+#### Ou reprendre
+
+Les deux services de recommandation sont ecrits, testes sur le papier, **jamais
+executes ni deployes**. PR #16.
+
+1. Verifier que `mistral-medium-latest` accepte les connecteurs avec la cle
+   disponible — `bash ~/essai-websearch.sh mistral-medium-latest`. La cle
+   d'acces aux modeles payants n'est peut-etre pas celle de la traduction,
+   d'ou `LUCY_RECO_MISTRAL_KEY`, separable et par defaut repliee sur l'autre.
+2. Installer Deno et faire tourner les 26 tests des deux services.
+3. Deployer `recommander` et `composition`, puis mesurer ce que le modele
+   rapporte reellement : codes-barres trouves, listes INCI completes ou non, et
+   surtout **ordre respecte** — une liste reordonnee produit une note plausible
+   et fausse, sans que rien ne le signale.
+4. L'application : ecran, resolution de composition, refus d'un `nomTrouve` qui
+   ne correspond pas, branchement du moteur pour qu'il applique le profil
+   localement. C'est du JavaScript, donc une mise a jour en vol suffira.
+5. Relire et merger la PR #15.
+
+**Reste non repondu, demande cinq fois** : le plafond de depense et le refus de
+l'entrainement sur la cle Mistral. Le point d'entree est public depuis ce matin,
+et la recherche en ligne est facturee a l'appel.
+
+**Et une piste a ne pas perdre.** Pour la composition, un modele n'est
+probablement pas le bon outil : une liste INCI vit dans trois ou quatre endroits
+connus, et les interroger directement serait plus exact, moins cher, et
+resterait en Europe. Le modele ne fait que lire une page a notre place, en
+pouvant se tromper d'ordre.
+
 ### 2026-09-14 — mise en ligne du service de traduction
 
 Point de depart : un testeur constate que l'onglet Recherche affiche
