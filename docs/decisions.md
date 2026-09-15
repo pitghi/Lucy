@@ -894,6 +894,7 @@ Rien n'a ete decide sur ces points ; ils ne sont pas des oublis.
 | **Opposition a l'entrainement sur le plan gratuit** | Le plan Experiment de Mistral alimente l'entrainement par defaut ; l'opposition se fait dans la console (1.8). Reste a verifier que l'option existe bien sur ce plan, la documentation ne distinguant pas explicitement gratuit et payant. A faire avant de brancher de vrais testeurs, sinon passer au plan payant. |
 | **Qualite de traduction de `ministral-3b-2512`** | Quatre demandes eprouvees a la mise en service, toutes correctes (voir 1.8). C'est un signal, pas une mesure : rien n'est eprouve sur les formulations relachees, les negations, ni les demandes portant sur plusieurs produits. A reprendre sur de vraies demandes de testeurs. Repli : `mistral-small-2603`, soixante-cinq fois moins de debit. |
 | **Region d'execution des Edge Functions** | Depuis 1.9, le traitement europeen depend d'un en-tete envoye par l'application, non plus de la configuration du serveur. Le projet est en `eu-west-3`, donc l'en-tete et la base concordent aujourd'hui — mais retirer cet en-tete ferait repartir les phrases hors d'Europe sans qu'aucun test n'echoue. Il n'existe aucun garde-fou contre cela. |
+| **Trois categories ne suffisent pas a une demande** | La premiere recherche reelle rend une protection solaire SPF50 pour « une creme apaisante ». Le moteur ne se trompe pas : la tolerance est de 98, il n'y a pas de parfum, et le produit est bien un soin visage sans rincage. Mais `ProductCategory` ne connait que `leave_on_face`, `rinse_off_face` et `leave_on_body` — une taxonomie batie pour les plafonds reglementaires par categorie (Annexes), pas pour l'intention de qui cherche. Creme de jour, solaire et serum y sont le meme objet. Ce n'est donc pas un defaut de la traduction ni du classement, mais une granularite absente en amont des deux. |
 | **Un sel absent degrade en silence** | `LUCY_IP_SALT` manquant fait tomber `traduction.ts` sur une chaine vide, donc sur des empreintes d'adresses que la force brute remonte en quelques minutes — sans qu'aucune commande echoue ni qu'aucun test casse. Le compteur, lui, refuse de servir quand il tombe : deux garde-fous, deux postures opposees. Le sel est pose sur le projet actuel ; rien n'empeche un prochain d'en repartir sans. |
 | **Migration du SDK Expo** | Le projet est en SDK 52, la version courante est la 57. Expo recommande la 54 au minimum pour Xcode 26 ; l'image epinglee (1.10) n'est qu'un sursis. `react-native` a ete aligne en 0.76.9 a cette occasion, la question ne porte plus que sur le SDK. |
 | **Nom de l'application sur l'App Store** | « Lucy » etait pris : la fiche s'appelle « Lucy (cd6504) ». A changer avant d'ouvrir la beta externe, et lie a la question du nom de marque ci-dessus. |
@@ -969,10 +970,19 @@ Les deux inconnues de la veille sont levees, et pas de la meme maniere.
 `eu-west-3`, la valeur que le client impose deja, donc la garantie de
 traitement europeen tient de bout en bout. **Le SQL, lui, etait faux.**
 
-Reste la septieme etape : construire un nouveau binaire. Le transfert du projet
-vers l'organisation a change l'empreinte `runtimeVersion`, donc les appareils
-actuels ne recevront plus d'OTA — la variable qu'on vient de declarer ne les
-atteindra pas.
+La septieme etape est faite : build 4, empreinte
+`5ba5bcb9c51ad5a7545258e1a05f6f3301320a95`, televerse par Transporter plutot
+que par `eas submit`, dont la derniere tentative avait echoue apres 42 minutes.
+Le transfert vers l'organisation ayant change l'empreinte, les testeurs deja
+equipes doivent **reinstaller** : aucune mise a jour en vol ne franchit cet
+ecart.
+
+**Eprouve sur l'appareil, depuis TestFlight.** La meme phrase que celle du
+script — « une creme apaisante sans parfum pour peau sensible » — rend les
+quatre memes criteres dans l'application : soin visage, rougeurs, tolerance
+cutanee, sans parfum. C'est la seule preuve qui valait : `verifier.sh`
+interrogeait le service, pas un binaire portant sa variable compilee dedans, et
+c'est precisement la que la panne d'origine se tenait.
 
 #### Le compteur refusait son propre appelant
 
