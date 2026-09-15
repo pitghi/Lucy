@@ -82,3 +82,12 @@ end;
 $$;
 
 revoke all on function public.verifier_debit(text, int, interval) from public, anon, authenticated;
+
+-- `revoke ... from public` retire aussi le droit a `service_role`, qui le
+-- tenait par `public` et non en propre. Sans ce grant, l'Edge Function se voit
+-- repondre `42501 permission denied` par son propre compteur, et comme elle
+-- refuse plutot que de laisser passer, **tout** le service repond 503. Le
+-- symptome ressemble a une panne d'hebergement ; la cause est deux lignes plus
+-- haut. Eprouve : c'est exactement ce qui est arrive a la premiere mise en
+-- ligne.
+grant execute on function public.verifier_debit(text, int, interval) to service_role;
