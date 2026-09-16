@@ -984,6 +984,74 @@ Rien n'a ete decide sur ces points ; ils ne sont pas des oublis.
 
 ## 8. Historique des sessions
 
+### 2026-09-16 — les deux services mis a l'epreuve reelle
+
+Reprise sur le point d'arret de la veille. Les quatre premieres etapes du
+« ou reprendre » sont faites ; la quatrieme a rendu un verdict oppose sur les
+deux services.
+
+**La cle Mistral et l'entrainement.** La question posee cinq fois a une
+reponse : la cle tient au plan gratuit *Experiment*, qui donne acces a toute
+la gamme sans facturation. Le plafond de depense n'est donc pas le sujet, la
+limite etant un debit et un volume mensuel. En revanche ce plan autorise par
+defaut l'entrainement sur les requetes — refus pose a la console avant tout
+appel portant un profil. `mistral-medium-latest` accepte les connecteurs avec
+cette cle ; `LUCY_RECO_MISTRAL_KEY` reste separable mais n'a pas lieu d'etre
+renseignee. Le point d'entree europeen rend toujours 404 sur
+`/v1/conversations` : la recherche en ligne sort d'Europe, comme prevu en 1.11.
+
+**Deux defauts que la premiere execution a reveles.** Les tests n'avaient
+jamais tourne, Deno n'etant pas installe. `composition.ts` ne compilait pas :
+la consigne du modele citait deux noms de champ entre accents graves a
+l'interieur d'un gabarit lui-meme delimite par des accents graves. Et les trois
+services hachaient la seule adresse IP avec le meme sel, donc partageaient une
+file unique : des plafonds de 5, 20 et 10 appliques au meme total, le plus
+strict l'emportant sur le trafic des trois. Un discriminant de service entre
+desormais dans l'empreinte des deux nouvelles fonctions.
+
+**`recommander` tient ce qu'on en attendait.** Sur « une creme apaisante pour
+peau sensible, sans parfum », profil transmis, il rend quatre cremes apaisantes
+sans parfum. Le defaut d'origine — une protection solaire rendue par le moteur
+faute de mieux parmi quatorze produits — ne se reproduit pas.
+
+**La garantie la plus redoutee tient sur cet echantillon.** Deux listes INCI
+rendues ont ete confrontees a leur page source : identiques, **ordre compris**,
+sans ajout ni traduction. C'est le risque nomme la veille — une liste reordonnee
+produit une note plausible et fausse — et il ne s'est pas materialise ici. Deux
+verifications ne font pas une mesure ; elles autorisent a continuer, pas a
+conclure.
+
+**Le code-barres, lui, ne vient pas.** Zero sur quatre suggestions, alors que
+c'est « ce qui vaut le plus » : Open Beauty Facts l'indexe et le scan
+l'exploite deja. Pire, la base ne connait pas non plus ces produits par leur
+nom — zero resultat pour les deux essayes. Le second rideau imagine pour
+resoudre la composition ne repose donc sur rien pour des references de niche.
+
+**`composition` ne tient pas dans une Edge Function.** Trois appels, trois
+echecs a 150 secondes : delai d'inactivite depasse, puis limite de ressources
+du worker. Ce n'est pas un reglage a ajuster, c'est un modele qui cherche en
+ligne, lit des pages et rend une liste longue, dans une enveloppe qui n'est pas
+faite pour ca. La piste notee la veille cesse d'etre une intuition : une liste
+INCI vit dans trois ou quatre endroits connus, et les interroger directement
+serait plus exact, moins cher, plus rapide, et resterait en Europe.
+
+#### Ou reprendre
+
+1. **Refaire `composition` sans modele** : interrogation directe d'Open Beauty
+   Facts par code-barres, puis des sources INCI connues. Le service actuel est
+   deploye mais inutilisable ; ne pas le brancher.
+2. **Trouver d'ou viendra le code-barres**, puisque ni le modele ni Open Beauty
+   Facts par le nom ne le donnent. Sans lui, la composition d'un produit
+   recommande reste hors d'atteinte, et les trois scores avec elle.
+3. **L'application**, qui ne consomme toujours aucun des deux services.
+4. Relire et merger la PR #15.
+
+**Ce que la mesure ne dit pas.** Une seule demande, quatre suggestions, deux
+compositions verifiees. Rien sur la stabilite d'une demande a l'autre, ni sur
+ce que le modele fait d'un profil contradictoire, ni sur le respect des deux
+garanties passees du code au prompt en 1.11 — ecarter un INCI non tolere, ne
+jamais reproposer un produit juge mauvais. Ces deux-la restent non mesurees.
+
 ### 2026-09-15 — Supabase branche, puis changement de cap
 
 Point de depart : « qu'est-ce qui reste a faire pour brancher Supabase ». Les
