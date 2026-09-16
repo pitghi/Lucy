@@ -45,11 +45,16 @@ Architecture retenue :
 
 1. **Socle : Open Beauty Facts.** Base ouverte, codes-barres et listes INCI,
    gratuite. Couverture partielle en cosmetique, a mesurer.
-2. **Repli : lecture optique de la liste INCI.** Quand le code-barres est
-   inconnu, l'utilisateur photographie la liste d'ingredients. Le parsing
-   existant tolere deja le bruit de reconnaissance optique (coquilles,
-   separateurs, casse).
-3. **Contribution utilisateur.** Une liste saisie ou photographiee enrichit la
+2. **Premier rattrapage : recherche web** (decision 3.9). Quand la base ne
+   porte pas la liste, un service dedie la cherche sur le web et la rapporte
+   avec la page ou il l'a lue. Elle s'affiche comme telle : elle n'a pas le
+   statut d'une fiche produit, et son exactitude n'est pas encore mesuree.
+3. **Repli : lecture optique de la liste INCI.** Quand rien n'est trouve,
+   l'utilisateur photographie la liste d'ingredients. Le parsing existant
+   tolere deja le bruit de reconnaissance optique (coquilles, separateurs,
+   casse). Toujours pas ecrit, et la recherche web ne l'annule pas : elle ne
+   sert ni hors ligne, ni pour un produit absent du web.
+4. **Contribution utilisateur.** Une liste saisie ou photographiee enrichit la
    base pour les suivants. C'est ce qui fait passer la couverture de partielle
    a suffisante, et c'est un actif qui s'accumule.
 

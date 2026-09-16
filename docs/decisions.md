@@ -562,6 +562,72 @@ plus deux produits par marque, un quota de formules courtes — sans lui le tri
 par couverture ne retient que des listes de quarante ingredients, et une
 demande du type « au maximum quinze ingredients » ne renverrait jamais rien.
 
+### 3.9 La composition absente est cherchee sur le web, et sa provenance s'affiche — *provisoire*
+
+Consequence directe de 3.1 et de l'impasse decrite en 5.12. Quatre produits sur
+dix n'ont pas de liste exploitable dans Open Beauty Facts ; le scan les nommait
+et s'arretait la, l'ecran de saisie n'existant toujours pas (5.7). La
+composition, elle, est publique : elle figure sur la fiche du fabricant, sur
+celle d'un distributeur, ou sur l'emballage photographie ailleurs.
+
+Un service dedie, `composition-produit`, la cherche donc sur le web — une Edge
+Function de plus, pour la meme raison que la premiere : la cle du modele ne
+peut pas vivre dans le binaire. Mistral, connecteur `web_search`, traitement
+europeen.
+
+**Ce que le modele fait, et ce qu'il ne fait pas.** Il retrouve une page et en
+recopie la liste. Il ne note rien, n'estime aucune concentration, ne voit aucun
+referentiel : le moteur fait tout cela ensuite, localement, sur le texte
+rapporte. C'est la meme frontiere qu'en 1.8 et pour la meme raison — un
+classement produit par un modele ne serait ni rejouable ni opposable a une
+marque.
+
+**Trois refus avant toute reponse positive.** Le mode d'echec redoute n'est pas
+l'absence de resultat, c'est la composition plausible : elle produirait trois
+notes fausses et credibles, ce qui est pire que rien.
+
+| Refus | Ce qu'il ecarte |
+| --- | --- |
+| Aucune page citee par l'outil de recherche | Une liste recitee de memoire, qui a l'air exacte et ne l'est pas |
+| Moins de cinq ingredients apres decoupage | Le meme seuil qu'a l'audit (3.1), applique avec le parsing du moteur |
+| Moins de 80 % de libelles ayant la forme d'un nom INCI | Un paragraphe de description commerciale decoupe sur ses virgules |
+
+L'adresse rendue n'est pas celle que le modele annonce, mais l'une de celles que
+l'outil a effectivement ouvertes. C'est la difference entre une source et une
+citation.
+
+**La provenance s'affiche** (5.15). Une liste recopiee d'une page n'a pas le
+statut d'une fiche produit : elle peut decrire une autre contenance, une
+formule anterieure, un homonyme. Les trois scores en dependent pourtant
+entierement, donc l'ecart se dit au-dessus des scores et la page est
+atteignable. Sans cela, la note ne serait pas contestable sur des faits, ce que
+6.1 exige.
+
+Le service sert aussi les codes-barres absents de la base, ou il rapporte en
+plus un nom et une marque — sans quoi l'ecran n'aurait rien a afficher. Le nom
+de la base l'emporte toujours sur celui de la page quand les deux existent.
+
+**Ecarte :** imposer un schema de sortie ferme comme en 1.8. La combinaison
+d'un format de reponse en schema et de l'execution d'un connecteur n'est pas
+garantie chez le fournisseur, et un refus de schema ferait echouer l'appel
+apres avoir paye la recherche. La consigne demande un objet JSON seul, et la
+validation cote service fait foi — c'est elle qui comptait de toute facon.
+
+**Provisoire**, et la condition de revue est double :
+
+- **L'exactitude des listes rapportees n'est pas mesuree.** Les trois refus
+  ecartent les echecs grossiers, aucun ne verifie que la liste est bien celle
+  du produit scanne. Il faut un echantillon de produits dont on possede
+  l'emballage, et comparer. Tant que ce n'est pas fait, un score calcule sur
+  une composition web est annonce comme tel et rien de plus.
+- **Le declenchement est automatique**, a chaque scan qui n'aboutit pas. C'est
+  ce qui rend le parcours continu, mais chaque recherche coute une requete web
+  facturee et une vingtaine de secondes d'attente, pour un produit qui peut
+  tres bien n'etre nulle part. L'alternative — un bouton « chercher sur le
+  web » — reporte le cout sur une intention explicite au prix d'un geste de
+  plus. Non tranche ; le plafond par adresse est a cinq appels par minute, soit
+  cinq fois moins que la traduction, en attendant.
+
 ### 3.7 Les photographies d'emballage viennent d'Open Beauty Facts — *acte* **[PR]**
 
 Recuperees par code-barres via l'API `api/v2` (`image_front_url` et
@@ -802,8 +868,8 @@ confondre reporte sur la camera un echec qui vient de la donnee :
 | Issue | Ce que l'ecran dit et propose |
 | --- | --- |
 | Produit trouve | La fiche s'ouvre |
-| Code-barres absent de la base | Le code est nomme, puis reprise de la lecture |
-| Produit reference sans composition exploitable | Le produit est nomme, puis reprise de la lecture |
+| Code-barres absent de la base | La composition est cherchee sur le web (3.9) ; a defaut, le code est nomme, puis reprise de la lecture |
+| Produit reference sans composition exploitable | Meme chose, le produit etant en plus nomme |
 | Reseau indisponible | Reessayer le meme code, ou renoncer |
 
 Le seuil d'exploitabilite est celui de l'audit : cinq ingredients (3.1). Une
@@ -812,9 +878,10 @@ peut-etre, et les deux cas n'appellent pas la meme suite — seul le reseau vaut
 d'etre rejoue.
 
 Les deux premiers cas devraient mener a une saisie de la liste ; ils n'y menent
-pas, faute d'ecran de saisie (5.7). L'ecran les nomme donc sans rien promettre,
-ce qui reste preferable au silence d'avant — mais c'est un parcours qui
-s'arrete la, et c'est la l'argument le plus fort pour ecrire cet ecran.
+toujours pas, faute d'ecran de saisie (5.7). Depuis 3.9 ils menent d'abord a
+une recherche web, qui en rattrape une partie : le parcours ne s'arrete plus
+systematiquement la. Quand elle ne donne rien, l'ecran nomme le cas sans rien
+promettre, ce qui reste preferable au silence d'avant.
 
 Le code lu s'affiche des la lecture, avant meme le resultat : il prouve que la
 camera a fait son travail. Et la lecture est suspendue tant qu'un message
@@ -856,6 +923,29 @@ contredit la regle de visibilite de l'incertitude. La sortie est d'afficher la
 categorie retenue sur la fiche et de permettre sa correction ; ce n'est pas
 fait. Voir §7.
 
+### 5.15 Une composition venue du web se signale, et l'attente se nomme — *acte*
+
+Pendant de 3.9 cote interface. Deux endroits, deux problemes differents.
+
+**Sur la fiche**, un bandeau precede les scores : composition trouvee sur le
+web, non verifiee sur l'emballage, susceptible de concerner une autre
+contenance ou une formule anterieure, et le domaine de la page est atteignable.
+Il precede les scores parce qu'il conditionne leur lecture — le reduire a une
+mention en bas de page reviendrait a presenter comme equivalentes une note
+calculee sur une fiche produit et une note calculee sur une page trouvee. Il ne
+s'affiche que dans ce cas : repeter la provenance a chaque ecran la
+banaliserait, et c'est parce qu'elle est exceptionnelle qu'elle doit se voir.
+
+**Sur l'ecran de scan**, l'etape est annoncee. Une recherche en base se compte
+en centaines de millisecondes, une recherche web en dizaines de secondes : les
+confondre sous un meme « Recherche du produit... » ferait passer la seconde
+pour un blocage, devant une camera figee. L'ecran dit donc « Composition
+absente, recherche sur le web... » et annonce l'ordre de grandeur de l'attente.
+
+Les deux messages d'echec sont repris en consequence : ils disent maintenant
+que le web a ete cherche aussi, sans quoi ils promettraient implicitement un
+recours qui a deja eu lieu.
+
 ---
 
 ## 6. Posture juridique et editoriale
@@ -889,7 +979,7 @@ Rien n'a ete decide sur ces points ; ils ne sont pas des oublis.
 | **Nom et positionnement** | « Lucy » est le nom du depot, pas une decision de marque. |
 | **Taux de presence du code-barres** | Traite cote interface (5.12) : les deux cas sont desormais distingues a l'ecran. Reste non mesure — l'audit portait sur la **liste d'ingredients**, pas sur le code-barres, donc on ignore quelle part des scans aboutit reellement en rayon. |
 | **Categorie d'un produit scanne** | Deduite des categories et du nom Open Beauty Facts (5.14), donc approximative, alors qu'elle deplace la note. Elle devrait s'afficher sur la fiche et pouvoir etre corrigee. Non fait. |
-| **Authentification de l'application aupres du service** | Le point d'entree de la fonction `recherche-criteres` est public : qui connait l'URL peut l'appeler. Un jeton embarque dans le binaire s'en extrait comme une cle d'API. L'attestation d'application (App Attest, Play Integrity) est la reponse serieuse ; non traitee. En attendant, le plafond par adresse (1.9) et le plafond de depense sur la cle tiennent lieu de protection. |
+| **Authentification de l'application aupres des services** | Les points d'entree de `recherche-criteres` et `composition-produit` sont publics : qui connait l'URL peut les appeler. Le second coute plus cher a l'appel, ce qui augmente l'enjeu. Un jeton embarque dans le binaire s'en extrait comme une cle d'API. L'attestation d'application (App Attest, Play Integrity) est la reponse serieuse ; non traitee. En attendant, le plafond par adresse (1.9) et le plafond de depense sur la cle tiennent lieu de protection. |
 | **Budget par recherche** | Mesure en volume de jetons (~670 en entree, ~60 en sortie), soit moins de 3 $ par mois pour 10 000 recherches chez tous les fournisseurs examines. Ce qui n'est pas mesure, c'est la latence ressentie dans un champ de recherche. |
 | **Opposition a l'entrainement sur le plan gratuit** | Le plan Experiment de Mistral alimente l'entrainement par defaut ; l'opposition se fait dans la console (1.8). Reste a verifier que l'option existe bien sur ce plan, la documentation ne distinguant pas explicitement gratuit et payant. A faire avant de brancher de vrais testeurs, sinon passer au plan payant. |
 | **Qualite de traduction de `ministral-3b-2512`** | Quatre demandes eprouvees a la mise en service, toutes correctes (voir 1.8). C'est un signal, pas une mesure : rien n'est eprouve sur les formulations relachees, les negations, ni les demandes portant sur plusieurs produits. A reprendre sur de vraies demandes de testeurs. Repli : `mistral-small-2603`, soixante-cinq fois moins de debit. |
@@ -897,11 +987,46 @@ Rien n'a ete decide sur ces points ; ils ne sont pas des oublis.
 | **Un sel absent degrade en silence** | `LUCY_IP_SALT` manquant fait tomber `traduction.ts` sur une chaine vide, donc sur des empreintes d'adresses que la force brute remonte en quelques minutes — sans qu'aucune commande echoue ni qu'aucun test casse. Le compteur, lui, refuse de servir quand il tombe : deux garde-fous, deux postures opposees. Le sel est pose sur le projet actuel ; rien n'empeche un prochain d'en repartir sans. |
 | **Migration du SDK Expo** | Le projet est en SDK 52, la version courante est la 57. Expo recommande la 54 au minimum pour Xcode 26 ; l'image epinglee (1.10) n'est qu'un sursis. `react-native` a ete aligne en 0.76.9 a cette occasion, la question ne porte plus que sur le SDK. |
 | **Nom de l'application sur l'App Store** | « Lucy » etait pris : la fiche s'appelle « Lucy (cd6504) ». A changer avant d'ouvrir la beta externe, et lie a la question du nom de marque ci-dessus. |
-| **Ecran de saisie / OCR** | Priorite fonctionnelle suivante (3.1), toujours pas ecrit. Son absence coute desormais davantage : les appels a la saisie ont ete retires de l'ecran de scan (5.7), donc un produit non reconnu n'a plus aucune suite dans l'application. |
+| **Ecran de saisie / OCR** | Priorite fonctionnelle suivante (3.1), toujours pas ecrit. La recherche web (3.9) rattrape une partie des produits sans composition, mais pas tous, et elle ne rattrape rien hors ligne ni pour un produit absent du web. Elle repousse l'echeance, elle ne l'annule pas. |
+| **Exactitude des compositions trouvees sur le web** | Non mesuree (3.9). Les trois refus du service ecartent les echecs grossiers ; aucun ne verifie que la liste rapportee est bien celle du produit scanne. Demande un echantillon de produits dont on possede l'emballage. Determine si un score calcule sur une composition web peut un jour cesser d'etre annonce comme moins sur. |
+| **Declenchement de la recherche web** | Automatique a chaque scan qui n'aboutit pas (3.9). Continuite du parcours contre cout facture et vingt secondes d'attente, y compris pour un produit qui n'est nulle part. L'alternative est un bouton explicite. Non tranche. |
+| **Cout d'une recherche de composition** | Non mesure. Une requete web facturee par le fournisseur, plus une lecture de pages dont le volume de jetons depend des pages ouvertes — donc sans commune mesure avec les ~670 jetons d'une traduction. A mesurer avant d'ouvrir a des testeurs, et a borner par le plafond de depense sur la cle. |
 
 ---
 
 ## 8. Historique des sessions
+
+### 2026-09-16 — la composition manquante se cherche sur le web
+
+Point de depart : deux scans en rayon, deux fois le meme ecran. « Ce produit
+est reference, mais sa liste d'ingredients est absente ou trop courte pour etre
+analysee. » Une pate anti-imperfections L'Oreal Men Expert, un spray solaire
+Garnier. Les deux sont identifies, nommes, photographies — et l'application
+n'en dit rien. C'est l'impasse annoncee en 5.12, rencontree telle quelle.
+
+Ce qui a ete fait (3.9) : un second service, `composition-produit`, qui cherche
+la liste sur le web et la rapporte avec la page ou il l'a lue. Meme forme que
+le premier — la logique separee du point d'entree pour etre testable sans
+reseau, le plafond avant toute depense, la sortie du modele revalidee a
+l'arrivee.
+
+Ce qui a demande le plus de soin n'est pas l'appel au modele, c'est ce qu'on
+refuse d'en accepter. Une recherche qui ne trouve rien est un resultat
+acceptable ; une composition plausible ne l'est pas, parce qu'elle produirait
+trois notes fausses et parfaitement credibles. D'ou trois refus, dont le plus
+important est l'absence de page effectivement ouverte : sans elle, la liste ne
+vient pas du web mais de la memoire du modele. L'adresse rendue est d'ailleurs
+prise dans les references posees par l'outil de recherche, jamais dans ce que
+le modele annonce — une source, pas une citation.
+
+`parseInciList` a rejoint `parseSearchQuery` dans la copie partagee des Edge
+Functions : le seuil de cinq ingredients n'a de sens que si le service et le
+moteur decoupent une liste de la meme maniere. Le test d'integrite couvre
+desormais les trois fichiers.
+
+Reste ouvert, et consigne comme tel : l'exactitude des listes rapportees n'est
+pas mesuree, le cout d'une recherche non plus, et le declenchement automatique
+n'est pas tranche.
 
 ### 2026-09-14 — mise en ligne du service de traduction
 

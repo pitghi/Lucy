@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 #
-# Recopie la validation des criteres du moteur vers le dossier partage des
-# Edge Functions.
+# Recopie du moteur vers le dossier partage des Edge Functions les regles que
+# les fonctions doivent appliquer a l'identique.
 #
 # POURQUOI UNE COPIE. `parseSearchQuery` est la seule regle qui fait foi sur la
-# forme des criteres, et elle doit rester ecrite une seule fois. Mais une Edge
-# Function est deployee isolement : rien ne garantit qu'un import pointant hors
-# de `supabase/functions/` survive a l'empaquetage.
+# forme des criteres, `parseInciList` la seule qui fait foi sur le decoupage
+# d'une liste d'ingredients : toutes deux doivent rester ecrites une seule
+# fois. Mais une Edge Function est deployee isolement : rien ne garantit qu'un
+# import pointant hors de `supabase/functions/` survive a l'empaquetage.
 #
 # La copie est donc **generee, jamais editee**, et un test la compare a sa
 # source (`npm test --workspace @lucy/engine`). Modifier le moteur sans
@@ -42,10 +43,13 @@ copier() {
 
 echo "Copies a jour :"
 copier reco/query.ts
+copier inci/parse.ts
 copier types.ts
 
-# Dans le moteur, `query.ts` vit un cran sous `types.ts` ; cote partage, les
-# deux sont voisins. C'est la seule retouche que subit la copie, et le test
-# d'integrite la reproduit a l'identique.
-sed -i.bak "s|from '../types.ts'|from './types.ts'|" "$partage/query.ts"
-rm -f "$partage/query.ts.bak"
+# Dans le moteur, `query.ts` et `parse.ts` vivent un cran sous `types.ts` ;
+# cote partage, tout est voisin. C'est la seule retouche que subissent les
+# copies, et le test d'integrite la reproduit a l'identique.
+for fichier in query.ts parse.ts; do
+  sed -i.bak "s|from '../types.ts'|from './types.ts'|" "$partage/$fichier"
+  rm -f "$partage/$fichier.bak"
+done

@@ -9,6 +9,7 @@ import { usePalette } from '../theme/usePalette';
 import { ScoreRow } from '../components/ScoreRow';
 import { ReasonCard } from '../components/ReasonCard';
 import { CoverageNotice } from '../components/CoverageNotice';
+import { CompositionSourceNotice } from '../components/CompositionSourceNotice';
 import { ConfidenceIndicator } from '../components/Confidence';
 import { ProductImage } from '../components/ProductImage';
 
@@ -27,6 +28,11 @@ import { ProductImage } from '../components/ProductImage';
 interface Props {
   product: Product;
   assessment: ProductAssessment;
+  /**
+   * Page d'ou la composition a ete tiree, quand elle vient du web et non d'une
+   * fiche produit (decision 3.9). Absente le reste du temps.
+   */
+  compositionSourceUrl?: string;
   onBack: () => void;
   /** Enregistre le produit comme bien toléré ou non, pour affiner le profil. */
   onToleranceFeedback: (tolerated: boolean) => void;
@@ -35,6 +41,7 @@ interface Props {
 export function ProductScreen({
   product,
   assessment,
+  compositionSourceUrl,
   onBack,
   onToleranceFeedback,
 }: Props) {
@@ -123,6 +130,12 @@ export function ProductScreen({
               </Text>
             </View>
           </View>
+        ) : null}
+
+        {/* La provenance precede les scores : elle conditionne leur lecture,
+            elle n'est pas une precision a chercher apres coup. */}
+        {compositionSourceUrl ? (
+          <CompositionSourceNotice url={compositionSourceUrl} />
         ) : null}
 
         <View style={[styles.card, { backgroundColor: palette.card, borderColor: palette.border }]}>

@@ -19,7 +19,11 @@ import { ProfileScreen } from './src/screens/ProfileScreen';
 import { RecommendationsScreen } from './src/screens/RecommendationsScreen';
 import { SearchScreen } from './src/screens/SearchScreen';
 import { DEMO_CATALOG } from './src/data/catalog';
-import { lookupBarcode, type LookupOutcome } from './src/data/productLookup';
+import {
+  lookupBarcode,
+  type LookupOutcome,
+  type LookupStep,
+} from './src/data/productLookup';
 
 /**
  * Racine de l'application.
@@ -51,6 +55,17 @@ export default function App() {
   const [selected, setSelected] = useState<Product | null>(null);
 
   /**
+   * Page d'ou vient la composition du produit ouvert, quand elle a ete trouvee
+   * sur le web (decision 3.9).
+   *
+   * Elle n'entre pas dans `Product` : le type du moteur est une entree de
+   * scoring, et la provenance ne change aucun calcul. Elle change ce que
+   * l'ecran doit dire, ce qui est une autre affaire — c'est deja le partage
+   * retenu pour les photographies (decision 3.7).
+   */
+  const [compositionSource, setCompositionSource] = useState<string | null>(null);
+
+  /**
    * Etat de la lecture en cours.
    *
    * Un scan a trois issues et non deux : la fiche s'ouvre, la recherche
@@ -60,9 +75,10 @@ export default function App() {
    */
   const [scan, setScan] = useState<{
     searching: boolean;
+    step: LookupStep;
     code: string | null;
     failure: Exclude<LookupOutcome, { statut: 'trouve' }> | null;
-  }>({ searching: false, code: null, failure: null });
+  }>({ searching: false, step: 'base', code: null, failure: null });
 
   /**
    * Delai de garde apres la fermeture d'une fiche.
@@ -77,6 +93,7 @@ export default function App() {
   const closeProduct = useCallback(() => {
     reopenBlockedUntil.current = Date.now() + 2500;
     setSelected(null);
+    setCompositionSource(null);
   }, []);
 
   /**
@@ -119,30 +136,36 @@ export default function App() {
   /**
    * Cherche le produit derriere un code-barres lu.
    *
-   * La recherche interroge le catalogue local puis Open Beauty Facts. Elle
-   * n'echoue jamais en silence : chaque issue negative remonte a l'ecran de
-   * scan, qui la nomme et propose la suite.
+   * La recherche interroge le catalogue local, puis Open Beauty Facts, puis le
+   * web quand la base n'a pas la liste d'ingredients. Elle n'echoue jamais en
+   * silence : chaque issue negative remonte a l'ecran de scan, qui la nomme et
+   * propose la suite. L'etape en cours y remonte aussi — la recherche web dure
+   * assez longtemps pour devoir etre annoncee.
    */
   const handleBarcode = useCallback((barcode: string) => {
     if (barcode === lastScanned.current && Date.now() < reopenBlockedUntil.current) {
       return;
     }
     lastScanned.current = barcode;
-    setScan({ searching: true, code: barcode, failure: null });
+    setScan({ searching: true, step: 'base', code: barcode, failure: null });
 
-    lookupBarcode(barcode).then((outcome) => {
+    const suivreEtape = (step: LookupStep) =>
+      setScan((current) => (current.searching ? { ...current, step } : current));
+
+    lookupBarcode(barcode, suivreEtape).then((outcome) => {
       if (outcome.statut === 'trouve') {
-        setScan({ searching: false, code: null, failure: null });
+        setScan({ searching: false, step: 'base', code: null, failure: null });
+        setCompositionSource(outcome.sourceUrl ?? null);
         setSelected(outcome.product);
         return;
       }
-      setScan({ searching: false, code: barcode, failure: outcome });
+      setScan({ searching: false, step: 'base', code: barcode, failure: outcome });
     });
   }, []);
 
   /** Ecarte le message d'echec et rouvre la lecture. */
   const dismissScan = useCallback(() => {
-    setScan({ searching: false, code: null, failure: null });
+    setScan({ searching: false, step: 'base', code: null, failure: null });
   }, []);
 
   /** Relance la recherche du meme code apres une coupure de reseau. */
@@ -158,6 +181,7 @@ export default function App() {
         <ProductScreen
           product={selected}
           assessment={assessment}
+          {...(compositionSource ? { compositionSourceUrl: compositionSource } : {})}
           onBack={closeProduct}
           onToleranceFeedback={(suited) => recordTolerance(selected, suited)}
         />
@@ -173,6 +197,7 @@ export default function App() {
             <ScanScreen
               onBarcode={handleBarcode}
               searching={scan.searching}
+              step={scan.step}
               pendingCode={scan.code}
               failure={scan.failure}
               onDismiss={dismissScan}

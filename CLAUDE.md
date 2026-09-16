@@ -35,7 +35,8 @@ regression, meme s'il simplifie le code ou l'interface :
 - **Un actif sous sa dose efficace ne rapporte aucun point.**
 - **L'incertitude reste visible** : une concentration s'affiche « entre 0,3 et
   1 % » ou « sous 1 % », jamais par sa moyenne. Chaque estimation porte son
-  niveau de confiance.
+  niveau de confiance. Une composition trouvee sur le web et non sur une fiche
+  produit (decision 3.9) le dit au-dessus des scores, avec sa source.
 - **Jamais la couleur seule** : chaque score porte un libelle textuel. Et pas
   de vert dans l'echelle — c'est la semantique des concurrents.
 - **Chaque motif porte ses sources.** Une note sans motif ne se distingue pas
@@ -54,12 +55,12 @@ npm install                                   # racine du monorepo
 npm run typecheck --workspace @lucy/engine
 npm run demo    --workspace @lucy/engine      # moteur en action sur des formules types
 
-npm test        --workspace @lucy/engine      # 89 tests, copie partagee comprise
+npm test        --workspace @lucy/engine      # 90 tests, copies partagees comprises
 
-# Service de traduction (Edge Function Supabase)
-supabase functions serve recherche-criteres   # instance locale
+# Services serveur (Edge Functions Supabase)
+supabase functions serve                      # instance locale, les deux fonctions
 ./supabase/verifier.sh                        # verifie une instance qui tourne
-cd supabase/functions/recherche-criteres && deno test --allow-env  # 16 tests
+cd supabase/functions && deno test --allow-env  # 35 tests, les deux fonctions
 
 npm run ios     --workspace @lucy/app         # simulateur iOS (macOS requis)
 npm run android --workspace @lucy/app
@@ -85,9 +86,11 @@ packages/engine/   moteur pur TypeScript, sans dependance
   src/data/        referentiel de 185 ingredients, chacun source
   scripts/         audit de couverture et collecte d'echantillon
 packages/app/      application React Native / Expo
-supabase/          service de traduction (porte la cle) et compteur de debit
-  functions/       Edge Functions Deno
-  _shared/         copie GENEREE du moteur — voir sync-moteur.sh
+supabase/          les deux services (ils portent la cle) et compteur de debit
+  functions/
+    recherche-criteres/  traduit une demande en langage libre en criteres
+    composition-produit/ cherche sur le web la liste d'ingredients manquante
+    _shared/       copie GENEREE du moteur — voir sync-moteur.sh
 docs/              decisions, methodologie, plan MVP, apercu
 design-system/     design system et ecarts assumes
 ```
@@ -100,8 +103,8 @@ Le deploiement du service est decrit dans
 - **Le moteur n'a aucune dependance** et n'en prend pas. Il tourne sous Node
   avec `--experimental-strip-types`, d'ou les imports avec extension `.ts`.
 - **`supabase/functions/_shared/` est genere**, jamais edite a la main.
-  Modifier `packages/engine/src/reco/query.ts` impose de relancer
-  `./supabase/sync-moteur.sh` — un test du moteur casse sinon.
+  Modifier `packages/engine/src/reco/query.ts` ou `src/inci/parse.ts` impose de
+  relancer `./supabase/sync-moteur.sh` — un test du moteur casse sinon.
 - **L'application importe le moteur directement**, sans couche d'adaptation.
   Ses imports sont **sans extension** : c'est la convention Metro.
 - **Toute entree du referentiel porte au moins une source** et une plage

@@ -1,5 +1,6 @@
 import { parseInciList, type Product, type ProductCategory } from '@lucy/engine';
 import { DEMO_CATALOG } from './catalog';
+import { chercherComposition } from './compositionClient';
 
 /**
  * Recherche d'un produit par son code-barres.
@@ -18,6 +19,13 @@ import { DEMO_CATALOG } from './catalog';
  * incident mais un etat ordinaire, et il se distingue en trois cas que
  * l'interface ne doit pas confondre — code inconnu de la base, produit connu
  * sans composition, reseau indisponible. Chacun appelle une suite differente.
+ *
+ * Les deux premiers ne s'arretent plus la. Quand la base n'a pas la liste, le
+ * service `composition-produit` va la chercher sur le web et la rapporte avec
+ * la page ou il l'a lue (decision 3.9). Cette liste n'a pas le meme statut
+ * qu'une fiche de base : elle est marquee comme telle jusqu'a l'ecran, avec sa
+ * source, parce qu'une note dont on ne peut pas montrer la provenance n'est
+ * pas opposable.
  */
 
 const ENDPOINT = 'https://world.openbeautyfacts.org/api/v2/product';
@@ -35,9 +43,25 @@ const TIMEOUT_MS = 8000;
  */
 const MIN_INGREDIENTS = 5;
 
+/**
+ * D'ou vient la composition affichee.
+ *
+ * `web` n'est pas une source comme les deux autres : la liste a ete recopiee
+ * d'une page par un modele, elle peut concerner une autre contenance ou une
+ * formule anterieure, et la fiche doit le dire. Les deux autres viennent d'une
+ * fiche produit identifiee par le code-barres.
+ */
+export type CompositionSource = 'catalogue' | 'openbeautyfacts' | 'web';
+
 export type LookupOutcome =
   /** Produit trouve avec une liste INCI exploitable. */
-  | { statut: 'trouve'; product: Product; source: 'catalogue' | 'openbeautyfacts' }
+  | {
+      statut: 'trouve';
+      product: Product;
+      source: CompositionSource;
+      /** Page ou la liste a ete lue. Presente pour la seule source `web`. */
+      sourceUrl?: string;
+    }
   /** Code-barres present dans la base, mais sans composition utilisable. */
   | { statut: 'sans_composition'; barcode: string; name?: string; brand?: string }
   /** Code-barres absent de la base. */
@@ -178,7 +202,10 @@ async function fetchRecord(barcode: string): Promise<Fetched> {
  * l'emballage vendu ici. Les noms INCI y restent en denomination
  * internationale, le parsing n'y perd donc rien.
  */
-function toOutcome(barcode: string, fiche: ObfProduct): LookupOutcome {
+function toOutcome(
+  barcode: string,
+  fiche: ObfProduct,
+): Extract<LookupOutcome, { statut: 'trouve' | 'sans_composition' }> {
   const name = (fiche.product_name_fr || fiche.product_name || '').trim();
   const brand = (fiche.brands ?? '').split(',')[0]?.trim() ?? '';
 
@@ -213,13 +240,76 @@ function toOutcome(barcode: string, fiche: ObfProduct): LookupOutcome {
   };
 }
 
+/**
+ * Etapes de la recherche, annoncees a l'ecran pendant qu'elles durent.
+ *
+ * La consultation de la base se compte en centaines de millisecondes ; la
+ * recherche web se compte en dizaines de secondes. Sans annonce, la seconde
+ * passerait pour une panne devant une camera figee.
+ */
+export type LookupStep = 'base' | 'web';
+
+/**
+ * Derniere tentative quand la base n'a pas la liste : la chercher sur le web.
+ *
+ * Elle ne remplace pas le cas d'echec, elle le precede : si le service ne
+ * rapporte rien, c'est le message d'origine qui s'affiche — produit sans
+ * composition, ou code-barres inconnu, selon ce que la base a repondu.
+ *
+ * Ce qui revient est marque `web` jusqu'a l'ecran. Une liste recopiee d'une
+ * page n'est pas une fiche produit : elle peut concerner une autre contenance
+ * ou une formule anterieure, et la fiche l'annonce avec son adresse.
+ */
+async function chercherSurLeWeb(
+  manque: Extract<LookupOutcome, { statut: 'sans_composition' | 'inconnu' }>,
+): Promise<LookupOutcome> {
+  const connu = manque.statut === 'sans_composition' ? manque : { name: '', brand: '' };
+
+  const trouvee = await chercherComposition({
+    barcode: manque.barcode,
+    ...(connu.name ? { name: connu.name } : {}),
+    ...(connu.brand ? { brand: connu.brand } : {}),
+  });
+
+  if (!trouvee.trouve) return manque;
+
+  // Le service valide deja la liste. On la revalide ici avec le parsing du
+  // moteur, pour la meme raison qu'ailleurs : ce qui vient du reseau ne fait
+  // pas foi, et une liste trop courte produirait une note sur rien.
+  if (parseInciList(trouvee.inciList).length < MIN_INGREDIENTS) return manque;
+
+  // Le nom de la base l'emporte sur celui de la page : c'est le produit que
+  // l'utilisateur a dans la main. Celui de la page ne sert que quand la base
+  // ne connaissait pas le code-barres.
+  const name = connu.name || trouvee.name || '';
+  const brand = connu.brand || trouvee.brand || '';
+
+  return {
+    statut: 'trouve',
+    source: 'web',
+    sourceUrl: trouvee.source,
+    product: {
+      barcode: manque.barcode,
+      name: name || `Produit ${manque.barcode}`,
+      brand: brand || 'Marque non renseignée',
+      // Aucune categorie ne revient du web : elle se deduit du seul nom, ce qui
+      // reste l'approximation assumee de la decision 5.14.
+      category: inferCategory([], name),
+      inciList: trouvee.inciList,
+    },
+  };
+}
+
 /** Resultats deja obtenus dans la session, pour ne pas rejouer une requete. */
 const cache = new Map<string, LookupOutcome>();
 
 /** Requetes en cours, pour qu'un meme code scanne deux fois n'appelle qu'une fois. */
 const inFlight = new Map<string, Promise<LookupOutcome>>();
 
-async function resolve(barcode: string): Promise<LookupOutcome> {
+async function resolve(
+  barcode: string,
+  onStep?: (step: LookupStep) => void,
+): Promise<LookupOutcome> {
   const variants = barcodeVariants(barcode);
 
   const local = DEMO_CATALOG.find(
@@ -232,27 +322,45 @@ async function resolve(barcode: string): Promise<LookupOutcome> {
   let networkFailed = false;
   for (const variant of variants) {
     const fetched = await fetchRecord(variant);
-    if (fetched.kind === 'fiche') return toOutcome(variant, fetched.fiche);
+    if (fetched.kind === 'fiche') {
+      const outcome = toOutcome(variant, fetched.fiche);
+      if (outcome.statut === 'trouve') return outcome;
+
+      onStep?.('web');
+      return chercherSurLeWeb(outcome);
+    }
     if (fetched.kind === 'reseau') networkFailed = true;
   }
 
   // Une panne reseau ne se conclut pas en « produit inconnu » : le produit
-  // existe peut-etre, et proposer une saisie manuelle pour une coupure de
-  // reseau ferait perdre son temps a l'utilisateur.
-  return networkFailed
-    ? { statut: 'reseau', barcode }
-    : { statut: 'inconnu', barcode };
+  // existe peut-etre, et le service de composition n'aurait pas plus de reseau
+  // que la base pour repondre.
+  if (networkFailed) return { statut: 'reseau', barcode };
+
+  onStep?.('web');
+  return chercherSurLeWeb({ statut: 'inconnu', barcode });
 }
 
-/** Cherche le produit derriere un code-barres, ou dit pourquoi il n'y en a pas. */
-export function lookupBarcode(barcode: string): Promise<LookupOutcome> {
+/**
+ * Cherche le produit derriere un code-barres, ou dit pourquoi il n'y en a pas.
+ *
+ * `onStep` suit la recherche en cours, pour que l'ecran annonce la recherche
+ * web — la seule etape assez longue pour devoir etre nommee. Il n'est pas
+ * rappele pour un resultat deja en cache ni pour une requete deja en vol :
+ * dans le premier cas il n'y a rien a attendre, dans le second c'est l'appel
+ * d'origine qui mene l'affichage.
+ */
+export function lookupBarcode(
+  barcode: string,
+  onStep?: (step: LookupStep) => void,
+): Promise<LookupOutcome> {
   const known = cache.get(barcode);
   if (known) return Promise.resolve(known);
 
   const pending = inFlight.get(barcode);
   if (pending) return pending;
 
-  const promise = resolve(barcode)
+  const promise = resolve(barcode, onStep)
     .then((outcome) => {
       // Une panne reseau n'est pas memorisee : elle se retente.
       if (outcome.statut !== 'reseau') cache.set(barcode, outcome);

@@ -8,10 +8,10 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions, type BarcodeType } from 'expo-camera';
-import { Camera, PackageSearch, ScanLine, WifiOff } from 'lucide-react-native';
+import { Camera, Globe, PackageSearch, ScanLine, WifiOff } from 'lucide-react-native';
 import { radius, space, TOUCH_MIN, type } from '../theme/index';
 import { usePalette } from '../theme/usePalette';
-import type { LookupOutcome } from '../data/productLookup';
+import type { LookupOutcome, LookupStep } from '../data/productLookup';
 
 /**
  * Ecran de scan.
@@ -31,6 +31,12 @@ interface Props {
   onBarcode: (barcode: string) => void;
   /** Vrai pendant la recherche du produit scanne. */
   searching?: boolean;
+  /**
+   * Etape en cours. La recherche web se compte en dizaines de secondes, la
+   * consultation de la base en centaines de millisecondes : les confondre sous
+   * un meme « Recherche... » ferait passer la premiere pour une panne.
+   */
+  step?: LookupStep;
   /** Code-barres en cours de recherche, affiché pour confirmer la lecture. */
   pendingCode?: string | null;
   /** Issue de la derniere recherche, quand elle n'a pas ouvert de fiche. */
@@ -78,7 +84,7 @@ function describeFailure(failure: Exclude<LookupOutcome, { statut: 'trouve' }>):
       Icon: PackageSearch,
       title: produit ? produit : 'Composition absente',
       detail:
-        'Ce produit est référencé, mais sa liste d’ingrédients est absente ou trop courte pour être analysée. Sans composition, aucun score ne peut être calculé.',
+        'Ce produit est référencé, mais sa liste d’ingrédients est absente des bases ouvertes, et la recherche sur le web n’a rien donné non plus. Sans composition, aucun score ne peut être calculé.',
       retry: 'Scanner un autre produit',
     };
   }
@@ -89,7 +95,7 @@ function describeFailure(failure: Exclude<LookupOutcome, { statut: 'trouve' }>):
     detail:
       'Le code ' +
       failure.barcode +
-      ' a bien été lu, mais il ne figure dans aucune base ouverte.',
+      ' a bien été lu, mais il ne figure dans aucune base ouverte, et la recherche sur le web n’a pas retrouvé sa composition.',
     retry: 'Scanner un autre produit',
   };
 }
@@ -97,6 +103,7 @@ function describeFailure(failure: Exclude<LookupOutcome, { statut: 'trouve' }>):
 export function ScanScreen({
   onBarcode,
   searching = false,
+  step = 'base',
   pendingCode = null,
   failure = null,
   onDismiss,
@@ -208,13 +215,28 @@ export function ScanScreen({
             <ScanLine size={16} color="#FFFFFF" strokeWidth={2} />
           )}
           <Text style={[type.smallMedium, styles.headerText]}>
-            {searching ? 'Recherche du produit...' : 'Cadrez le code-barres'}
+            {!searching
+              ? 'Cadrez le code-barres'
+              : step === 'web'
+                ? 'Composition absente, recherche sur le web...'
+                : 'Recherche du produit...'}
           </Text>
         </View>
         {/* Le code lu s'affiche des la lecture : il confirme que la camera a
             fait son travail, meme quand la recherche n'aboutit pas. */}
         {pendingCode ? (
           <Text style={[type.caption, styles.codeText]}>{pendingCode}</Text>
+        ) : null}
+
+        {/* Une attente de plusieurs dizaines de secondes doit dire ce qu'elle
+            fait, sinon elle se lit comme un blocage. */}
+        {searching && step === 'web' ? (
+          <View style={styles.headerNote}>
+            <Globe size={13} color="rgba(255,255,255,0.8)" strokeWidth={2} />
+            <Text style={[type.caption, styles.codeText]}>
+              Cela peut prendre une vingtaine de secondes
+            </Text>
+          </View>
         ) : null}
       </View>
 
@@ -303,6 +325,7 @@ const CORNER = 28;
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000000' },
+  headerNote: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
   centered: {
     flex: 1,
     alignItems: 'center',
