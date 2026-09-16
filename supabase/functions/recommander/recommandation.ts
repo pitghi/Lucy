@@ -153,7 +153,7 @@ export async function empreinteAdresse(req: Request): Promise<string> {
     req.headers.get('x-real-ip') ??
     (req.headers.get('x-forwarded-for') ?? '').split(',')[0].trim() ??
     'inconnue';
-  const octets = new TextEncoder().encode(`${SEL}:${brut}`);
+  const octets = new TextEncoder().encode(`${SEL}:reco:${brut}`);
   const somme = await crypto.subtle.digest('SHA-256', octets);
   return [...new Uint8Array(somme)].map((o) => o.toString(16).padStart(2, '0')).join('');
 }
