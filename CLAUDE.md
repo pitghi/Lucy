@@ -28,6 +28,13 @@ regression, meme s'il simplifie le code ou l'interface :
 
 ## Regles a ne pas casser
 
+> **Depuis 1.11, l'onglet Recherche ne suit plus ces regles.** La
+> recommandation y est produite par un modele qui cherche en ligne, et recoit
+> le profil. Les regles ci-dessous valent pour le scan, la fiche produit et le
+> moteur — c'est-a-dire pour tout ce qui porte une note. Ne pas « corriger »
+> l'onglet Recherche pour le ramener dessus : c'est un arbitrage assume, pas un
+> oubli.
+
 - **Trois scores, jamais fusionnes** : tolerance cutanee, environnement,
   adequation au profil. Aucune moyenne, a aucun endroit.
 - **Aucune penalite sans passer par la concentration estimee** et son seuil
