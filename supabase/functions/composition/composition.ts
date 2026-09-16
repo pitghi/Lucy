@@ -32,12 +32,12 @@ tout ce qui sera calcule dessus.
 
 Une gamme n'est pas une reference. « Riche », « legere », « peaux sensibles »,
 un format different : ce sont d'autres produits, avec d'autres compositions.
-Rapporte dans `nomTrouve` le nom exact du produit dont tu donnes la liste, tel
+Rapporte dans « nomTrouve » le nom exact du produit dont tu donnes la liste, tel
 qu'il figure sur la page. C'est ce qui permettra de refuser une composition qui
 n'est pas celle demandee.
 
 Si tu ne trouves pas, ou si tu n'es pas sur que ce soit la meme reference,
-rends `inci` a null et dis pourquoi. **Ne reconstitue jamais une liste de
+rends « inci » a null et dis pourquoi. **Ne reconstitue jamais une liste de
 memoire** : une composition inventee ferait calculer une note fausse sur un
 produit reel, et cette note serait opposee a une marque.
 
