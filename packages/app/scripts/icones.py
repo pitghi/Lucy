@@ -4,7 +4,10 @@ La marque figure la these du projet : une liste INCI est ordonnee par
 concentration decroissante, et sous le seuil d'effet un ingredient ne compte
 plus. D'ou quatre barres decroissantes, la derniere estompee.
 
-Palette : primary #0E7490 des jetons de design. Aucune couleur inventee.
+Palette : les trois couleurs de l'ADN (decision 5.15). La tuile est le bleu
+layette des actions, les barres l'encre brune — la meme paire que sur un
+bouton, a 8:1. Seul le degrade de la tuile s'ecarte d'un cran du bleu exact,
+pour donner un peu de modele a une surface plate.
 Rendu par sur-echantillonnage x4 puis reduction Lanczos : PIL ne lisse pas les
 formes autrement.
 """
@@ -12,9 +15,9 @@ from PIL import Image, ImageDraw
 
 S = 4  # facteur de sur-echantillonnage
 
-TEAL_HAUT = (18, 135, 159)
-TEAL_BAS = (11, 92, 112)
-BLANC = (255, 255, 255)
+BLEU_HAUT = (156, 206, 255)  # un cran au-dessus de #8EC5FF
+BLEU_BAS = (128, 187, 252)   # un cran en dessous
+BRUN = (59, 36, 24)          # #3B2418
 ALPHA_TRACE = 97  # ~38 % : la barre sous le seuil d'effet
 
 # Geometrie des barres, exprimee en fraction du cote, pour etre reutilisable
@@ -28,14 +31,14 @@ LARGEURS = [628 / 1024, 476 / 1024, 344 / 1024, 220 / 1024]
 
 
 def degrade(taille):
-    """Fond teal, degrade vertical discret."""
-    img = Image.new('RGB', (taille, taille), TEAL_HAUT)
+    """Fond bleu layette, degrade vertical discret."""
+    img = Image.new('RGB', (taille, taille), BLEU_HAUT)
     d = ImageDraw.Draw(img)
     for y in range(taille):
         t = y / max(taille - 1, 1)
         d.line(
             [(0, y), (taille, y)],
-            fill=tuple(round(a + (b - a) * t) for a, b in zip(TEAL_HAUT, TEAL_BAS)),
+            fill=tuple(round(a + (b - a) * t) for a, b in zip(BLEU_HAUT, BLEU_BAS)),
         )
     return img
 
@@ -68,10 +71,10 @@ def reduire(img, cible):
 
 
 def tuile(taille, arrondie):
-    """Tuile teal + barres blanches. `arrondie` ajoute le masque iOS."""
+    """Tuile bleue + barres brunes. `arrondie` ajoute le masque iOS."""
     grand = taille * S
     fond = degrade(grand).convert('RGBA')
-    fond.alpha_composite(barres(grand, BLANC))
+    fond.alpha_composite(barres(grand, BRUN))
     if arrondie:
         masque = Image.new('L', (grand, grand), 0)
         ImageDraw.Draw(masque).rounded_rectangle(
@@ -88,7 +91,7 @@ tuile(1024, arrondie=False).convert('RGB').save('assets/icon.png')
 # 2. adaptive-icon.png — Android : avant-plan seul, fond declare dans app.json.
 #    Le contenu tient dans le cercle interieur de 66 %, zone jamais rognee.
 av = Image.new('RGBA', (1024 * S, 1024 * S), (0, 0, 0, 0))
-av.alpha_composite(barres(1024 * S, BLANC, echelle=0.60))
+av.alpha_composite(barres(1024 * S, BRUN, echelle=0.60))
 reduire(av, 1024).save('assets/adaptive-icon.png')
 
 # 3. splash.png — toile au format de l'ecran, marque petite et centree :

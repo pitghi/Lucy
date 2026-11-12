@@ -148,11 +148,15 @@ worktree git sans difficulte, installe et lance sur iPhone 17.
 `assets/` est produit par `scripts/icones.py`, a partir des jetons de design.
 La marque figure la these du projet : quatre barres decroissantes, une liste
 INCI ordonnee par concentration, la derniere estompee sous le seuil d'effet.
-Modifier le script plutot que les PNG, puis :
+Tuile bleu layette, barres a l'encre brune : la paire d'un bouton d'action
+(decision 5.15). Modifier le script plutot que les PNG, puis :
 
 ```bash
 cd packages/app && python3 scripts/icones.py
 ```
+
+Les icones et l'ecran de demarrage entrent dans l'empreinte native : les
+changer demande un nouveau binaire, pas une mise a jour en vol.
 
 ## Regles de design a ne pas casser
 
