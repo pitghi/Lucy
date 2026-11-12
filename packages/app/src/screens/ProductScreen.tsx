@@ -11,6 +11,8 @@ import { ReasonCard } from '../components/ReasonCard';
 import { CoverageNotice } from '../components/CoverageNotice';
 import { ConfidenceIndicator } from '../components/Confidence';
 import { ProductImage } from '../components/ProductImage';
+import { Button, TextLink } from '../components/Button';
+import { Em } from '../components/Em';
 
 /**
  * Fiche produit.
@@ -61,7 +63,7 @@ export function ProductScreen({
           styles.topBar,
           {
             paddingTop: insets.top + space.sm,
-            backgroundColor: palette.card,
+            backgroundColor: palette.background,
             borderBottomColor: palette.border,
           },
         ]}
@@ -75,7 +77,10 @@ export function ProductScreen({
         >
           <ChevronLeft size={24} color={palette.text} strokeWidth={2} />
         </Pressable>
-        <Text style={[type.smallMedium, { color: palette.textMuted }]} numberOfLines={1}>
+        <Text
+          style={[type.eyebrow, styles.brand, { color: palette.textMuted }]}
+          numberOfLines={1}
+        >
           {product.brand}
         </Text>
         <View style={styles.backButton} />
@@ -140,7 +145,9 @@ export function ProductScreen({
         <CoverageNotice coverage={assessment.skin.coverage} />
 
         <View style={styles.section}>
-          <Text style={[type.title, { color: palette.text }]}>Pourquoi ce score</Text>
+          <Text style={[type.title, { color: palette.text }]}>
+            Pourquoi ce <Em>score</Em>
+          </Text>
           <Text style={[type.small, { color: palette.textMuted }]}>
             Chaque motif indique la concentration estimée de l'ingrédient et la fiabilité de
             cette estimation. Les concentrations ne sont pas publiées par les marques : elles
@@ -168,7 +175,9 @@ export function ProductScreen({
 
         {assessment.env.reasons.length > 0 ? (
           <View style={styles.section}>
-            <Text style={[type.title, { color: palette.text }]}>Côté environnement</Text>
+            <Text style={[type.title, { color: palette.text }]}>
+              Côté <Em>environnement</Em>
+            </Text>
             <Text style={[type.small, { color: palette.textMuted }]}>
               Calcule séparément du score cutané. Un silicone est bien toléré par la peau et
               faiblement biodégradable : moyenner les deux n'informerait sur aucun des deux.
@@ -188,7 +197,9 @@ export function ProductScreen({
         <View style={styles.section}>
           <View style={styles.sectionHead}>
             <FlaskConical size={18} color={palette.textMuted} strokeWidth={2} />
-            <Text style={[type.title, { color: palette.text }]}>Composition estimée</Text>
+            <Text style={[type.title, { color: palette.text }]}>
+              Composition <Em>estimée</Em>
+            </Text>
           </View>
 
           <View
@@ -219,18 +230,15 @@ export function ProductScreen({
           </View>
 
           {assessment.concentrations.length > 8 ? (
-            <Pressable
+            <TextLink
               onPress={() => setShowAllIngredients(!showAllIngredients)}
-              accessibilityRole="button"
-              accessibilityState={{ expanded: showAllIngredients }}
-              style={({ pressed }) => [styles.moreButton, pressed && styles.pressed]}
-            >
-              <Text style={[type.smallMedium, { color: palette.primary }]}>
-                {showAllIngredients
+              label={
+                showAllIngredients
                   ? 'Afficher moins'
-                  : `Afficher les ${assessment.concentrations.length - 8} autres ingrédients`}
-              </Text>
-            </Pressable>
+                  : `Afficher les ${assessment.concentrations.length - 8} autres ingrédients`
+              }
+              style={styles.more}
+            />
           ) : null}
         </View>
       </ScrollView>
@@ -248,33 +256,21 @@ export function ProductScreen({
           },
         ]}
       >
-        <Pressable
+        <Button
+          label="Il me convient"
+          icon={Heart}
           onPress={() => onToleranceFeedback(true)}
-          accessibilityRole="button"
           accessibilityLabel="Ce produit me convient"
-          style={({ pressed }) => [
-            styles.feedbackButton,
-            { backgroundColor: palette.primary },
-            pressed && styles.pressed,
-          ]}
-        >
-          <Heart size={17} color={palette.onPrimary} strokeWidth={2} />
-          <Text style={[type.smallMedium, { color: palette.onPrimary }]}>Il me convient</Text>
-        </Pressable>
-
-        <Pressable
+          style={styles.feedbackButton}
+        />
+        <Button
+          label="Mal toléré"
+          icon={ThumbsDown}
+          variant="secondary"
           onPress={() => onToleranceFeedback(false)}
-          accessibilityRole="button"
           accessibilityLabel="Ce produit ne me convient pas"
-          style={({ pressed }) => [
-            styles.feedbackButton,
-            { backgroundColor: palette.surfaceMuted, borderColor: palette.border, borderWidth: 1 },
-            pressed && styles.pressed,
-          ]}
-        >
-          <ThumbsDown size={17} color={palette.textMuted} strokeWidth={2} />
-          <Text style={[type.smallMedium, { color: palette.textMuted }]}>Mal toléré</Text>
-        </Pressable>
+          style={styles.feedbackButton}
+        />
       </View>
     </View>
   );
@@ -291,6 +287,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   backButton: { width: TOUCH_MIN, height: TOUCH_MIN, alignItems: 'center', justifyContent: 'center' },
+  brand: { flexShrink: 1, textAlign: 'center' },
   pressed: { opacity: 0.6 },
 
   content: { paddingHorizontal: space.lg, paddingTop: space.xl, gap: space.xl },
@@ -323,11 +320,7 @@ const styles = StyleSheet.create({
   ingredientName: { flex: 1, gap: space.xs },
   ingredientValue: { fontVariant: ['tabular-nums'] },
 
-  moreButton: {
-    minHeight: TOUCH_MIN,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  more: { alignSelf: 'center' },
 
   actionBar: {
     position: 'absolute',
@@ -340,13 +333,5 @@ const styles = StyleSheet.create({
     paddingTop: space.md,
     borderTopWidth: 1,
   },
-  feedbackButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: space.sm,
-    minHeight: TOUCH_MIN,
-    borderRadius: radius.pill,
-  },
+  feedbackButton: { flex: 1, paddingHorizontal: space.md },
 });

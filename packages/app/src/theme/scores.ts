@@ -8,8 +8,8 @@ import { light, type Palette } from './tokens';
  *
  * 1. **Pas de feu tricolore.** L'echelle n'emploie pas le vert : « vert = bon »
  *    est la semantique des applications concurrentes et importerait leur
- *    simplification. Le registre va du teal soutenu a l'ambre puis au rouge
- *    brique.
+ *    simplification. Le registre va du bleu marine au bleu denim, puis a
+ *    l'ocre et a la terre cuite — les bleus de l'ADN, les terres du brun.
  *
  * 2. **Jamais la couleur seule.** Chaque score porte un libelle textuel propre
  *    a son axe. Un utilisateur daltonien, un lecteur d'ecran ou une capture en
@@ -97,14 +97,18 @@ export const AXIS_QUESTIONS: Record<ScoreAxis, string> = {
 };
 
 /**
- * Couleurs par niveau. La progression est aussi une progression de luminosite,
- * de sorte que les niveaux restent distinguables sans percevoir la teinte.
+ * Couleurs par niveau. La progression est aussi une progression de luminosite
+ * — chaque niveau est un cran plus clair que le precedent (L* 26, 33, 40, 44)
+ * — de sorte que les niveaux restent distinguables sans percevoir la teinte.
+ *
+ * Toutes atteignent 4,5:1 sur la toile creme, sur la carte et sur leur fond
+ * dilue : elles portent la valeur et le libelle, pas seulement une barre.
  */
 const TONES: Record<ScoreLevel, { color: string; soft: string }> = {
-  high: { color: '#0E7490', soft: '#ECFEFF' },
-  good: { color: '#0891B2', soft: '#F0FBFF' },
-  moderate: { color: '#B54708', soft: '#FFFAEB' },
-  low: { color: '#B42318', soft: '#FEF3F2' },
+  high: { color: '#1B3E66', soft: '#DCEAFB' },
+  good: { color: '#234F80', soft: '#E7F0FA' },
+  moderate: { color: '#85520F', soft: '#F7E6C6' },
+  low: { color: '#B4432A', soft: '#FAE6DF' },
 };
 
 /**
@@ -112,14 +116,15 @@ const TONES: Record<ScoreLevel, { color: string; soft: string }> = {
  *
  * Le mode sombre n'inverse pas les couleurs claires : il emploie des tons plus
  * clairs et moins saturés, seuls à conserver un contraste suffisant sur une
- * surface sombre (règle `color-dark-mode`). Le teal foncé du mode clair y
- * deviendrait illisible.
+ * surface sombre (règle `color-dark-mode`). Le marine du mode clair y
+ * deviendrait illisible. La progression de luminosité s'y retourne (L* 86, 78,
+ * 70, 63) : sur l'expresso, c'est le ton le plus clair qui ressort le plus.
  */
 const TONES_DARK: Record<ScoreLevel, { color: string; soft: string }> = {
-  high: { color: '#22D3EE', soft: '#0E2E38' },
-  good: { color: '#67E8F9', soft: '#0C2A33' },
-  moderate: { color: '#FEC84B', soft: '#33260C' },
-  low: { color: '#FDA29B', soft: '#37201E' },
+  high: { color: '#B9DBFF', soft: '#1E2C3D' },
+  good: { color: '#8EC5FF', soft: '#1C2838' },
+  moderate: { color: '#D9A04A', soft: '#36270F' },
+  low: { color: '#E07C64', soft: '#3A1E17' },
 };
 
 /**

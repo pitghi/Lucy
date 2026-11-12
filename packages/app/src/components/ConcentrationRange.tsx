@@ -57,15 +57,19 @@ export function ConcentrationRange({ estimate, threshold, thresholdLabel }: Prop
         ) : null}
       </View>
 
+      {/* La piste prend la couleur des filets : posee sur un bloc encastre de
+          la meme teinte qu'elle, elle disparaissait, et l'echelle avec elle.
+          L'intervalle est en bleu soutenu — le bleu layette n'atteint pas
+          3:1 sur la creme, seuil d'un trait porteur d'information. */}
       <View
-        style={[styles.track, { backgroundColor: palette.surfaceMuted }]}
+        style={[styles.track, { backgroundColor: palette.border }]}
         accessibilityLabel={`Concentration estimée entre ${estimate.min} et ${estimate.max} pour cent`}
       >
         <View
           style={[
             styles.range,
             {
-              backgroundColor: palette.primary,
+              backgroundColor: palette.primaryStrong,
               left: `${start * 100}%`,
               width: `${width * 100}%`,
             },

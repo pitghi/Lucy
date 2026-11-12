@@ -17,8 +17,8 @@
     "update:production": "npx --yes eas-cli@latest update --branch production"
   },
   "dependencies": {
+    "@expo-google-fonts/instrument-serif": "^0.4.1",
     "@expo-google-fonts/inter": "^0.2.3",
-    "@expo-google-fonts/lora": "^0.2.3",
     "@expo/metro-runtime": "~4.0.1",
     "@lucy/engine": "*",
     "expo": "~52.0.0",

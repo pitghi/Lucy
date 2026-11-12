@@ -13,9 +13,11 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Check, Heart, HeartCrack, Search, X } from 'lucide-react-native';
 import type { Product, ToleranceEntry } from '@lucy/engine';
-import { radius, space, TOUCH_MIN, type } from '../theme/index';
+import { font, radius, space, TOUCH_MIN, type } from '../theme/index';
 import { usePalette } from '../theme/usePalette';
 import { ProductImage } from './ProductImage';
+import { TextLink } from './Button';
+import { Em } from './Em';
 
 /**
  * Recherche d'un produit du catalogue, pour le journal de tolerance.
@@ -133,7 +135,7 @@ export function JournalPicker({
         >
           <View style={styles.headRow}>
             <Text style={[type.title, { color: palette.text, flex: 1 }]}>
-              Rechercher un produit
+              Rechercher un <Em>produit</Em>
             </Text>
             <Pressable
               onPress={onClose}
@@ -166,14 +168,13 @@ export function JournalPicker({
               style={[type.body, styles.input, { color: palette.text }]}
             />
             {text.length > 0 ? (
-              <Pressable
+              <TextLink
+                label="Effacer"
+                size="caption"
                 onPress={() => setText('')}
-                accessibilityRole="button"
                 accessibilityLabel="Effacer la recherche"
-                style={({ pressed }) => [styles.clear, pressed && styles.pressed]}
-              >
-                <Text style={[type.caption, { color: palette.primary }]}>Effacer</Text>
-              </Pressable>
+                style={styles.clear}
+              />
             ) : null}
           </View>
         </View>
@@ -251,7 +252,7 @@ function Ligne({
       value: 'suited' as const,
       Icon: Heart,
       libelle: "M'a convenu",
-      teinte: palette.primary,
+      teinte: palette.primaryStrong,
       fond: palette.primarySoft,
     },
     {
@@ -268,8 +269,10 @@ function Ligne({
       <View style={styles.rowHead}>
         <ProductImage {...(product.barcode ? { barcode: product.barcode } : {})} />
         <View style={styles.rowText}>
-          <Text style={[type.caption, { color: palette.textSubtle }]}>{product.brand}</Text>
-          <Text style={[type.bodyMedium, { color: palette.text }]} numberOfLines={2}>
+          <Text style={[type.eyebrow, { color: palette.textMuted }]} numberOfLines={1}>
+            {product.brand}
+          </Text>
+          <Text style={[type.titleSmall, { color: palette.text }]} numberOfLines={2}>
             {product.name}
           </Text>
         </View>
@@ -302,9 +305,13 @@ function Ligne({
               ) : (
                 <Icon size={16} color={palette.textSubtle} strokeWidth={2} />
               )}
+              {/* 13 px : a 14, « Ne m'a pas convenu » depassait une
+                  demi-largeur d'ecran de 390 px et se coupait. Le verdict
+                  actif passe en graisse 500 — le semi-gras se coupait encore. */}
               <Text
                 style={[
-                  actif ? type.smallMedium : type.small,
+                  type.caption,
+                  actif && styles.verdictActif,
                   { color: actif ? teinte : palette.textMuted },
                 ]}
                 numberOfLines={1}
@@ -346,12 +353,12 @@ const styles = StyleSheet.create({
     marginTop: space.xs,
   },
   input: { flex: 1, minHeight: TOUCH_MIN, paddingVertical: space.sm },
-  clear: { minHeight: TOUCH_MIN, justifyContent: 'center', paddingLeft: space.sm },
+  clear: { paddingLeft: space.sm, alignSelf: 'center' },
 
   list: { paddingHorizontal: space.lg, paddingTop: space.lg, gap: space.md },
-  row: { borderWidth: 1, borderRadius: radius.md, padding: space.md, gap: space.md },
+  row: { borderWidth: 1, borderRadius: radius.lg, padding: space.md, gap: space.md },
   rowHead: { flexDirection: 'row', alignItems: 'center', gap: space.md },
-  rowText: { flex: 1, gap: 2 },
+  rowText: { flex: 1, gap: space.xs },
 
   verdicts: { flexDirection: 'row', gap: space.sm },
   verdict: {
@@ -365,6 +372,8 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     paddingHorizontal: space.sm,
   },
+
+  verdictActif: { fontFamily: font.bodyMedium },
 
   empty: { gap: space.sm, paddingTop: space.xl },
   pressed: { opacity: 0.7 },

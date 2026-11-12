@@ -14,6 +14,8 @@ import { radius, space, TOUCH_MIN, type } from '../theme/index';
 import { usePalette } from '../theme/usePalette';
 import { Chip, ChipGroup } from '../components/Chip';
 import { JournalPicker } from '../components/JournalPicker';
+import { Button, TextLink } from '../components/Button';
+import { Em } from '../components/Em';
 
 /**
  * Profil utilisateur.
@@ -137,7 +139,9 @@ export function ProfileScreen({ initial, catalog = [], onSave }: Props) {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.heading}>
-          <Text style={[type.display, { color: palette.text }]}>Votre profil</Text>
+          <Text style={[type.display, { color: palette.text }]}>
+            Votre <Em>profil</Em>
+          </Text>
           <Text style={[type.body, { color: palette.textMuted }]}>
             Trois questions suffisent pour personnaliser les scores. Il s'affinera ensuite
             selon les produits que vous déclarez bien ou mal tolérer.
@@ -147,8 +151,16 @@ export function ProfileScreen({ initial, catalog = [], onSave }: Props) {
         {/* Etape 1 — obligatoire */}
         <View style={styles.section}>
           <View style={styles.sectionHead}>
-            <Text style={[type.title, { color: palette.text }]}>Type de peau</Text>
-            <Text style={[type.caption, { color: palette.danger }]}>Requis</Text>
+            <Text style={[type.title, { color: palette.text }]}>
+              Type de <Em>peau</Em>
+            </Text>
+            {/* Pastille brune plutot que texte rouge : c'est une consigne, pas
+                une erreur. */}
+            <View style={[styles.required, { backgroundColor: palette.secondary }]}>
+              <Text style={[type.eyebrow, styles.requiredText, { color: palette.onSecondary }]}>
+                Requis
+              </Text>
+            </View>
           </View>
 
           <View style={styles.typeList}>
@@ -165,7 +177,7 @@ export function ProfileScreen({ initial, catalog = [], onSave }: Props) {
                     styles.typeCard,
                     {
                       backgroundColor: selected ? palette.primarySoft : palette.card,
-                      borderColor: selected ? palette.primary : palette.border,
+                      borderColor: selected ? palette.secondary : palette.border,
                     },
                     pressed && styles.pressed,
                   ]}
@@ -173,8 +185,9 @@ export function ProfileScreen({ initial, catalog = [], onSave }: Props) {
                   <View style={styles.typeText}>
                     <Text
                       style={[
-                        type.bodyMedium,
-                        { color: selected ? palette.primary : palette.text },
+                        selected ? type.subtitle : type.bodyMedium,
+                        styles.optionLabel,
+                        { color: palette.text },
                       ]}
                     >
                       {option.label}
@@ -186,7 +199,7 @@ export function ProfileScreen({ initial, catalog = [], onSave }: Props) {
                     </Text>
                   </View>
                   {selected ? (
-                    <Check size={20} color={palette.primary} strokeWidth={2.5} />
+                    <Check size={20} color={palette.secondary} strokeWidth={2.5} />
                   ) : null}
                 </Pressable>
               );
@@ -197,7 +210,9 @@ export function ProfileScreen({ initial, catalog = [], onSave }: Props) {
         {/* Etape 2 */}
         <View style={styles.section}>
           <View style={styles.sectionHead}>
-            <Text style={[type.title, { color: palette.text }]}>Vos préoccupations</Text>
+            <Text style={[type.title, { color: palette.text }]}>
+              Vos <Em>préoccupations</Em>
+            </Text>
             <Text style={[type.caption, { color: palette.textSubtle }]}>Optionnel</Text>
           </View>
           <Text style={[type.small, { color: palette.textMuted }]}>
@@ -219,7 +234,9 @@ export function ProfileScreen({ initial, catalog = [], onSave }: Props) {
         {/* Etape 3 */}
         <View style={styles.section}>
           <View style={styles.sectionHead}>
-            <Text style={[type.title, { color: palette.text }]}>Ce que vous ne tolérez pas</Text>
+            <Text style={[type.title, styles.sectionTitle, { color: palette.text }]}>
+              Ce que vous ne <Em>tolérez</Em> pas
+            </Text>
             <Text style={[type.caption, { color: palette.textSubtle }]}>Optionnel</Text>
           </View>
           <Text style={[type.small, { color: palette.textMuted }]}>
@@ -262,7 +279,7 @@ export function ProfileScreen({ initial, catalog = [], onSave }: Props) {
                 styles.checkbox,
                 {
                   backgroundColor: avoidFragrance ? palette.primary : 'transparent',
-                  borderColor: avoidFragrance ? palette.primary : palette.borderStrong,
+                  borderColor: avoidFragrance ? palette.secondary : palette.borderStrong,
                 },
               ]}
             >
@@ -274,7 +291,9 @@ export function ProfileScreen({ initial, catalog = [], onSave }: Props) {
         {/* Etape 4 — texture */}
         <View style={styles.section}>
           <View style={styles.sectionHead}>
-            <Text style={[type.title, { color: palette.text }]}>Texture préférée</Text>
+            <Text style={[type.title, { color: palette.text }]}>
+              Texture <Em>préférée</Em>
+            </Text>
             <Text style={[type.caption, { color: palette.textSubtle }]}>Optionnel</Text>
           </View>
           <Text style={[type.small, { color: palette.textMuted }]}>
@@ -297,25 +316,29 @@ export function ProfileScreen({ initial, catalog = [], onSave }: Props) {
                     styles.typeCard,
                     {
                       backgroundColor: active ? palette.primarySoft : palette.card,
-                      borderColor: active ? palette.primary : palette.border,
+                      borderColor: active ? palette.secondary : palette.border,
                     },
                     pressed && styles.pressed,
                   ]}
                 >
                   <Droplet
                     size={18}
-                    color={active ? palette.primary : palette.textSubtle}
+                    color={active ? palette.text : palette.textSubtle}
                     strokeWidth={2}
                   />
                   <View style={styles.typeText}>
                     <Text
-                      style={[type.bodyMedium, { color: active ? palette.primary : palette.text }]}
+                      style={[
+                        active ? type.subtitle : type.bodyMedium,
+                        styles.optionLabel,
+                        { color: palette.text },
+                      ]}
                     >
                       {option.label}
                     </Text>
                     <Text style={[type.caption, { color: palette.textMuted }]}>{option.hint}</Text>
                   </View>
-                  {active ? <Check size={20} color={palette.primary} strokeWidth={2.5} /> : null}
+                  {active ? <Check size={20} color={palette.secondary} strokeWidth={2.5} /> : null}
                 </Pressable>
               );
             })}
@@ -329,7 +352,9 @@ export function ProfileScreen({ initial, catalog = [], onSave }: Props) {
         {/* Etape 5 — journal de tolerance */}
         <View style={styles.section}>
           <View style={styles.sectionHead}>
-            <Text style={[type.title, { color: palette.text }]}>Produits essayés</Text>
+            <Text style={[type.title, { color: palette.text }]}>
+              Produits <Em>essayés</Em>
+            </Text>
             <Text style={[type.caption, { color: palette.textSubtle }]}>
               {journal.length > 0 ? `${journal.length}` : 'Aucun'}
             </Text>
@@ -341,21 +366,13 @@ export function ProfileScreen({ initial, catalog = [], onSave }: Props) {
 
           {/* Le flacon deja fini n'est plus la pour etre scanne : sans cette
               recherche, le journal resterait vide au moment ou il sert le plus. */}
-          <Pressable
+          <Button
+            label="Rechercher un produit"
+            icon={Search}
+            variant="secondary"
             onPress={() => setPicker(true)}
-            accessibilityRole="button"
             accessibilityLabel="Rechercher un produit dans le catalogue"
-            style={({ pressed }) => [
-              styles.searchButton,
-              { backgroundColor: palette.card, borderColor: palette.primary },
-              pressed && styles.pressed,
-            ]}
-          >
-            <Search size={18} color={palette.primary} strokeWidth={2} />
-            <Text style={[type.bodyMedium, { color: palette.primary }]}>
-              Rechercher un produit
-            </Text>
-          </Pressable>
+          />
 
           {journal.length === 0 ? (
             <Text style={[type.caption, { color: palette.textSubtle }]}>
@@ -372,7 +389,7 @@ export function ProfileScreen({ initial, catalog = [], onSave }: Props) {
                   ]}
                 >
                   {entry.verdict === 'suited' ? (
-                    <Heart size={16} color={palette.primary} strokeWidth={2} />
+                    <Heart size={16} color={palette.primaryStrong} strokeWidth={2} />
                   ) : (
                     <HeartCrack size={16} color={palette.danger} strokeWidth={2} />
                   )}
@@ -386,16 +403,12 @@ export function ProfileScreen({ initial, catalog = [], onSave }: Props) {
                       {entry.date}
                     </Text>
                   </View>
-                  <Pressable
-                    onPress={() =>
-                      setJournal(journal.filter((item) => item !== entry))
-                    }
-                    accessibilityRole="button"
+                  <TextLink
+                    label="Retirer"
+                    size="caption"
+                    onPress={() => setJournal(journal.filter((item) => item !== entry))}
                     accessibilityLabel={`Retirer ${entry.name} du journal`}
-                    style={({ pressed }) => [styles.remove, pressed && styles.pressed]}
-                  >
-                    <Text style={[type.caption, { color: palette.primary }]}>Retirer</Text>
-                  </Pressable>
+                  />
                 </View>
               ))}
             </View>
@@ -421,15 +434,10 @@ export function ProfileScreen({ initial, catalog = [], onSave }: Props) {
                   {suggestion.products.join(', ')}. Ce n'est pas une preuve — un produit
                   contient des dizaines d'ingrédients. À vous de juger.
                 </Text>
-                <Pressable
+                <TextLink
+                  label="Ajouter à mes intolérances"
                   onPress={() => setNotTolerated(toggle(notTolerated, suggestion.inci))}
-                  accessibilityRole="button"
-                  style={({ pressed }) => [styles.remove, pressed && styles.pressed]}
-                >
-                  <Text style={[type.smallMedium, { color: palette.primary }]}>
-                    Ajouter à mes intolérances
-                  </Text>
-                </Pressable>
+                />
               </View>
             </View>
           ))}
@@ -454,7 +462,12 @@ export function ProfileScreen({ initial, catalog = [], onSave }: Props) {
           },
         ]}
       >
-        <Pressable
+        {/* Etat inactif explicite : aplat creme, libelle qui dit ce qui
+            manque, action inerte. */}
+        <Button
+          label={canSave ? 'Enregistrer mon profil' : 'Choisissez un type de peau'}
+          accessibilityLabel="Enregistrer mon profil"
+          disabled={!canSave}
           onPress={() =>
             skinType &&
             onSave({
@@ -467,22 +480,7 @@ export function ProfileScreen({ initial, catalog = [], onSave }: Props) {
               ...(preferredTexture ? { preferredTexture } : {}),
             })
           }
-          disabled={!canSave}
-          accessibilityRole="button"
-          accessibilityLabel="Enregistrer mon profil"
-          accessibilityState={{ disabled: !canSave }}
-          style={({ pressed }) => [
-            styles.saveButton,
-            { backgroundColor: palette.primary },
-            // Etat desactive explicite : opacite reduite et action inerte.
-            !canSave && styles.disabled,
-            pressed && canSave && styles.pressed,
-          ]}
-        >
-          <Text style={[type.bodyMedium, { color: palette.onPrimary }]}>
-            {canSave ? 'Enregistrer mon profil' : 'Choisissez un type de peau'}
-          </Text>
-        </Pressable>
+        />
       </View>
 
       <JournalPicker
@@ -502,7 +500,18 @@ const styles = StyleSheet.create({
   content: { paddingHorizontal: space.lg, gap: space.xxl },
   heading: { gap: space.sm },
   section: { gap: space.md },
-  sectionHead: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
+  sectionHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: space.md,
+  },
+  sectionTitle: { flexShrink: 1 },
+  required: { borderRadius: radius.pill, paddingHorizontal: space.sm, paddingVertical: 3 },
+  requiredText: { fontSize: 10, lineHeight: 13, letterSpacing: 1 },
+  // La graisse change avec la selection : un signal de plus que la couleur,
+  // sans changer la hauteur de ligne.
+  optionLabel: { lineHeight: 24 },
 
   typeList: { gap: space.sm },
   typeCard: {
@@ -515,16 +524,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     borderWidth: 1.5,
   },
-  searchButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: space.sm,
-    minHeight: TOUCH_MIN,
-    borderRadius: radius.pill,
-    borderWidth: 1.5,
-    paddingHorizontal: space.lg,
-  },
   journal: { gap: space.sm },
   journalRow: {
     flexDirection: 'row',
@@ -534,7 +533,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     padding: space.md,
   },
-  remove: { minHeight: TOUCH_MIN, justifyContent: 'center' },
   suggestion: {
     flexDirection: 'row',
     gap: space.sm,
@@ -544,7 +542,6 @@ const styles = StyleSheet.create({
   },
   typeText: { flex: 1, gap: 2 },
   pressed: { opacity: 0.7 },
-  disabled: { opacity: 0.45 },
 
   switchRow: {
     flexDirection: 'row',
@@ -580,11 +577,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: space.lg,
     paddingTop: space.md,
     borderTopWidth: 1,
-  },
-  saveButton: {
-    minHeight: TOUCH_MIN + 6,
-    borderRadius: radius.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });

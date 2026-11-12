@@ -191,7 +191,11 @@ Les quatre regles structurantes :
 ## Apercu
 
 Les captures de `docs/apercu/` sont produites depuis le rendu web reel
-(React Native Web), en fenetre 390 x 844 :
+(React Native Web), en fenetre 390 x 844, themes clair et sombre. Celles du
+2026-11-12 montrent la direction artistique de la decision 5.15 ; le flux de la
+camera y est une image de synthese, et les fiches le repli « Photo
+indisponible », Open Beauty Facts n'etant pas joignable depuis la session de
+capture :
 
 ```bash
 npm run web --workspace @lucy/app

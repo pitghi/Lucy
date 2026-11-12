@@ -111,6 +111,11 @@ Le deploiement du service est decrit dans
   `./supabase/sync-moteur.sh` — un test du moteur casse sinon.
 - **L'application importe le moteur directement**, sans couche d'adaptation.
   Ses imports sont **sans extension** : c'est la convention Metro.
+- **Les couleurs passent par les jetons** (`packages/app/src/theme/tokens.ts`),
+  jamais en dur. Direction artistique brun / creme / bleu layette (decision
+  5.15) : le bleu layette est un aplat d'action avec l'encre brune dessus, pas
+  une couleur de texte — 1,5:1 sur la creme. Boutons par `Button`, liens par
+  `TextLink`.
 - **Toute entree du referentiel porte au moins une source** et une plage
   d'usage. Un test d'integrite le verifie.
 - **Le calibrage des poids de scoring est provisoire** et attend une validation

@@ -9,7 +9,7 @@ import { dark, light, type Palette } from './tokens';
  * sombre (regle `color-dark-mode`).
  */
 export function usePalette(): Palette {
-  return useColorScheme() === 'dark' ? (dark as unknown as Palette) : light;
+  return useColorScheme() === 'dark' ? dark : light;
 }
 
 /**

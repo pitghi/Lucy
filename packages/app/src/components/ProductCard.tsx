@@ -46,7 +46,7 @@ export function ProductCard({
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={`${product.name} de ${product.brand}. ${fit.accessibilityLabel}`}
+      accessibilityLabel={`${rank !== undefined ? `${rank}. ` : ''}${product.name} de ${product.brand}. ${fit.accessibilityLabel}`}
       {...(accessibilityHint ? { accessibilityHint } : {})}
       style={({ pressed }) => [
         styles.card,
@@ -55,17 +55,31 @@ export function ProductCard({
       ]}
     >
       <View style={styles.cardHead}>
-        {rank !== undefined ? (
-          <Text style={[type.caption, { color: palette.textSubtle }]}>{rank}</Text>
-        ) : null}
-        <ProductImage barcode={product.barcode} />
+        <View>
+          <ProductImage barcode={product.barcode} />
+          {/* Le rang en pastille brune, a la maniere du compteur de panier de
+              la reference : lisible d'un coup d'oeil sans voler la place du
+              titre. */}
+          {rank !== undefined ? (
+            <View
+              style={[
+                styles.rank,
+                { backgroundColor: palette.secondary, borderColor: palette.card },
+              ]}
+            >
+              <Text style={[styles.rankText, { color: palette.onSecondary }]}>{rank}</Text>
+            </View>
+          ) : null}
+        </View>
         <View style={styles.cardTitle}>
-          <Text style={[type.bodyMedium, { color: palette.text }]} numberOfLines={2}>
+          <Text style={[type.eyebrow, { color: palette.textMuted }]} numberOfLines={1}>
+            {product.brand}
+          </Text>
+          <Text style={[type.titleSmall, { color: palette.text }]} numberOfLines={2}>
             {product.name}
           </Text>
-          <Text style={[type.caption, { color: palette.textMuted }]}>{product.brand}</Text>
         </View>
-        <ChevronRight size={20} color={palette.textSubtle} strokeWidth={2} />
+        <ChevronRight size={20} color={palette.textSubtle} strokeWidth={1.75} />
       </View>
 
       <View style={styles.scores}>
@@ -98,10 +112,23 @@ export function ProductCard({
 }
 
 const styles = StyleSheet.create({
-  card: { borderWidth: 1, borderRadius: radius.lg, padding: space.lg, gap: space.md },
+  card: { borderWidth: 1, borderRadius: radius.lg, padding: space.lg, gap: space.lg },
   pressed: { opacity: 0.85 },
   cardHead: { flexDirection: 'row', alignItems: 'center', gap: space.md },
-  cardTitle: { flex: 1, gap: 2 },
+  cardTitle: { flex: 1, gap: space.xs },
+  rank: {
+    position: 'absolute',
+    top: -6,
+    left: -6,
+    minWidth: 22,
+    height: 22,
+    paddingHorizontal: 5,
+    borderRadius: radius.pill,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rankText: { fontSize: 11, lineHeight: 14, fontFamily: font.bodySemiBold, fontVariant: ['tabular-nums'] },
 
   scores: { flexDirection: 'row', gap: space.sm },
   scorePill: {
@@ -112,7 +139,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
   },
   scoreLabel: { fontSize: 11, lineHeight: 15, fontFamily: font.body },
-  scoreValue: { fontVariant: ['tabular-nums'], fontSize: 17 },
+  scoreValue: { fontVariant: ['tabular-nums'], fontSize: 18, fontFamily: font.bodySemiBold },
 
   note: { borderTopWidth: 1, paddingTop: space.md, gap: space.sm },
 });

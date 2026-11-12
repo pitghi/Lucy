@@ -61,8 +61,13 @@ export function ScoreRow({ axis, value, compact = false }: Props) {
       </View>
 
       {/* Le libelle textuel est la seule information non redondante pour un
-          utilisateur qui ne percoit pas la couleur : il n'est jamais masque. */}
-      <Text style={[type.caption, { color: score.color }]}>{score.label}</Text>
+          utilisateur qui ne percoit pas la couleur : il n'est jamais masque.
+          Il se presente en pastille, a la maniere du « Back in stock » de la
+          reference : un point, un aplat dilue, le mot. */}
+      <View style={[styles.levelPill, { backgroundColor: score.soft }]}>
+        <View style={[styles.levelDot, { backgroundColor: score.color }]} />
+        <Text style={[type.label, { color: score.color }]}>{score.label}</Text>
+      </View>
 
       {compact ? null : (
         <Text style={[type.caption, { color: palette.textSubtle }]}>{score.question}</Text>
@@ -78,4 +83,15 @@ const styles = StyleSheet.create({
   valueGroup: { flexDirection: 'row', alignItems: 'baseline', gap: 2 },
   track: { height: 6, borderRadius: radius.pill, overflow: 'hidden' },
   fill: { height: '100%', borderRadius: radius.pill },
+  levelPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: space.xs + 2,
+    borderRadius: radius.pill,
+    paddingHorizontal: space.sm + 2,
+    paddingVertical: 3,
+    marginTop: space.xs,
+  },
+  levelDot: { width: 6, height: 6, borderRadius: 3 },
 });

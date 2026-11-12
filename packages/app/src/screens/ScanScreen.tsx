@@ -1,17 +1,13 @@
 import { useCallback, useEffect, useRef } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions, type BarcodeType } from 'expo-camera';
 import { Camera, PackageSearch, ScanLine, WifiOff } from 'lucide-react-native';
-import { radius, space, TOUCH_MIN, type } from '../theme/index';
+import { camera, radius, space, type } from '../theme/index';
 import { usePalette } from '../theme/usePalette';
 import type { LookupOutcome } from '../data/productLookup';
+import { Button } from '../components/Button';
+import { Em } from '../components/Em';
 
 /**
  * Ecran de scan.
@@ -129,7 +125,7 @@ export function ScanScreen({
   if (!permission) {
     return (
       <View style={[styles.centered, { backgroundColor: palette.background }]}>
-        <ActivityIndicator color={palette.primary} />
+        <ActivityIndicator color={palette.text} />
       </View>
     );
   }
@@ -143,10 +139,10 @@ export function ScanScreen({
         ]}
       >
         <View style={[styles.permissionIcon, { backgroundColor: palette.primarySoft }]}>
-          <Camera size={28} color={palette.primary} strokeWidth={1.75} />
+          <Camera size={28} color={palette.text} strokeWidth={1.75} />
         </View>
         <Text style={[type.title, { color: palette.text, textAlign: 'center' }]}>
-          Autoriser l'appareil photo
+          Autoriser l'appareil <Em>photo</Em>
         </Text>
         {/* L'explication precede la demande : un refus vient le plus souvent
             d'une permission demandee sans motif. */}
@@ -155,18 +151,12 @@ export function ScanScreen({
           Aucune image n'est conservée ni transmise.
         </Text>
 
-        <Pressable
+        <Button
+          label="Autoriser"
           onPress={requestPermission}
-          accessibilityRole="button"
           accessibilityLabel="Autoriser l'accès à l'appareil photo"
-          style={({ pressed }) => [
-            styles.primaryButton,
-            { backgroundColor: palette.primary },
-            pressed && styles.pressed,
-          ]}
-        >
-          <Text style={[type.bodyMedium, { color: palette.onPrimary }]}>Autoriser</Text>
-        </Pressable>
+          style={styles.permissionButton}
+        />
       </View>
     );
   }
@@ -203,9 +193,9 @@ export function ScanScreen({
       <View style={[styles.header, { top: insets.top + space.lg }]} pointerEvents="none">
         <View style={styles.headerBadge}>
           {searching ? (
-            <ActivityIndicator size="small" color="#FFFFFF" />
+            <ActivityIndicator size="small" color={camera.text} />
           ) : (
-            <ScanLine size={16} color="#FFFFFF" strokeWidth={2} />
+            <ScanLine size={16} color={camera.reticle} strokeWidth={2} />
           )}
           <Text style={[type.smallMedium, styles.headerText]}>
             {searching ? 'Recherche du produit...' : 'Cadrez le code-barres'}
@@ -268,30 +258,21 @@ function Failure({
           reprendre la lecture. Le reseau fait exception — le meme code vaut
           la peine d'etre rejoue, et on peut aussi renoncer. */}
       <View style={styles.failureActions}>
-        <Pressable
+        <Button
+          label={retry}
+          size="md"
           onPress={failure.statut === 'reseau' ? onRetryLookup : onDismiss}
-          accessibilityRole="button"
-          style={({ pressed }) => [
-            styles.failurePrimary,
-            { backgroundColor: palette.primary },
-            pressed && styles.pressed,
-          ]}
-        >
-          <Text style={[type.smallMedium, { color: palette.onPrimary }]}>{retry}</Text>
-        </Pressable>
+          style={styles.failureAction}
+        />
 
         {failure.statut === 'reseau' ? (
-          <Pressable
+          <Button
+            label="Fermer"
+            size="md"
+            variant="secondary"
             onPress={onDismiss}
-            accessibilityRole="button"
-            style={({ pressed }) => [
-              styles.failureSecondary,
-              { borderColor: palette.borderStrong },
-              pressed && styles.pressed,
-            ]}
-          >
-            <Text style={[type.smallMedium, { color: palette.text }]}>Fermer</Text>
-          </Pressable>
+            style={styles.failureAction}
+          />
         ) : null}
       </View>
     </View>
@@ -302,7 +283,7 @@ const RETICLE_SIZE = 260;
 const CORNER = 28;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#000000' },
+  container: { flex: 1, backgroundColor: camera.base },
   centered: {
     flex: 1,
     alignItems: 'center',
@@ -317,43 +298,37 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  primaryButton: {
-    minHeight: TOUCH_MIN + 4,
-    paddingHorizontal: space.xxl,
-    borderRadius: radius.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: space.sm,
-  },
-  pressed: { opacity: 0.7 },
+  permissionButton: { alignSelf: 'stretch', marginTop: space.sm },
 
+  // Voile expresso plutot que gris ardoise : la photo garde la chaleur de la
+  // toile, et les coins bleus ressortent sur un fond brun.
   overlay: { ...StyleSheet.absoluteFillObject },
-  overlayTop: { flex: 1, backgroundColor: 'rgba(2, 6, 23, 0.55)' },
-  overlayBottom: { flex: 1.3, backgroundColor: 'rgba(2, 6, 23, 0.55)' },
+  overlayTop: { flex: 1, backgroundColor: camera.overlay },
+  overlayBottom: { flex: 1.3, backgroundColor: camera.overlay },
   reticleRow: { flexDirection: 'row', height: RETICLE_SIZE },
-  overlaySide: { flex: 1, backgroundColor: 'rgba(2, 6, 23, 0.55)' },
+  overlaySide: { flex: 1, backgroundColor: camera.overlay },
   reticle: { width: RETICLE_SIZE, height: RETICLE_SIZE },
   corner: {
     position: 'absolute',
     width: CORNER,
     height: CORNER,
-    borderColor: '#FFFFFF',
+    borderColor: camera.reticle,
   },
-  tl: { top: 0, left: 0, borderTopWidth: 3, borderLeftWidth: 3, borderTopLeftRadius: radius.md },
-  tr: { top: 0, right: 0, borderTopWidth: 3, borderRightWidth: 3, borderTopRightRadius: radius.md },
+  tl: { top: 0, left: 0, borderTopWidth: 4, borderLeftWidth: 4, borderTopLeftRadius: radius.lg },
+  tr: { top: 0, right: 0, borderTopWidth: 4, borderRightWidth: 4, borderTopRightRadius: radius.lg },
   bl: {
     bottom: 0,
     left: 0,
-    borderBottomWidth: 3,
-    borderLeftWidth: 3,
-    borderBottomLeftRadius: radius.md,
+    borderBottomWidth: 4,
+    borderLeftWidth: 4,
+    borderBottomLeftRadius: radius.lg,
   },
   br: {
     bottom: 0,
     right: 0,
-    borderBottomWidth: 3,
-    borderRightWidth: 3,
-    borderBottomRightRadius: radius.md,
+    borderBottomWidth: 4,
+    borderRightWidth: 4,
+    borderBottomRightRadius: radius.lg,
   },
 
   header: { position: 'absolute', left: 0, right: 0, alignItems: 'center', gap: space.sm },
@@ -364,10 +339,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: space.lg,
     paddingVertical: space.md,
     borderRadius: radius.pill,
-    backgroundColor: 'rgba(2, 6, 23, 0.7)',
+    backgroundColor: camera.badge,
   },
-  headerText: { color: '#FFFFFF' },
-  codeText: { color: 'rgba(255, 255, 255, 0.75)' },
+  headerText: { color: camera.text },
+  codeText: { color: camera.textMuted },
 
   actions: {
     position: 'absolute',
@@ -393,24 +368,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   failureActions: { flexDirection: 'row', gap: space.sm },
-  failurePrimary: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: space.sm,
-    minHeight: TOUCH_MIN,
-    paddingHorizontal: space.lg,
-    borderRadius: radius.pill,
-  },
-  failureSecondary: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: TOUCH_MIN,
-    paddingHorizontal: space.lg,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-  },
+  failureAction: { flex: 1 },
 
 });

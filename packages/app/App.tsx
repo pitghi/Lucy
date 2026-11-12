@@ -1,8 +1,11 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { Platform, Pressable, StatusBar, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StatusBar, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFonts } from 'expo-font';
-import { Lora_400Regular, Lora_600SemiBold } from '@expo-google-fonts/lora';
+import {
+  InstrumentSerif_400Regular,
+  InstrumentSerif_400Regular_Italic,
+} from '@expo-google-fonts/instrument-serif';
 import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { ScanLine, Search, Sparkles, UserCog } from 'lucide-react-native';
 import {
@@ -12,7 +15,7 @@ import {
   type ToleranceEntry,
 } from '@lucy/engine';
 import { radius, space, TOUCH_MIN, type } from './src/theme/index';
-import { usePalette } from './src/theme/usePalette';
+import { useIsDark, usePalette } from './src/theme/usePalette';
 import { ScanScreen } from './src/screens/ScanScreen';
 import { ProductScreen } from './src/screens/ProductScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
@@ -34,13 +37,14 @@ type Tab = 'scan' | 'search' | 'reco' | 'profile';
 
 export default function App() {
   const [fontsLoaded] = useFonts({
-    Lora_400Regular,
-    Lora_600SemiBold,
+    InstrumentSerif_400Regular,
+    InstrumentSerif_400Regular_Italic,
     Inter_400Regular,
     Inter_500Medium,
     Inter_600SemiBold,
   });
 
+  const isDark = useIsDark();
   const [tab, setTab] = useState<Tab>('scan');
   const [profile, setProfile] = useState<SkinProfile | null>({
     skinType: 'sensitive',
@@ -208,7 +212,9 @@ export default function App() {
         </View>
 
         <TabBar current={tab} onChange={setTab} />
-        <StatusBar barStyle={tab === 'scan' ? 'light-content' : 'dark-content'} />
+        {/* Sur la camera comme sur la toile expresso du theme sombre, le
+            texte de la barre d'etat doit etre clair. */}
+        <StatusBar barStyle={tab === 'scan' || isDark ? 'light-content' : 'dark-content'} />
       </View>
     </SafeAreaProvider>
   );
@@ -219,8 +225,10 @@ export default function App() {
  *
  * Quatre destinations de premier niveau, sous la limite de cinq
  * (`bottom-nav-limit`), chacune avec icone et libelle (`nav-label-icon`).
- * L'onglet actif est signale par la couleur, le poids du texte et un
- * indicateur, jamais par la couleur seule.
+ * L'onglet actif porte une pastille bleu layette derriere son icone : c'est,
+ * avec les boutons d'action, le seul aplat bleu de l'interface. Il est aussi
+ * signale par la graisse du libelle et l'epaisseur du trait, jamais par la
+ * couleur seule.
  */
 function TabBar({ current, onChange }: { current: Tab; onChange: (tab: Tab) => void }) {
   const palette = usePalette();
@@ -257,19 +265,20 @@ function TabBar({ current, onChange }: { current: Tab; onChange: (tab: Tab) => v
           >
             <View
               style={[
-                styles.tabIndicator,
+                styles.tabPill,
                 { backgroundColor: active ? palette.primary : 'transparent' },
               ]}
-            />
-            <Icon
-              size={22}
-              color={active ? palette.primary : palette.textSubtle}
-              strokeWidth={active ? 2.25 : 1.75}
-            />
+            >
+              <Icon
+                size={22}
+                color={active ? palette.onPrimary : palette.textSubtle}
+                strokeWidth={active ? 2.25 : 1.75}
+              />
+            </View>
             <Text
               style={[
                 active ? type.label : type.caption,
-                { color: active ? palette.primary : palette.textSubtle },
+                { color: active ? palette.text : palette.textSubtle },
               ]}
             >
               {label}
@@ -288,7 +297,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     borderTopWidth: 1,
     paddingTop: space.sm,
-    ...(Platform.OS === 'web' ? {} : {}),
   },
   tab: {
     flex: 1,
@@ -297,10 +305,11 @@ const styles = StyleSheet.create({
     minHeight: TOUCH_MIN,
     paddingBottom: space.xs,
   },
-  tabIndicator: {
-    width: 24,
-    height: 3,
+  tabPill: {
+    width: 56,
+    height: 32,
     borderRadius: radius.pill,
-    marginBottom: space.xs,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

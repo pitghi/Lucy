@@ -6,9 +6,11 @@ import { usePalette } from '../theme/usePalette';
 /**
  * Option selectionnable du profil.
  *
- * L'etat selectionne est porte par trois signaux simultanes — fond teinte,
- * bordure accentuee, coche — de sorte qu'il reste lisible sans percevoir la
- * couleur. L'etat est egalement annonce aux lecteurs d'ecran via
+ * L'etat selectionne est porte par trois signaux simultanes — fond bleu
+ * dilue, contour brun, coche — de sorte qu'il reste lisible sans percevoir la
+ * couleur. C'est le traitement de l'option retenue dans la reference : un
+ * contour d'encre, pas un aplat qui concurrencerait le bouton d'action.
+ * L'etat est egalement annonce aux lecteurs d'ecran via
  * `accessibilityState.selected`.
  */
 
@@ -24,7 +26,9 @@ export function Chip({ label, selected, onPress, tone = 'default' }: ChipProps) 
   const palette = usePalette();
   const isExclude = tone === 'exclude';
 
-  const activeColor = isExclude ? palette.danger : palette.primary;
+  // L'exclusion garde la brique : elle signale un rejet, pas un choix.
+  const activeColor = isExclude ? palette.danger : palette.secondary;
+  const activeText = isExclude ? palette.danger : palette.text;
   const activeBackground = isExclude ? palette.dangerSoft : palette.primarySoft;
   const Icon = isExclude ? X : Check;
 
@@ -45,7 +49,7 @@ export function Chip({ label, selected, onPress, tone = 'default' }: ChipProps) 
       ]}
     >
       {selected ? <Icon size={15} color={activeColor} strokeWidth={2.5} /> : null}
-      <Text style={[type.smallMedium, { color: selected ? activeColor : palette.textMuted }]}>
+      <Text style={[type.smallMedium, { color: selected ? activeText : palette.textMuted }]}>
         {label}
       </Text>
     </Pressable>

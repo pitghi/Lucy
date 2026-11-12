@@ -1,6 +1,5 @@
 import { useCallback, useState } from 'react';
 import {
-  ActivityIndicator,
   FlatList,
   KeyboardAvoidingView,
   Platform,
@@ -22,9 +21,11 @@ import {
 } from '@lucy/engine';
 import { CONCERN_LABELS } from '../data/labels';
 import { translateQuery, type SearchFailure } from '../data/searchClient';
-import { radius, space, TOUCH_MIN, type } from '../theme/index';
+import { font, radius, space, type } from '../theme/index';
 import { usePalette } from '../theme/usePalette';
 import { ProductCard } from '../components/ProductCard';
+import { Button } from '../components/Button';
+import { Em } from '../components/Em';
 
 /**
  * Recherche en langage libre.
@@ -122,28 +123,16 @@ export function SearchScreen({ catalog, profile, onSelect, onEditProfile }: Prop
         ]}
       >
         <View style={[styles.emptyIcon, { backgroundColor: palette.primarySoft }]}>
-          <UserCog size={28} color={palette.primary} strokeWidth={1.75} />
+          <UserCog size={28} color={palette.text} strokeWidth={1.75} />
         </View>
         <Text style={[type.title, { color: palette.text, textAlign: 'center' }]}>
-          Renseignez votre profil
+          Renseignez votre <Em>profil</Em>
         </Text>
         <Text style={[type.body, { color: palette.textMuted, textAlign: 'center' }]}>
           La recherche tient compte de votre peau et de ce que vous ne tolérez pas. Sans
           profil, elle ne saurait pas quoi écarter.
         </Text>
-        <Pressable
-          onPress={onEditProfile}
-          accessibilityRole="button"
-          style={({ pressed }) => [
-            styles.cta,
-            { backgroundColor: palette.primary },
-            pressed && styles.pressed,
-          ]}
-        >
-          <Text style={[type.bodyMedium, { color: palette.onPrimary }]}>
-            Renseigner mon profil
-          </Text>
-        </Pressable>
+        <Button label="Renseigner mon profil" onPress={onEditProfile} style={styles.ctaStretch} />
       </View>
     );
   }
@@ -164,7 +153,9 @@ export function SearchScreen({ catalog, profile, onSelect, onEditProfile }: Prop
         showsVerticalScrollIndicator={false}
         ListHeaderComponent={
           <View style={styles.header}>
-            <Text style={[type.display, { color: palette.text }]}>Rechercher</Text>
+            <Text style={[type.display, { color: palette.text }]}>
+              <Em>Rechercher</Em>
+            </Text>
             <Text style={[type.body, { color: palette.textMuted }]}>
               Décrivez ce que vous cherchez. Votre profil reste sur votre téléphone : seule
               votre phrase est envoyée pour être comprise.
@@ -189,46 +180,18 @@ export function SearchScreen({ catalog, profile, onSelect, onEditProfile }: Prop
               />
             </View>
 
-            <Pressable
+            <Button
+              label="Rechercher"
+              icon={Search}
               onPress={() => void run(text)}
-              disabled={text.trim().length === 0 || state.phase === 'recherche'}
-              accessibilityRole="button"
-              style={({ pressed }) => [
-                styles.cta,
-                {
-                  backgroundColor:
-                    text.trim().length === 0 ? palette.surfaceMuted : palette.primary,
-                },
-                pressed && styles.pressed,
-              ]}
-            >
-              {state.phase === 'recherche' ? (
-                <ActivityIndicator color={palette.onPrimary} />
-              ) : (
-                <>
-                  <Search
-                    size={18}
-                    color={text.trim().length === 0 ? palette.textSubtle : palette.onPrimary}
-                    strokeWidth={2}
-                  />
-                  <Text
-                    style={[
-                      type.bodyMedium,
-                      {
-                        color:
-                          text.trim().length === 0 ? palette.textSubtle : palette.onPrimary,
-                      },
-                    ]}
-                  >
-                    Rechercher
-                  </Text>
-                </>
-              )}
-            </Pressable>
+              disabled={text.trim().length === 0}
+              loading={state.phase === 'recherche'}
+              style={styles.cta}
+            />
 
             {state.phase === 'repos' ? (
               <View style={styles.exemples}>
-                <Text style={[type.label, { color: palette.textSubtle }]}>EXEMPLES</Text>
+                <Text style={[type.eyebrow, { color: palette.textMuted }]}>Exemples</Text>
                 {EXEMPLES.map((exemple) => (
                   <Pressable
                     key={exemple}
@@ -239,11 +202,13 @@ export function SearchScreen({ catalog, profile, onSelect, onEditProfile }: Prop
                     accessibilityRole="button"
                     style={({ pressed }) => [
                       styles.exemple,
-                      { borderColor: palette.border },
+                      { backgroundColor: palette.card, borderColor: palette.border },
                       pressed && styles.pressed,
                     ]}
                   >
-                    <Text style={[type.small, { color: palette.textMuted }]}>{exemple}</Text>
+                    <Text style={[styles.citation, { color: palette.text }]}>
+                      « {exemple} »
+                    </Text>
                   </Pressable>
                 ))}
               </View>
@@ -270,19 +235,16 @@ export function SearchScreen({ catalog, profile, onSelect, onEditProfile }: Prop
 
             {state.phase === 'resultats' ? (
               <View style={styles.comprises}>
-                <Text style={[type.label, { color: palette.textSubtle }]}>
-                  CE QUE J'AI COMPRIS
+                <Text style={[type.eyebrow, { color: palette.textMuted }]}>
+                  Ce que j'ai compris
                 </Text>
                 <View style={styles.comprisesRow}>
                   {state.comprises.map((critere) => (
                     <View
                       key={critere}
-                      style={[
-                        styles.critere,
-                        { backgroundColor: palette.primarySoft, borderColor: palette.border },
-                      ]}
+                      style={[styles.critere, { backgroundColor: palette.primarySoft }]}
                     >
-                      <Check size={13} color={palette.primary} strokeWidth={2.5} />
+                      <Check size={13} color={palette.text} strokeWidth={2.5} />
                       <Text style={[type.caption, { color: palette.text }]}>{critere}</Text>
                     </View>
                   ))}
@@ -390,28 +352,24 @@ const styles = StyleSheet.create({
   field: { borderWidth: 1, borderRadius: radius.md, marginTop: space.md },
   input: { minHeight: 88, padding: space.md, textAlignVertical: 'top' },
 
-  cta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: space.sm,
-    minHeight: TOUCH_MIN,
-    borderRadius: radius.pill,
-    paddingHorizontal: space.xl,
-    marginTop: space.sm,
-  },
+  cta: { marginTop: space.sm },
+  ctaStretch: { alignSelf: 'stretch' },
   pressed: { opacity: 0.85 },
 
   exemples: { gap: space.sm, marginTop: space.lg },
-  exemple: { borderWidth: 1, borderRadius: radius.md, padding: space.md },
+  exemple: { borderWidth: 1, borderRadius: radius.lg, padding: space.lg },
+  // Une phrase qu'on pourrait taper : citee, en serif italique, comme le
+  // temoignage de la reference.
+  citation: { fontFamily: font.headingItalic, fontSize: 19, lineHeight: 24 },
 
   comprises: { gap: space.sm, marginTop: space.lg },
   comprisesRow: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  // Pastille d'etat, comme le « Back in stock » de la reference : aplat bleu
+  // dilue, encre brune, coche.
   critere: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: space.xs,
-    borderWidth: 1,
     borderRadius: radius.pill,
     paddingHorizontal: space.md,
     paddingVertical: space.xs,

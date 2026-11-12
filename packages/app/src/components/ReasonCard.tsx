@@ -41,11 +41,18 @@ export function ReasonCard({ reason, estimate }: Props) {
   const isBonus = reason.impact > 0 && !reason.informational;
   const isInfo = reason.informational === true;
 
+  // Le sens de l'impact est triple : icone (+, -, i), texte (« +9 points »),
+  // et teinte. Le bonus prend le bleu soutenu, la penalite la brique.
   const accentColor = isInfo
     ? palette.textMuted
     : isBonus
-      ? palette.primary
+      ? palette.primaryStrong
       : palette.danger;
+  const accentBackground = isInfo
+    ? palette.surfaceMuted
+    : isBonus
+      ? palette.primarySoft
+      : palette.dangerSoft;
 
   const ImpactIcon = isInfo ? Info : isBonus ? Plus : Minus;
 
@@ -64,7 +71,7 @@ export function ReasonCard({ reason, estimate }: Props) {
   return (
     <View style={[styles.card, { backgroundColor: palette.card, borderColor: palette.border }]}>
       <View style={styles.head}>
-        <View style={[styles.impactBadge, { backgroundColor: palette.surfaceMuted }]}>
+        <View style={[styles.impactBadge, { backgroundColor: accentBackground }]}>
           <ImpactIcon size={14} color={accentColor} strokeWidth={2.5} />
         </View>
 
@@ -82,7 +89,7 @@ export function ReasonCard({ reason, estimate }: Props) {
       </Text>
 
       {estimate ? (
-        <View style={[styles.rangeBlock, { backgroundColor: palette.surfaceMuted }]}>
+        <View style={[styles.rangeBlock, { backgroundColor: palette.background }]}>
           <ConcentrationRange estimate={estimate} />
         </View>
       ) : null}
@@ -101,13 +108,13 @@ export function ReasonCard({ reason, estimate }: Props) {
         style={({ pressed }) => [styles.sourceToggle, pressed && styles.pressed]}
         hitSlop={8}
       >
-        <BookOpen size={14} color={palette.primary} strokeWidth={2} />
-        <Text style={[type.label, { color: palette.primary }]}>
+        <BookOpen size={14} color={palette.text} strokeWidth={2} />
+        <Text style={[type.label, styles.underline, { color: palette.text }]}>
           {reason.sources.length} source{reason.sources.length > 1 ? 's' : ''}
         </Text>
         <ChevronDown
           size={14}
-          color={palette.primary}
+          color={palette.text}
           strokeWidth={2}
           style={{ transform: [{ rotate: expanded ? '180deg' : '0deg' }] }}
         />
@@ -137,7 +144,7 @@ const styles = StyleSheet.create({
   impactBadge: {
     width: 28,
     height: 28,
-    borderRadius: radius.sm,
+    borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -152,5 +159,7 @@ const styles = StyleSheet.create({
   },
   // L'etat presse ne modifie que l'opacite : aucun deplacement de mise en page.
   pressed: { opacity: 0.6 },
+  // Comme tout lien de l'application : l'encre soulignee, pas une couleur.
+  underline: { textDecorationLine: 'underline' },
   sources: { borderTopWidth: 1, paddingTop: space.md, gap: space.sm },
 });

@@ -779,14 +779,17 @@ Retenu du design system genere pour le projet. Il se traduit ici par les
 sources affichees sur chaque motif et les niveaux de confiance visibles, plutot
 que par les badges et certifications d'une landing page.
 
-### 5.2 Palette Healthcare, pas Beauty — *acte*
+### 5.2 Palette Healthcare, pas Beauty — *revoque le 2026-11-12, voir 5.15*
 
 Le domaine couleur proposait une palette « Beauty/Spa » rose et lavande.
 Ecartee : elle signale un produit de beaute lifestyle, quand Lucy vend de la
 rigueur analytique. Socle Healthcare, avec un fond neutralise pour ne pas
 teinter les surfaces de donnees.
 
-### 5.3 Inter en corps de texte, Lora en titres — *acte*
+Remplacee par la direction artistique de 5.15, qui assume un registre plus
+chaud. L'argument d'ici n'a pas disparu : 5.15 dit comment il est tenu.
+
+### 5.3 Inter en corps de texte, Lora en titres — *acte pour Inter ; Lora remplace par Instrument Serif le 2026-11-12, voir 5.15*
 
 Ecart assume au design system, qui recommandait Lora / Raleway. Lora est
 conserve en titres : registre editorial, credibilite scientifique, et
@@ -802,6 +805,12 @@ page entre « entre 0,3 et 1 % » et « 10 % ».
 « Vert = bon » est la semantique des applications concurrentes et importerait
 leur simplification. Le registre va du teal soutenu a l'ambre puis au rouge
 brique, la progression etant aussi une progression de luminosite.
+
+**Depuis 5.15**, le registre va du bleu marine au bleu denim, puis a l'ocre et
+a la terre cuite. La progression de luminosite est desormais verifiee (L* 26,
+33, 40, 44) : elle ne l'etait pas tout a fait, le teal du niveau haut et
+l'ambre du niveau moyen ayant la meme luminance. Le bleu s'eloigne d'ailleurs
+davantage du vert que le teal ne le faisait.
 
 ### 5.5 Jamais la couleur seule — *acte*
 
@@ -845,6 +854,9 @@ Corrige apres observation du rendu : les couleurs de score du mode clair
 restaient illisibles sur fond sombre. Le mode sombre emploie des tons plus
 clairs et moins satures, conformement a `color-dark-mode`. Les deux themes se
 verifient separement.
+
+Depuis 5.15, le sombre est un brun expresso a encre creme ; le bleu layette
+n'y change pas (10:1 sur l'expresso).
 
 ### 5.10 La photo produit a un repli de meme encombrement — *acte*
 
@@ -937,6 +949,73 @@ contredit la regle de visibilite de l'incertitude. La sortie est d'afficher la
 categorie retenue sur la fiche et de permettre sa correction ; ce n'est pas
 fait. Voir §7.
 
+### 5.15 Direction artistique : brun, creme, bleu layette — *acte* **[PR]**
+
+Le porteur a fixe l'ADN visuel sur trois couleurs, prises d'une page produit
+de reference (une marque de soin fictive, « fawn ») :
+
+| Role | Couleur | Emploi |
+| --- | --- | --- |
+| Primary | bleu layette `#8EC5FF` | aplat des actions principales (CTA), onglet actif |
+| Secondary | brun `#3B2418` | encre du texte, contours, aplats sombres (badges, rang) |
+| Tertiary | creme `#F2E8DA` | toile de fond |
+
+La reference fournit aussi le reste du registre, repris tel quel : serif
+editorial dont un mot passe en italique (« The Barrier *Serum* » ; ici
+« Pour *vous* »), sans-serif sobre pour le reste, gelules pour les actions,
+filets fins plutot qu'ombres, liens soulignes, pastille d'etat a point
+(« ● Back in stock » ; ici le libelle de chaque score). Jetons :
+`packages/app/src/theme/tokens.ts` ; detail dans `design-system/lucy`.
+
+**Ce que la palette imposait, et comment c'est tenu.**
+
+- **Le bleu layette ne porte pas de texte.** Sur la creme il fait 1,5:1. Il
+  reste donc un aplat, toujours avec l'encre brune dessus (8:1) — jamais du
+  blanc, qui n'y atteint que 1,8:1. Quand le bleu doit se *lire* (bonus d'un
+  motif, trait d'intervalle, icone), c'est un bleu soutenu `#234F80` (6,9:1 sur
+  la creme, 5,7:1 contre la piste d'une barre).
+- **Les liens sont l'encre soulignee**, comme dans la reference, et plus une
+  couleur : un lien colore se confondrait avec une valeur de score.
+- **Une option retenue prend un contour brun** et un fond bleu dilue, pas un
+  aplat bleu : deux aplats bleus a l'ecran, et l'action principale ne se
+  distingue plus.
+- **Toutes les paires texte/fond ont ete calculees**, dans les deux themes :
+  aucune sous 4,5:1. Les couleurs de score tiennent 4,5:1 sur la toile, la
+  carte et leur propre fond dilue — elles portent la valeur et le libelle.
+- **Instrument Serif remplace Lora** : c'est le serif de la reference, et il
+  garde ce qui justifiait Lora en 5.3 (voix editoriale, differenciante). Il
+  n'existe qu'en graisse 400, donc il ne descend pas sous 22 px. **Inter ne
+  bouge pas** : la raison de 5.3 — les chiffres tabulaires — n'a rien a voir
+  avec la palette.
+- **Theme sombre** : brun expresso, encre creme, meme bleu (5.9).
+
+**Ce qui entre en tension avec 5.2, et pourquoi on passe outre.** La reference
+est une boutique de cosmetiques : c'est le registre « beaute lifestyle » que
+5.2 ecartait. Le porteur l'assume. Ce qui faisait la rigueur ne tenait pas a la
+palette et n'a pas bouge : sources sur chaque motif, intervalles, niveaux de
+confiance, couverture annoncee, pas de vert, jamais la couleur seule. Le risque
+reste a surveiller aupres des testeurs : qu'une application qui ressemble a
+une boutique soit lue comme celle d'une marque, alors que sa valeur est d'etre
+independante. Ce qui la distingue d'une boutique — aucun prix, aucun panier,
+des notes qui peuvent etre mauvaises — doit rester visible.
+
+**Ecarte :**
+
+- le bleu layette comme couleur de texte ou de lien (1,5:1) ;
+- du texte blanc sur le bleu (1,8:1), que les boutons de la reference evitent
+  aussi ;
+- garder Lora : serif de lecture, a contraste modere, il ne porte pas le
+  registre de la reference ;
+- une barre d'onglets brune : trop lourde, le brun reste l'encre et les petits
+  aplats.
+
+**Livraison.** Empreinte mesuree (decision 1.6) : les jetons, composants,
+ecrans et la police ne la changent pas — iOS `5ba5bcb9…` avant et apres —
+donc ils passent par mise a jour en vol. L'icone, l'ecran de demarrage et les
+couleurs de fond d'`app.json` la changent (iOS `8809baee…`, Android
+`14b5bd3e…`) : ils demandent un nouveau binaire. Les deux parties sont dans
+deux commits distincts.
+
 ---
 
 ## 6. Posture juridique et editoriale
@@ -983,6 +1062,35 @@ Rien n'a ete decide sur ces points ; ils ne sont pas des oublis.
 ---
 
 ## 8. Historique des sessions
+
+### 2026-11-12 — nouvelle direction artistique
+
+Demande du porteur : reprendre l'ADN d'une page produit de reference — brun,
+creme, bleu layette — sur toute l'application (5.15).
+
+Fait : jetons refondus (palette, typographie, echelle de score), un composant
+`Button` (primaire bleu, secondaire a contour brun) et un `TextLink` (encre
+soulignee) a la place des boutons reecrits ecran par ecran, l'accent italique
+des titres (`Em`), la pastille de niveau sur chaque score, l'icone et l'ecran
+de demarrage regeneres. Captures de `docs/apercu/` refaites, clair et sombre.
+
+Corrige au passage : la piste de la barre de concentration etait de la meme
+couleur que le bloc qui la porte, donc invisible ; la barre d'etat restait en
+texte sombre sur le theme sombre ; « Ne m'a pas convenu » se coupait dans la
+recherche du journal.
+
+Les captures montrent le repli « Photo indisponible » : Open Beauty Facts
+n'etait pas joignable depuis la session. Le flux de la camera est une image de
+synthese.
+
+#### Ou reprendre
+
+1. **Verifier sur appareil** le rendu d'Instrument Serif (une seule graisse,
+   etroite) et l'agrandissement systeme du texte : le web ne dit rien du rendu
+   iOS des polices.
+2. **Livrer en deux temps** si les testeurs doivent voir la DA avant le
+   prochain binaire : le premier commit passe en OTA, le second (icone) attend
+   un build (skill `ota`, §0).
 
 ### 2026-09-16 — les deux services mis a l'epreuve reelle
 

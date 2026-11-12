@@ -1,14 +1,16 @@
 import { useMemo, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Sparkles, UserCog } from 'lucide-react-native';
 import type { Concern, Product, SkinProfile } from '@lucy/engine';
 import { recommend, type Recommendation } from '@lucy/engine';
 import { CONCERN_LABELS } from '../data/labels';
-import { radius, space, TOUCH_MIN, type } from '../theme/index';
+import { radius, space, type } from '../theme/index';
 import { usePalette } from '../theme/usePalette';
 import { Chip, ChipGroup } from '../components/Chip';
 import { ProductCard } from '../components/ProductCard';
+import { Button, TextLink } from '../components/Button';
+import { Em } from '../components/Em';
 
 /**
  * Recommandations pour le profil.
@@ -57,28 +59,16 @@ export function RecommendationsScreen({
         ]}
       >
         <View style={[styles.emptyIcon, { backgroundColor: palette.primarySoft }]}>
-          <UserCog size={28} color={palette.primary} strokeWidth={1.75} />
+          <UserCog size={28} color={palette.text} strokeWidth={1.75} />
         </View>
         <Text style={[type.title, { color: palette.text, textAlign: 'center' }]}>
-          Renseignez votre profil
+          Renseignez votre <Em>profil</Em>
         </Text>
         <Text style={[type.body, { color: palette.textMuted, textAlign: 'center' }]}>
           Les recommandations dépendent de votre type de peau et de vos besoins. Trois
           questions suffisent.
         </Text>
-        <Pressable
-          onPress={onEditProfile}
-          accessibilityRole="button"
-          style={({ pressed }) => [
-            styles.cta,
-            { backgroundColor: palette.primary },
-            pressed && styles.pressed,
-          ]}
-        >
-          <Text style={[type.bodyMedium, { color: palette.onPrimary }]}>
-            Renseigner mon profil
-          </Text>
-        </Pressable>
+        <Button label="Renseigner mon profil" onPress={onEditProfile} style={styles.cta} />
       </View>
     );
   }
@@ -95,7 +85,9 @@ export function RecommendationsScreen({
         showsVerticalScrollIndicator={false}
         ListHeaderComponent={
           <View style={styles.header}>
-            <Text style={[type.display, { color: palette.text }]}>Pour vous</Text>
+            <Text style={[type.display, { color: palette.text }]}>
+              Pour <Em>vous</Em>
+            </Text>
             <Text style={[type.body, { color: palette.textMuted }]}>
               Classé selon votre profil. Les produits contenant un ingrédient que vous ne
               tolérez pas sont écartés.
@@ -103,8 +95,8 @@ export function RecommendationsScreen({
 
             {profile.concerns.length > 0 ? (
               <View style={styles.filters}>
-                <Text style={[type.label, { color: palette.textSubtle }]}>
-                  CIBLER UNE PRÉOCCUPATION
+                <Text style={[type.eyebrow, { color: palette.textMuted }]}>
+                  Cibler une préoccupation
                 </Text>
                 <ChipGroup>
                   {profile.concerns.map((concern) => (
@@ -129,15 +121,7 @@ export function RecommendationsScreen({
               Vos critères d'exclusion ecartent tout le catalogue disponible. Retirez un
               ingrédient de votre liste pour élargir les résultats.
             </Text>
-            <Pressable
-              onPress={onEditProfile}
-              accessibilityRole="button"
-              style={({ pressed }) => [styles.textButton, pressed && styles.pressed]}
-            >
-              <Text style={[type.smallMedium, { color: palette.primary }]}>
-                Modifier mon profil
-              </Text>
-            </Pressable>
+            <TextLink label="Modifier mon profil" onPress={onEditProfile} />
           </View>
         }
         renderItem={({ item, index }) => (
@@ -169,7 +153,7 @@ function RecommendationCard({
       note={
         highlights.length > 0 ? (
           <View style={styles.reason}>
-            <Sparkles size={14} color={palette.primary} strokeWidth={2} />
+            <Sparkles size={14} color={palette.primaryStrong} strokeWidth={2} />
             <Text style={[type.caption, { color: palette.textMuted, flex: 1 }]}>
               {highlights[0]}
             </Text>
@@ -186,8 +170,6 @@ const styles = StyleSheet.create({
   header: { gap: space.sm, marginBottom: space.md },
   filters: { gap: space.sm, marginTop: space.md },
 
-
-
   reason: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
 
   emptyContainer: {
@@ -203,14 +185,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  cta: {
-    minHeight: TOUCH_MIN + 4,
-    paddingHorizontal: space.xxl,
-    borderRadius: radius.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  cta: { alignSelf: 'stretch' },
   empty: { padding: space.xl, borderRadius: radius.lg, gap: space.sm },
-  textButton: { minHeight: TOUCH_MIN, justifyContent: 'center' },
-  pressed: { opacity: 0.7 },
 });

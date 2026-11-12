@@ -1,203 +1,223 @@
-# Design System Master File
+# Design System — Lucy
 
-> **LOGIC:** When building a specific page, first check `design-system/pages/[page-name].md`.
-> If that file exists, its rules **override** this Master file.
-> If not, strictly follow the rules below.
-
----
-
-**Project:** Lucy
-**Generated:** 2026-09-07 15:32:21
-**Category:** Home Services (Plumber/Electrician)
+> **LOGIQUE :** pour un ecran donne, consulter d'abord
+> `design-system/lucy/pages/[ecran].md`. S'il existe, ses regles **priment**
+> sur ce fichier. Sinon, suivre strictement ce qui suit.
 
 ---
 
-## Global Rules
+**Projet :** Lucy
+**Revise le :** 2026-11-12 — direction artistique « brun, creme, bleu layette »
+(decision 5.15 du [journal](../../docs/decisions.md)). Remplace la version
+generee le 2026-09-07 (palette Healthcare, Lora / Raleway).
+**Reference :** une page produit de soin (« fawn », marque fictive) fournie par
+le porteur : toile creme, encre brune, un seul bleu pour les actions, serif
+editorial a accent italique.
+**Source de verite :** `packages/app/src/theme/tokens.ts` et `scores.ts`. Ce
+fichier les explique ; en cas d'ecart, ce sont les jetons qui font foi.
 
-### Color Palette
+---
 
-| Role | Hex | CSS Variable |
-|------|-----|--------------|
-| Primary | `#2563EB` | `--color-primary` |
-| Secondary | `#3B82F6` | `--color-secondary` |
-| CTA/Accent | `#F97316` | `--color-cta` |
-| Background | `#F8FAFC` | `--color-background` |
-| Text | `#1E293B` | `--color-text` |
+## ADN
 
-**Color Notes:** Document grey + scan blue
+| Role | Nom | Hex | Variable |
+|------|-----|-----|----------|
+| Primary | Bleu layette | `#8EC5FF` | `--color-primary` |
+| Secondary | Brun | `#3B2418` | `--color-secondary` |
+| Tertiary | Creme | `#F2E8DA` | `--color-tertiary` |
 
-### Typography
+- **Primary** : l'aplat des actions — boutons principaux, onglet actif. Il ne
+  porte **jamais** de texte ni de trait : 1,5:1 sur la creme. Ce qui se pose
+  dessus est l'encre brune (8:1), jamais du blanc (1,8:1).
+- **Secondary** : l'encre. Tout le texte, les contours d'action, les petits
+  aplats (rang d'un produit, « Requis »).
+- **Tertiary** : la toile de fond.
 
-- **Heading Font:** Lora
-- **Body Font:** Raleway
-- **Mood:** calm, wellness, health, relaxing, natural, organic
-- **Google Fonts:** [Lora + Raleway](https://fonts.google.com/share?selection.family=Lora:wght@400;500;600;700|Raleway:wght@300;400;500;600;700)
+## Jetons semantiques
 
-**CSS Import:**
+| Jeton | Clair | Sombre | Emploi |
+|-------|-------|--------|--------|
+| `background` | `#F2E8DA` | `#1C120C` | toile |
+| `card` | `#FBF7F1` | `#281A12` | cartes, feuilles, barre d'onglets |
+| `surfaceMuted` | `#EBDFCE` | `#33241A` | zones encastrees, bouton inactif |
+| `text` | `#3B2418` | `#F2E8DA` | encre — 11,9:1 / 15,2:1 sur la toile |
+| `textMuted` | `#5E4636` | `#D2C1AD` | texte secondaire — 7,2:1 sur la toile |
+| `textSubtle` | `#725B4A` | `#B09A85` | mentions — 4,8:1 au pire (encastre) |
+| `primary` | `#8EC5FF` | `#8EC5FF` | aplat d'action |
+| `onPrimary` | `#3B2418` | `#3B2418` | texte sur l'aplat bleu — 8:1 |
+| `primarySoft` | `#DCEBFC` | `#22324A` | option retenue, pastille d'etat |
+| `primaryStrong` | `#234F80` | `#8EC5FF` | bleu qui se lit : bonus, trait de donnees — 6,9:1 |
+| `secondary` | `#3B2418` | `#F2E8DA` | aplat d'encre, contour d'option retenue |
+| `onSecondary` | `#F2E8DA` | `#3B2418` | texte sur l'aplat d'encre |
+| `border` | `#E2D3BF` | `#3D2C21` | filets, piste des barres |
+| `borderStrong` | `#9A846F` | `#7A6553` | contour d'un controle — 3:1 sur la carte |
+| `danger` / `dangerSoft` | `#A0381F` / `#F8E1D9` | `#F09C88` / `#3D2019` | blocage, exclusion |
+| `warning` / `warningSoft` | `#85520F` / `#F7E6C6` | `#E6B464` / `#3A2A14` | mise en garde |
+
+Toutes les paires texte / fond atteignent 4,5:1 dans les deux themes ; les
+contours de controle, 3:1 sur la carte qui les porte.
+
+### Echelle de score
+
+Pas de vert (decision 5.4), jamais la couleur seule (5.5). Chaque niveau est un
+cran plus clair que le precedent, de sorte qu'ils restent distincts en niveaux
+de gris.
+
+| Niveau | Clair | Dilue | Sombre | Dilue sombre |
+|--------|-------|-------|--------|--------------|
+| haut | `#1B3E66` marine | `#DCEAFB` | `#B9DBFF` | `#1E2C3D` |
+| bon | `#234F80` denim | `#E7F0FA` | `#8EC5FF` | `#1C2838` |
+| moyen | `#85520F` ocre | `#F7E6C6` | `#D9A04A` | `#36270F` |
+| faible | `#B4432A` terre cuite | `#FAE6DF` | `#E07C64` | `#3A1E17` |
+
+Luminance (L*) : 26, 33, 40, 44 en clair ; 86, 78, 70, 63 en sombre.
+
+## Typographie
+
+- **Titres : Instrument Serif** 400, et son italique pour l'accent — un mot
+  du titre, jamais un nom de produit (« Pour *vous* », « Pourquoi ce *score* »).
+  Une seule graisse : jamais sous 22 px.
+- **Corps : Inter** 400 / 500 / 600, chiffres tabulaires pour toute valeur
+  (decision 5.3).
+- **Surtitre** : Inter 600, 12 / 16, capitales par le style, interlettrage 1,2
+  (marque d'un produit, « Cibler une préoccupation »).
+
+| Style | Famille | Taille / interligne |
+|-------|---------|---------------------|
+| `display` | Instrument Serif | 40 / 44 |
+| `title` | Instrument Serif | 28 / 32 |
+| `titleSmall` | Instrument Serif | 22 / 26 |
+| `subtitle` | Inter 600 | 18 / 26 |
+| `body` / `bodyMedium` | Inter 400 / 500 | 16 / 24 |
+| `small` / `smallMedium` | Inter 400 / 500 | 14 / 21 |
+| `caption` | Inter 400 | 13 / 19 |
+| `label` | Inter 600 | 13 / 18 |
+| `eyebrow` | Inter 600, capitales | 12 / 16 |
+
 ```css
-@import url('https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&family=Raleway:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&display=swap');
 ```
 
-### Spacing Variables
+## Espacement, rayons, ombres
 
-| Token | Value | Usage |
-|-------|-------|-------|
-| `--space-xs` | `4px` / `0.25rem` | Tight gaps |
-| `--space-sm` | `8px` / `0.5rem` | Icon gaps, inline spacing |
-| `--space-md` | `16px` / `1rem` | Standard padding |
-| `--space-lg` | `24px` / `1.5rem` | Section padding |
-| `--space-xl` | `32px` / `2rem` | Large gaps |
-| `--space-2xl` | `48px` / `3rem` | Section margins |
-| `--space-3xl` | `64px` / `4rem` | Hero padding |
+| Jeton | Valeur |
+|-------|--------|
+| `space` | 4, 8, 12, 16, 24, 32, 48 |
+| `radius.sm` / `md` | 8 / 12 — vignettes, champs |
+| `radius.lg` | 14 — cartes |
+| `radius.pill` | gelule — actions, pastilles, options |
 
-### Shadow Depths
-
-| Level | Value | Usage |
-|-------|-------|-------|
-| `--shadow-sm` | `0 1px 2px rgba(0,0,0,0.05)` | Subtle lift |
-| `--shadow-md` | `0 4px 6px rgba(0,0,0,0.1)` | Cards, buttons |
-| `--shadow-lg` | `0 10px 15px rgba(0,0,0,0.1)` | Modals, dropdowns |
-| `--shadow-xl` | `0 20px 25px rgba(0,0,0,0.15)` | Hero images, featured cards |
+Les surfaces se separent par des **filets** (`border`), comme dans la
+reference ; les ombres sont teintees de brun et a peine marquees (opacite 0,05
+pour une carte).
 
 ---
 
-## Component Specs
+## Composants
 
-### Buttons
+### Boutons — `Button`
 
 ```css
-/* Primary Button */
+/* Primaire : l'action d'un ecran. Un seul par ecran. */
 .btn-primary {
-  background: #F97316;
-  color: white;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-weight: 600;
-  transition: all 200ms ease;
-  cursor: pointer;
+  background: #8EC5FF;
+  color: #3B2418;
+  border-radius: 999px;
+  min-height: 52px;          /* 44 dans une carte */
+  padding: 0 24px;
+  font: 500 16px/24px Inter;
 }
 
-.btn-primary:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
-}
-
-/* Secondary Button */
+/* Secondaire : contour d'encre, sans aplat. */
 .btn-secondary {
   background: transparent;
-  color: #2563EB;
-  border: 2px solid #2563EB;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-weight: 600;
-  transition: all 200ms ease;
-  cursor: pointer;
+  color: #3B2418;
+  border: 1.5px solid #3B2418;
+  border-radius: 999px;
+  min-height: 52px;
 }
+
+/* Inactif : aplat creme, libelle qui dit ce qui manque. */
+.btn-primary:disabled { background: #EBDFCE; color: #725B4A; }
+
+/* Pression : l'opacite seule, la mise en page ne bouge pas. */
+.btn:active { opacity: 0.75; }
 ```
 
-### Cards
+### Lien — `TextLink`
 
-```css
-.card {
-  background: #F8FAFC;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: var(--shadow-md);
-  transition: all 200ms ease;
-  cursor: pointer;
-}
+Encre brune **soulignee**, Inter 500. Pas de couleur : un lien colore se
+confondrait avec une valeur de score.
 
-.card:hover {
-  box-shadow: var(--shadow-lg);
-  transform: translateY(-2px);
-}
-```
+### Option selectionnable — `Chip`, cartes de choix du profil
 
-### Inputs
+- non retenue : fond `card`, filet `border`, texte `textMuted` ;
+- retenue : fond `primarySoft`, **contour brun 1,5 px**, coche brune, texte
+  `text` — trois signaux, dont aucun n'est la seule couleur ;
+- exclusion retenue : fond `dangerSoft`, contour et croix `danger`.
 
-```css
-.input {
-  padding: 12px 16px;
-  border: 1px solid #E2E8F0;
-  border-radius: 8px;
-  font-size: 16px;
-  transition: border-color 200ms ease;
-}
+### Pastilles d'etat
 
-.input:focus {
-  border-color: #2563EB;
-  outline: none;
-  box-shadow: 0 0 0 3px #2563EB20;
-}
-```
+- **Niveau d'un score** : point + libelle sur l'aplat dilue du niveau
+  (« ● Très bien tolérée »), a la maniere du « ● Back in stock » de la
+  reference.
+- **Critere compris** (recherche) : aplat `primarySoft`, coche et texte bruns.
+- **Rang** : rond brun, chiffre creme, pose sur l'angle de la vignette.
 
-### Modals
+### Cartes
 
-```css
-.modal-overlay {
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-}
+Fond `card`, filet `border`, rayon 14, marge interne 16. Nom de produit en
+`titleSmall`, marque en surtitre au-dessus.
 
-.modal {
-  background: white;
-  border-radius: 16px;
-  padding: 32px;
-  box-shadow: var(--shadow-xl);
-  max-width: 500px;
-  width: 90%;
-}
-```
+### Champs
+
+Fond `card`, filet `border`, rayon 12, texte 16 px, indication en `textSubtle`.
+
+### Barre d'onglets
+
+Fond `card`, filet superieur. L'onglet actif porte une pastille bleu layette de
+56 × 32 derriere son icone, un libelle en semi-gras et un trait plus epais.
+
+### Camera
+
+Voile expresso a 60 % hors de la zone de visee, coins de visee bleu layette de
+4 px, pastille d'instruction expresso a texte creme.
 
 ---
 
-## Style Guidelines
+## Style
 
-**Style:** Trust & Authority
-
-**Keywords:** Certificates/badges displayed, expert credentials, case studies with metrics, before/after comparisons, industry recognition, security badges
-
-**Best For:** Healthcare/medical landing pages, financial services, enterprise software, premium/luxury products, legal services
-
-**Key Effects:** Badge hover effects, metric pulse animations, certificate carousel, smooth stat reveal
-
-### Page Pattern
-
-**Pattern Name:** Real-Time / Operations Landing
-
-- **Conversion Strategy:** For ops/security/iot products. Demo or sandbox link. Trust signals.
-- **CTA Placement:** Primary CTA in nav + After metrics
-- **Section Order:** 1. Hero (product + live preview or status), 2. Key metrics/indicators, 3. How it works, 4. CTA (Start trial / Contact)
+Le style **« Trust & Authority »** (decision 5.1) est maintenu sur le fond :
+sources sur chaque motif, niveaux de confiance, intervalles, couverture
+annoncee. Le registre visuel, lui, est celui de la reference : **editorial et
+chaud** — toile creme, encre brune, un seul bleu, filets fins, serif a accent
+italique, gelules.
 
 ---
 
-## Anti-Patterns (Do NOT Use)
+## Interdits
 
-- ❌ Hidden contact info
-- ❌ No certifications
-
-### Additional Forbidden Patterns
-
-- ❌ **Emojis as icons** — Use SVG icons (Heroicons, Lucide, Simple Icons)
-- ❌ **Missing cursor:pointer** — All clickable elements must have cursor:pointer
-- ❌ **Layout-shifting hovers** — Avoid scale transforms that shift layout
-- ❌ **Low contrast text** — Maintain 4.5:1 minimum contrast ratio
-- ❌ **Instant state changes** — Always use transitions (150-300ms)
-- ❌ **Invisible focus states** — Focus states must be visible for a11y
+- ❌ **Bleu layette en texte, en lien ou en trait de donnees** (1,5:1).
+- ❌ **Texte blanc sur le bleu layette** (1,8:1).
+- ❌ **Deux aplats bleus a l'ecran** : l'action principale ne se distingue plus.
+- ❌ **Vert dans l'echelle de score** (decision 5.4).
+- ❌ **Un etat porte par la couleur seule** (decision 5.5).
+- ❌ **Une couleur ecrite en dur dans un composant** : passer par les jetons,
+  condition pour que le theme sombre suive.
+- ❌ **Instrument Serif sous 22 px**, ou un nom de produit coupe en italique.
+- ❌ **Emojis comme icones** : Lucide uniquement.
+- ❌ **Changements d'etat instantanes** : transitions de 150 a 300 ms.
 
 ---
 
-## Pre-Delivery Checklist
+## Avant de livrer un ecran
 
-Before delivering any UI code, verify:
-
-- [ ] No emojis used as icons (use SVG instead)
-- [ ] All icons from consistent icon set (Heroicons/Lucide)
-- [ ] `cursor-pointer` on all clickable elements
-- [ ] Hover states with smooth transitions (150-300ms)
-- [ ] Light mode: text contrast 4.5:1 minimum
-- [ ] Focus states visible for keyboard navigation
-- [ ] `prefers-reduced-motion` respected
-- [ ] Responsive: 375px, 768px, 1024px, 1440px
-- [ ] No content hidden behind fixed navbars
-- [ ] No horizontal scroll on mobile
+- [ ] Aucune couleur en dur ; theme clair **et** sombre verifies.
+- [ ] Contraste texte 4,5:1, contour de controle 3:1, dans les deux themes.
+- [ ] Une seule action primaire (aplat bleu) par ecran.
+- [ ] Chaque score porte son libelle ; chaque etat a un signal autre que la
+      couleur.
+- [ ] Les chiffres sont tabulaires (Inter), les titres en Instrument Serif
+      d'au moins 22 px.
+- [ ] Surfaces tactiles de 44 px au moins.
+- [ ] Rien n'est masque par la barre d'onglets ni par la barre d'action.
