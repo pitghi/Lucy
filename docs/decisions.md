@@ -1070,20 +1070,28 @@ Build iOS de production n°5, construit par EAS depuis `5ab5a1b` (branche
 session distante. Empreinte `8809baee…`, relevee par EAS et identique a la
 mesure locale ; canal `production`. Artefact disponible jusqu'au 2026-12-13.
 
-**Pas encore sur TestFlight.** L'envoi automatique (`--auto-submit`) exige, en
-mode non interactif, `ascAppId` dans le profil `submit` d'`eas.json`. Il n'y
-est pas, et l'y ajouter maintenant changerait l'empreinte (1.6) : les mises a
-jour en vol publiees ensuite n'atteindraient plus ce build. A ajouter au
-prochain build natif. D'ici la, l'envoi se fait en interactif
-(`npm run submit:ios`), ou avec l'identifiant pose dans `eas.json` sans commit.
+**Envoye a App Store Connect** le meme jour, depuis la session. L'envoi
+automatique (`--auto-submit`) avait echoue : en mode non interactif, il exige
+`ascAppId` dans le profil `submit` d'`eas.json`, absent. L'y committer aurait
+change l'empreinte (1.6) — les mises a jour en vol publiees ensuite
+n'atteindraient plus ce build. L'identifiant (`6811905595`) a donc ete pose
+dans `eas.json` le temps de l'envoi, sans commit, puis retire.
+
+La CLI n'a pas pu ajouter le build a un groupe de testeurs TestFlight :
+`api.appstoreconnect.apple.com` est refuse par le reseau de l'environnement.
+Un groupe sans distribution automatique ne le recoit donc pas sans action
+dans App Store Connect.
 
 #### Ou reprendre
 
-1. **Envoyer le build 5 sur TestFlight**, avant le 2026-12-13.
+1. **Verifier que le build 5 atteint les testeurs** : traitement termine chez
+   Apple, et build ajoute au groupe interne si sa distribution n'est pas
+   automatique.
 2. **Fusionner la branche dans `main` avant toute mise a jour en vol** : sans le
    commit de l'icone, `main` a l'empreinte `5ba5bcb9…`, et une mise a jour
    publiee depuis `main` n'atteindrait pas le build 5.
-3. Au prochain build natif : `ascAppId` dans `eas.json`.
+3. Au prochain build natif : `"ascAppId": "6811905595"` dans le profil
+   `submit.production.ios` d'`eas.json`, pour que l'envoi suive le build.
 
 ### 2026-11-12 — nouvelle direction artistique
 

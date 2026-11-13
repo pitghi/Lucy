@@ -237,7 +237,7 @@ A confirmer plutot qu'a croire : ces faits vieillissent.
   `update:roll-back-to-embedded`, jamais `update:republish`.
 - **Releve du 2026-11-13** : cinq builds iOS de production. Le 4 vient de
   `b8b8907` ; le 5, de `5ab5a1b`, porte la nouvelle direction artistique et
-  l'empreinte `8809baee…` (journal, §8).
+  l'empreinte `8809baee…`, et a ete envoye a App Store Connect (journal, §8).
 - Trois builds iOS production : `d3b8cd8`, `f146b77`, `07183c3`. Le dernier
   **n'existe dans aucune branche du depot** — binaire de production
   irreproductible, a recuperer ou a refaire depuis un commit connu.
@@ -267,9 +267,11 @@ robot `Claude Code OTA`, admin de `pitghis-team`) et autorise `api.expo.dev` et
 `storage.googleapis.com` : `eas build`, `eas update` et `eas env:list`
 fonctionnent depuis la session. `api.appstoreconnect.apple.com` reste refuse :
 la CLI saute alors la validation du profil de provisionnement aupres d'Apple et
-garde la validation locale, sans effet sur le build. L'envoi non interactif sur
-TestFlight exige `ascAppId` dans le profil `submit` d'`eas.json`, absent a ce
-jour (journal, §8, 2026-11-13).
+garde la validation locale, sans effet sur le build — mais elle ne peut pas non
+plus ajouter un build a un groupe de testeurs TestFlight. L'envoi non
+interactif exige `ascAppId` (`6811905595`) dans le profil `submit` d'`eas.json`,
+absent a ce jour : le poser sans commit le temps de l'envoi, ou l'ajouter au
+prochain build natif (journal, §8, 2026-11-13).
 
 Avant cette date, et si le jeton venait a disparaitre : le conteneur n'a pas de
 session Expo, `eas whoami` repond « Not logged in », les commandes `eas update*`
