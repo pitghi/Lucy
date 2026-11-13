@@ -1063,6 +1063,28 @@ Rien n'a ete decide sur ces points ; ils ne sont pas des oublis.
 
 ## 8. Historique des sessions
 
+### 2026-11-13 — build 5, premier binaire de la nouvelle direction artistique
+
+Build iOS de production n°5, construit par EAS depuis `5ab5a1b` (branche
+`claude/adn-design-system-lp9are`, pas encore fusionnee), lance depuis la
+session distante. Empreinte `8809baee…`, relevee par EAS et identique a la
+mesure locale ; canal `production`. Artefact disponible jusqu'au 2026-12-13.
+
+**Pas encore sur TestFlight.** L'envoi automatique (`--auto-submit`) exige, en
+mode non interactif, `ascAppId` dans le profil `submit` d'`eas.json`. Il n'y
+est pas, et l'y ajouter maintenant changerait l'empreinte (1.6) : les mises a
+jour en vol publiees ensuite n'atteindraient plus ce build. A ajouter au
+prochain build natif. D'ici la, l'envoi se fait en interactif
+(`npm run submit:ios`), ou avec l'identifiant pose dans `eas.json` sans commit.
+
+#### Ou reprendre
+
+1. **Envoyer le build 5 sur TestFlight**, avant le 2026-12-13.
+2. **Fusionner la branche dans `main` avant toute mise a jour en vol** : sans le
+   commit de l'icone, `main` a l'empreinte `5ba5bcb9…`, et une mise a jour
+   publiee depuis `main` n'atteindrait pas le build 5.
+3. Au prochain build natif : `ascAppId` dans `eas.json`.
+
 ### 2026-11-12 — nouvelle direction artistique
 
 Demande du porteur : reprendre l'ADN d'une page produit de reference — brun,

@@ -235,6 +235,9 @@ A confirmer plutot qu'a croire : ces faits vieillissent.
   c'est l'installation d'`expo-updates` (commit `f146b77`), pas une
   publication. **Cible de rollback : le bundle embarque**, donc
   `update:roll-back-to-embedded`, jamais `update:republish`.
+- **Releve du 2026-11-13** : cinq builds iOS de production. Le 4 vient de
+  `b8b8907` ; le 5, de `5ab5a1b`, porte la nouvelle direction artistique et
+  l'empreinte `8809baee…` (journal, §8).
 - Trois builds iOS production : `d3b8cd8`, `f146b77`, `07183c3`. Le dernier
   **n'existe dans aucune branche du depot** — binaire de production
   irreproductible, a recuperer ou a refaire depuis un commit connu.
@@ -259,9 +262,18 @@ binaire.
 
 ## Publier depuis une session distante
 
-Le conteneur n'a pas de session Expo : `eas whoami` repond « Not logged in » et
-aucun `EXPO_TOKEN` n'est injecte. Les commandes `eas update*` echouent donc
-ici, et **c'est a dire, pas a contourner**. Deux voies :
+**Depuis le 2026-11-13**, l'environnement distant injecte un `EXPO_TOKEN` (compte
+robot `Claude Code OTA`, admin de `pitghis-team`) et autorise `api.expo.dev` et
+`storage.googleapis.com` : `eas build`, `eas update` et `eas env:list`
+fonctionnent depuis la session. `api.appstoreconnect.apple.com` reste refuse :
+la CLI saute alors la validation du profil de provisionnement aupres d'Apple et
+garde la validation locale, sans effet sur le build. L'envoi non interactif sur
+TestFlight exige `ascAppId` dans le profil `submit` d'`eas.json`, absent a ce
+jour (journal, §8, 2026-11-13).
+
+Avant cette date, et si le jeton venait a disparaitre : le conteneur n'a pas de
+session Expo, `eas whoami` repond « Not logged in », les commandes `eas update*`
+echouent ici, et **c'est a dire, pas a contourner**. Deux voies :
 
 1. l'utilisateur lance la commande depuis sa machine — lui donner la ligne
    exacte, et le §4 pour verifier ;
