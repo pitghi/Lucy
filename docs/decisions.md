@@ -14,6 +14,11 @@ Convention : chaque entree porte son statut.
 Les decisions prises par le porteur du projet sont marquees **[PR]**, celles
 prises par defaut faute d'arbitrage explicite **[defaut]**.
 
+> **Etat au 2026-11-17.** Ce journal est une version consolidee : il reprend
+> `main` et deux branches **non fusionnees**, dont les entrees portent la
+> mention *non fusionne*. Avant de croire qu'une decision est en production,
+> lire la premiere entree du §8, « passage de relais ».
+
 ---
 
 ## 1. Cadrage produit
@@ -643,6 +648,76 @@ plus deux produits par marque, un quota de formules courtes — sans lui le tri
 par couverture ne retient que des listes de quarante ingredients, et une
 demande du type « au maximum quinze ingredients » ne renverrait jamais rien.
 
+### 3.9 La composition absente est cherchee sur le web, et sa provenance s'affiche — *provisoire, non fusionne*
+
+> **Branche non fusionnee** — `claude/mistral-product-references-search-pj8g1h`
+> (PR #15). Reprise ici telle quelle le 2026-11-17 pour que le journal soit
+> complet ; rien de ce qu'elle decrit n'est sur `main`.
+
+Consequence directe de 3.1 et de l'impasse decrite en 5.12. Quatre produits sur
+dix n'ont pas de liste exploitable dans Open Beauty Facts ; le scan les nommait
+et s'arretait la, l'ecran de saisie n'existant toujours pas (5.7). La
+composition, elle, est publique : elle figure sur la fiche du fabricant, sur
+celle d'un distributeur, ou sur l'emballage photographie ailleurs.
+
+Un service dedie, `composition-produit`, la cherche donc sur le web — une Edge
+Function de plus, pour la meme raison que la premiere : la cle du modele ne
+peut pas vivre dans le binaire. Mistral, connecteur `web_search`, traitement
+europeen.
+
+**Ce que le modele fait, et ce qu'il ne fait pas.** Il retrouve une page et en
+recopie la liste. Il ne note rien, n'estime aucune concentration, ne voit aucun
+referentiel : le moteur fait tout cela ensuite, localement, sur le texte
+rapporte. C'est la meme frontiere qu'en 1.8 et pour la meme raison — un
+classement produit par un modele ne serait ni rejouable ni opposable a une
+marque.
+
+**Trois refus avant toute reponse positive.** Le mode d'echec redoute n'est pas
+l'absence de resultat, c'est la composition plausible : elle produirait trois
+notes fausses et credibles, ce qui est pire que rien.
+
+| Refus | Ce qu'il ecarte |
+| --- | --- |
+| Aucune page citee par l'outil de recherche | Une liste recitee de memoire, qui a l'air exacte et ne l'est pas |
+| Moins de cinq ingredients apres decoupage | Le meme seuil qu'a l'audit (3.1), applique avec le parsing du moteur |
+| Moins de 80 % de libelles ayant la forme d'un nom INCI | Un paragraphe de description commerciale decoupe sur ses virgules |
+
+L'adresse rendue n'est pas celle que le modele annonce, mais l'une de celles que
+l'outil a effectivement ouvertes. C'est la difference entre une source et une
+citation.
+
+**La provenance s'affiche** (5.16). Une liste recopiee d'une page n'a pas le
+statut d'une fiche produit : elle peut decrire une autre contenance, une
+formule anterieure, un homonyme. Les trois scores en dependent pourtant
+entierement, donc l'ecart se dit au-dessus des scores et la page est
+atteignable. Sans cela, la note ne serait pas contestable sur des faits, ce que
+6.1 exige.
+
+Le service sert aussi les codes-barres absents de la base, ou il rapporte en
+plus un nom et une marque — sans quoi l'ecran n'aurait rien a afficher. Le nom
+de la base l'emporte toujours sur celui de la page quand les deux existent.
+
+**Ecarte :** imposer un schema de sortie ferme comme en 1.8. La combinaison
+d'un format de reponse en schema et de l'execution d'un connecteur n'est pas
+garantie chez le fournisseur, et un refus de schema ferait echouer l'appel
+apres avoir paye la recherche. La consigne demande un objet JSON seul, et la
+validation cote service fait foi — c'est elle qui comptait de toute facon.
+
+**Provisoire**, et la condition de revue est double :
+
+- **L'exactitude des listes rapportees n'est pas mesuree.** Les trois refus
+  ecartent les echecs grossiers, aucun ne verifie que la liste est bien celle
+  du produit scanne. Il faut un echantillon de produits dont on possede
+  l'emballage, et comparer. Tant que ce n'est pas fait, un score calcule sur
+  une composition web est annonce comme tel et rien de plus.
+- **Le declenchement est automatique**, a chaque scan qui n'aboutit pas. C'est
+  ce qui rend le parcours continu, mais chaque recherche coute une requete web
+  facturee et une vingtaine de secondes d'attente, pour un produit qui peut
+  tres bien n'etre nulle part. L'alternative — un bouton « chercher sur le
+  web » — reporte le cout sur une intention explicite au prix d'un geste de
+  plus. Non tranche ; le plafond par adresse est a cinq appels par minute, soit
+  cinq fois moins que la traduction, en attendant.
+
 ### 3.7 Les photographies d'emballage viennent d'Open Beauty Facts — *acte* **[PR]**
 
 Recuperees par code-barres via l'API `api/v2` (`image_front_url` et
@@ -779,14 +854,17 @@ Retenu du design system genere pour le projet. Il se traduit ici par les
 sources affichees sur chaque motif et les niveaux de confiance visibles, plutot
 que par les badges et certifications d'une landing page.
 
-### 5.2 Palette Healthcare, pas Beauty — *acte*
+### 5.2 Palette Healthcare, pas Beauty — *revoque le 2026-11-12, voir 5.15*
 
 Le domaine couleur proposait une palette « Beauty/Spa » rose et lavande.
 Ecartee : elle signale un produit de beaute lifestyle, quand Lucy vend de la
 rigueur analytique. Socle Healthcare, avec un fond neutralise pour ne pas
 teinter les surfaces de donnees.
 
-### 5.3 Inter en corps de texte, Lora en titres — *acte*
+Remplacee par la direction artistique de 5.15, qui assume un registre plus
+chaud. L'argument d'ici n'a pas disparu : 5.15 dit comment il est tenu.
+
+### 5.3 Inter en corps de texte, Lora en titres — *acte pour Inter ; Lora remplace par Instrument Serif le 2026-11-12, voir 5.15*
 
 Ecart assume au design system, qui recommandait Lora / Raleway. Lora est
 conserve en titres : registre editorial, credibilite scientifique, et
@@ -802,6 +880,12 @@ page entre « entre 0,3 et 1 % » et « 10 % ».
 « Vert = bon » est la semantique des applications concurrentes et importerait
 leur simplification. Le registre va du teal soutenu a l'ambre puis au rouge
 brique, la progression etant aussi une progression de luminosite.
+
+**Depuis 5.15**, le registre va du bleu marine au bleu denim, puis a l'ocre et
+a la terre cuite. La progression de luminosite est desormais verifiee (L* 26,
+33, 40, 44) : elle ne l'etait pas tout a fait, le teal du niveau haut et
+l'ambre du niveau moyen ayant la meme luminance. Le bleu s'eloigne d'ailleurs
+davantage du vert que le teal ne le faisait.
 
 ### 5.5 Jamais la couleur seule — *acte*
 
@@ -846,6 +930,9 @@ restaient illisibles sur fond sombre. Le mode sombre emploie des tons plus
 clairs et moins satures, conformement a `color-dark-mode`. Les deux themes se
 verifient separement.
 
+Depuis 5.15, le sombre est un brun expresso a encre creme ; le bleu layette
+n'y change pas (10:1 sur l'expresso).
+
 ### 5.10 La photo produit a un repli de meme encombrement — *acte*
 
 Deux tailles : vignette de 56 px dans les cartes de recommandation, rendu
@@ -883,8 +970,8 @@ confondre reporte sur la camera un echec qui vient de la donnee :
 | Issue | Ce que l'ecran dit et propose |
 | --- | --- |
 | Produit trouve | La fiche s'ouvre |
-| Code-barres absent de la base | Le code est nomme, puis reprise de la lecture |
-| Produit reference sans composition exploitable | Le produit est nomme, puis reprise de la lecture |
+| Code-barres absent de la base | La composition est cherchee sur le web (3.9) ; a defaut, le code est nomme, puis reprise de la lecture |
+| Produit reference sans composition exploitable | Meme chose, le produit etant en plus nomme |
 | Reseau indisponible | Reessayer le meme code, ou renoncer |
 
 Le seuil d'exploitabilite est celui de l'audit : cinq ingredients (3.1). Une
@@ -893,9 +980,10 @@ peut-etre, et les deux cas n'appellent pas la meme suite — seul le reseau vaut
 d'etre rejoue.
 
 Les deux premiers cas devraient mener a une saisie de la liste ; ils n'y menent
-pas, faute d'ecran de saisie (5.7). L'ecran les nomme donc sans rien promettre,
-ce qui reste preferable au silence d'avant — mais c'est un parcours qui
-s'arrete la, et c'est la l'argument le plus fort pour ecrire cet ecran.
+toujours pas, faute d'ecran de saisie (5.7). Depuis 3.9 ils menent d'abord a
+une recherche web, qui en rattrape une partie : le parcours ne s'arrete plus
+systematiquement la. Quand elle ne donne rien, l'ecran nomme le cas sans rien
+promettre, ce qui reste preferable au silence d'avant.
 
 Le code lu s'affiche des la lecture, avant meme le resultat : il prouve que la
 camera a fait son travail. Et la lecture est suspendue tant qu'un message
@@ -937,6 +1025,104 @@ contredit la regle de visibilite de l'incertitude. La sortie est d'afficher la
 categorie retenue sur la fiche et de permettre sa correction ; ce n'est pas
 fait. Voir §7.
 
+### 5.15 Direction artistique : brun, creme, bleu layette — *acte* **[PR]**, non fusionne
+
+> **Branche non fusionnee** — `claude/adn-design-system-lp9are`. Les
+> revocations de 5.2 et 5.3, et les complements de 5.4 et 5.9, en viennent
+> aussi : sur `main`, l'application porte encore l'ancienne palette.
+
+Le porteur a fixe l'ADN visuel sur trois couleurs, prises d'une page produit
+de reference (une marque de soin fictive, « fawn ») :
+
+| Role | Couleur | Emploi |
+| --- | --- | --- |
+| Primary | bleu layette `#8EC5FF` | aplat des actions principales (CTA), onglet actif |
+| Secondary | brun `#3B2418` | encre du texte, contours, aplats sombres (badges, rang) |
+| Tertiary | creme `#F2E8DA` | toile de fond |
+
+La reference fournit aussi le reste du registre, repris tel quel : serif
+editorial dont un mot passe en italique (« The Barrier *Serum* » ; ici
+« Pour *vous* »), sans-serif sobre pour le reste, gelules pour les actions,
+filets fins plutot qu'ombres, liens soulignes, pastille d'etat a point
+(« ● Back in stock » ; ici le libelle de chaque score). Jetons :
+`packages/app/src/theme/tokens.ts` ; detail dans `design-system/lucy`.
+
+**Ce que la palette imposait, et comment c'est tenu.**
+
+- **Le bleu layette ne porte pas de texte.** Sur la creme il fait 1,5:1. Il
+  reste donc un aplat, toujours avec l'encre brune dessus (8:1) — jamais du
+  blanc, qui n'y atteint que 1,8:1. Quand le bleu doit se *lire* (bonus d'un
+  motif, trait d'intervalle, icone), c'est un bleu soutenu `#234F80` (6,9:1 sur
+  la creme, 5,7:1 contre la piste d'une barre).
+- **Les liens sont l'encre soulignee**, comme dans la reference, et plus une
+  couleur : un lien colore se confondrait avec une valeur de score.
+- **Une option retenue prend un contour brun** et un fond bleu dilue, pas un
+  aplat bleu : deux aplats bleus a l'ecran, et l'action principale ne se
+  distingue plus.
+- **Toutes les paires texte/fond ont ete calculees**, dans les deux themes :
+  aucune sous 4,5:1. Les couleurs de score tiennent 4,5:1 sur la toile, la
+  carte et leur propre fond dilue — elles portent la valeur et le libelle.
+- **Instrument Serif remplace Lora** : c'est le serif de la reference, et il
+  garde ce qui justifiait Lora en 5.3 (voix editoriale, differenciante). Il
+  n'existe qu'en graisse 400, donc il ne descend pas sous 22 px. **Inter ne
+  bouge pas** : la raison de 5.3 — les chiffres tabulaires — n'a rien a voir
+  avec la palette.
+- **Theme sombre** : brun expresso, encre creme, meme bleu (5.9).
+
+**Ce qui entre en tension avec 5.2, et pourquoi on passe outre.** La reference
+est une boutique de cosmetiques : c'est le registre « beaute lifestyle » que
+5.2 ecartait. Le porteur l'assume. Ce qui faisait la rigueur ne tenait pas a la
+palette et n'a pas bouge : sources sur chaque motif, intervalles, niveaux de
+confiance, couverture annoncee, pas de vert, jamais la couleur seule. Le risque
+reste a surveiller aupres des testeurs : qu'une application qui ressemble a
+une boutique soit lue comme celle d'une marque, alors que sa valeur est d'etre
+independante. Ce qui la distingue d'une boutique — aucun prix, aucun panier,
+des notes qui peuvent etre mauvaises — doit rester visible.
+
+**Ecarte :**
+
+- le bleu layette comme couleur de texte ou de lien (1,5:1) ;
+- du texte blanc sur le bleu (1,8:1), que les boutons de la reference evitent
+  aussi ;
+- garder Lora : serif de lecture, a contraste modere, il ne porte pas le
+  registre de la reference ;
+- une barre d'onglets brune : trop lourde, le brun reste l'encre et les petits
+  aplats.
+
+**Livraison.** Empreinte mesuree (decision 1.6) : les jetons, composants,
+ecrans et la police ne la changent pas — iOS `5ba5bcb9…` avant et apres —
+donc ils passent par mise a jour en vol. L'icone, l'ecran de demarrage et les
+couleurs de fond d'`app.json` la changent (iOS `8809baee…`, Android
+`14b5bd3e…`) : ils demandent un nouveau binaire. Les deux parties sont dans
+deux commits distincts.
+
+### 5.16 Une composition venue du web se signale, et l'attente se nomme — *acte, non fusionne*
+
+> **Branche non fusionnee** — `claude/mistral-product-references-search-pj8g1h`
+> (PR #15). Reprise ici telle quelle le 2026-11-17 pour que le journal soit
+> complet ; rien de ce qu'elle decrit n'est sur `main`.
+
+Pendant de 3.9 cote interface. Deux endroits, deux problemes differents.
+
+**Sur la fiche**, un bandeau precede les scores : composition trouvee sur le
+web, non verifiee sur l'emballage, susceptible de concerner une autre
+contenance ou une formule anterieure, et le domaine de la page est atteignable.
+Il precede les scores parce qu'il conditionne leur lecture — le reduire a une
+mention en bas de page reviendrait a presenter comme equivalentes une note
+calculee sur une fiche produit et une note calculee sur une page trouvee. Il ne
+s'affiche que dans ce cas : repeter la provenance a chaque ecran la
+banaliserait, et c'est parce qu'elle est exceptionnelle qu'elle doit se voir.
+
+**Sur l'ecran de scan**, l'etape est annoncee. Une recherche en base se compte
+en centaines de millisecondes, une recherche web en dizaines de secondes : les
+confondre sous un meme « Recherche du produit... » ferait passer la seconde
+pour un blocage, devant une camera figee. L'ecran dit donc « Composition
+absente, recherche sur le web... » et annonce l'ordre de grandeur de l'attente.
+
+Les deux messages d'echec sont repris en consequence : ils disent maintenant
+que le web a ete cherche aussi, sans quoi ils promettraient implicitement un
+recours qui a deja eu lieu.
+
 ---
 
 ## 6. Posture juridique et editoriale
@@ -970,7 +1156,7 @@ Rien n'a ete decide sur ces points ; ils ne sont pas des oublis.
 | **Nom et positionnement** | « Lucy » est le nom du depot, pas une decision de marque. |
 | **Taux de presence du code-barres** | Traite cote interface (5.12) : les deux cas sont desormais distingues a l'ecran. Reste non mesure — l'audit portait sur la **liste d'ingredients**, pas sur le code-barres, donc on ignore quelle part des scans aboutit reellement en rayon. |
 | **Categorie d'un produit scanne** | Deduite des categories et du nom Open Beauty Facts (5.14), donc approximative, alors qu'elle deplace la note. Elle devrait s'afficher sur la fiche et pouvoir etre corrigee. Non fait. |
-| **Authentification de l'application aupres du service** | Le point d'entree de la fonction `recherche-criteres` est public : qui connait l'URL peut l'appeler. Un jeton embarque dans le binaire s'en extrait comme une cle d'API. L'attestation d'application (App Attest, Play Integrity) est la reponse serieuse ; non traitee. En attendant, le plafond par adresse (1.9) et le plafond de depense sur la cle tiennent lieu de protection. |
+| **Authentification de l'application aupres des services** | Les points d'entree de `recherche-criteres` et `composition-produit` sont publics : qui connait l'URL peut les appeler. Le second coute plus cher a l'appel, ce qui augmente l'enjeu. Un jeton embarque dans le binaire s'en extrait comme une cle d'API. L'attestation d'application (App Attest, Play Integrity) est la reponse serieuse ; non traitee. En attendant, le plafond par adresse (1.9) et le plafond de depense sur la cle tiennent lieu de protection. |
 | **Budget par recherche** | Mesure en volume de jetons (~670 en entree, ~60 en sortie), soit moins de 3 $ par mois pour 10 000 recherches chez tous les fournisseurs examines. Ce qui n'est pas mesure, c'est la latence ressentie dans un champ de recherche. |
 | **Opposition a l'entrainement sur le plan gratuit** | Le plan Experiment de Mistral alimente l'entrainement par defaut ; l'opposition se fait dans la console (1.8). Reste a verifier que l'option existe bien sur ce plan, la documentation ne distinguant pas explicitement gratuit et payant. A faire avant de brancher de vrais testeurs, sinon passer au plan payant. |
 | **Qualite de traduction de `ministral-3b-2512`** | Quatre demandes eprouvees a la mise en service, toutes correctes (voir 1.8). C'est un signal, pas une mesure : rien n'est eprouve sur les formulations relachees, les negations, ni les demandes portant sur plusieurs produits. A reprendre sur de vraies demandes de testeurs. Repli : `mistral-small-2603`, soixante-cinq fois moins de debit. |
@@ -978,11 +1164,149 @@ Rien n'a ete decide sur ces points ; ils ne sont pas des oublis.
 | **Un sel absent degrade en silence** | `LUCY_IP_SALT` manquant fait tomber `traduction.ts` sur une chaine vide, donc sur des empreintes d'adresses que la force brute remonte en quelques minutes — sans qu'aucune commande echoue ni qu'aucun test casse. Le compteur, lui, refuse de servir quand il tombe : deux garde-fous, deux postures opposees. Le sel est pose sur le projet actuel ; rien n'empeche un prochain d'en repartir sans. |
 | **Migration du SDK Expo** | Le projet est en SDK 52, la version courante est la 57. Expo recommande la 54 au minimum pour Xcode 26 ; l'image epinglee (1.10) n'est qu'un sursis. `react-native` a ete aligne en 0.76.9 a cette occasion, la question ne porte plus que sur le SDK. |
 | **Nom de l'application sur l'App Store** | « Lucy » etait pris : la fiche s'appelle « Lucy (cd6504) ». A changer avant d'ouvrir la beta externe, et lie a la question du nom de marque ci-dessus. |
-| **Ecran de saisie / OCR** | Priorite fonctionnelle suivante (3.1), toujours pas ecrit. Son absence coute desormais davantage : les appels a la saisie ont ete retires de l'ecran de scan (5.7), donc un produit non reconnu n'a plus aucune suite dans l'application. |
+| **Ecran de saisie / OCR** | Priorite fonctionnelle suivante (3.1), toujours pas ecrit. La recherche web (3.9) rattrape une partie des produits sans composition, mais pas tous, et elle ne rattrape rien hors ligne ni pour un produit absent du web. Elle repousse l'echeance, elle ne l'annule pas. |
+| **Exactitude des compositions trouvees sur le web** | Non mesuree (3.9). Les trois refus du service ecartent les echecs grossiers ; aucun ne verifie que la liste rapportee est bien celle du produit scanne. Demande un echantillon de produits dont on possede l'emballage. Determine si un score calcule sur une composition web peut un jour cesser d'etre annonce comme moins sur. |
+| **Declenchement de la recherche web** | Automatique a chaque scan qui n'aboutit pas (3.9). Continuite du parcours contre cout facture et vingt secondes d'attente, y compris pour un produit qui n'est nulle part. L'alternative est un bouton explicite. Non tranche. |
+| **Cout d'une recherche de composition** | Non mesure. Une requete web facturee par le fournisseur, plus une lecture de pages dont le volume de jetons depend des pages ouvertes — donc sans commune mesure avec les ~670 jetons d'une traduction. A mesurer avant d'ouvrir a des testeurs, et a borner par le plafond de depense sur la cle. |
 
 ---
 
 ## 8. Historique des sessions
+
+### 2026-11-17 — passage de relais, journal consolide
+
+Le porteur change de compte d'assistant. Cette session n'a rien decide ni
+code : elle a rassemble dans un seul journal ce qui etait disperse sur trois
+branches, pour que la session suivante reparte d'un fichier unique.
+
+**Ce que `main` contient** : tout jusqu'a la PR #16 (recommandation par le
+modele, 1.11), fusionnee le 2026-09-17.
+
+**Ce qui n'est pas sur `main`**, et dont les entrees ont ete reprises ici :
+
+| Branche | Contenu | Etat |
+| --- | --- | --- |
+| `claude/adn-design-system-lp9are` | Direction artistique brun / creme / bleu layette (5.15), revocation de 5.2, Lora remplace en 5.3 ; build 5 envoye a App Store Connect | Non fusionnee. Ajoute aussi a `CLAUDE.md` une regle sur les jetons de couleur, non reprise ici puisqu'elle decrit du code absent de `main` |
+| `claude/mistral-product-references-search-pj8g1h` (PR #15) | Recherche web de la composition d'un produit scanne (3.9, 5.16) | Non fusionnee. Sa decision d'interface s'appelait 5.15 sur sa branche ; renumerotee 5.16 ici pour ne pas entrer en collision avec la DA |
+
+Les autres branches distantes sont soit deja fusionnees sous forme ecrasee,
+soit sans difference de contenu avec `main` (`jules-…`).
+
+**Une tension a trancher avant de fusionner la PR #15.** Elle annonce un
+traitement europeen avec le connecteur `web_search` (3.9). Or la session du
+2026-09-15, posterieure dans les faits a son ecriture, a mesure que
+`/v1/conversations` repond 404 sur le point d'entree europeen : la recherche
+en ligne sort d'Europe chez ce fournisseur (1.11). Et celle du 2026-09-16 a vu
+le service voisin `composition` echouer a 150 secondes dans une Edge Function.
+`composition-produit` (PR #15) et `composition` (PR #16) sont deux services
+distincts qui font presque la meme chose : il faut en garder un, ou passer a
+la piste sans modele notee le 2026-09-16.
+
+#### Ou reprendre
+
+1. **Fusionner `claude/adn-design-system-lp9are` dans `main`** — c'est la
+   condition pour que les mises a jour en vol atteignent le build 5 (voir
+   l'entree du 2026-11-13). Puis verifier que le build 5 est bien distribue
+   aux testeurs.
+2. **Trancher la PR #15** au vu de la tension ci-dessus : fusionner,
+   reprendre, ou fermer au profit d'une recherche de composition sans modele.
+3. Reprendre ensuite le « ou reprendre » du 2026-09-16 (composition sans
+   modele, origine du code-barres, application branchee sur `recommander`).
+
+### 2026-11-13 — build 5, premier binaire de la nouvelle direction artistique
+
+Build iOS de production n°5, construit par EAS depuis `5ab5a1b` (branche
+`claude/adn-design-system-lp9are`, pas encore fusionnee), lance depuis la
+session distante. Empreinte `8809baee…`, relevee par EAS et identique a la
+mesure locale ; canal `production`. Artefact disponible jusqu'au 2026-12-13.
+
+**Envoye a App Store Connect** le meme jour, depuis la session. L'envoi
+automatique (`--auto-submit`) avait echoue : en mode non interactif, il exige
+`ascAppId` dans le profil `submit` d'`eas.json`, absent. L'y committer aurait
+change l'empreinte (1.6) — les mises a jour en vol publiees ensuite
+n'atteindraient plus ce build. L'identifiant (`6811905595`) a donc ete pose
+dans `eas.json` le temps de l'envoi, sans commit, puis retire.
+
+La CLI n'a pas pu ajouter le build a un groupe de testeurs TestFlight :
+`api.appstoreconnect.apple.com` est refuse par le reseau de l'environnement.
+Un groupe sans distribution automatique ne le recoit donc pas sans action
+dans App Store Connect.
+
+#### Ou reprendre
+
+1. **Verifier que le build 5 atteint les testeurs** : traitement termine chez
+   Apple, et build ajoute au groupe interne si sa distribution n'est pas
+   automatique.
+2. **Fusionner la branche dans `main` avant toute mise a jour en vol** : sans le
+   commit de l'icone, `main` a l'empreinte `5ba5bcb9…`, et une mise a jour
+   publiee depuis `main` n'atteindrait pas le build 5.
+3. Au prochain build natif : `"ascAppId": "6811905595"` dans le profil
+   `submit.production.ios` d'`eas.json`, pour que l'envoi suive le build.
+
+### 2026-11-12 — nouvelle direction artistique
+
+Demande du porteur : reprendre l'ADN d'une page produit de reference — brun,
+creme, bleu layette — sur toute l'application (5.15).
+
+Fait : jetons refondus (palette, typographie, echelle de score), un composant
+`Button` (primaire bleu, secondaire a contour brun) et un `TextLink` (encre
+soulignee) a la place des boutons reecrits ecran par ecran, l'accent italique
+des titres (`Em`), la pastille de niveau sur chaque score, l'icone et l'ecran
+de demarrage regeneres. Captures de `docs/apercu/` refaites, clair et sombre.
+
+Corrige au passage : la piste de la barre de concentration etait de la meme
+couleur que le bloc qui la porte, donc invisible ; la barre d'etat restait en
+texte sombre sur le theme sombre ; « Ne m'a pas convenu » se coupait dans la
+recherche du journal.
+
+Les captures montrent le repli « Photo indisponible » : Open Beauty Facts
+n'etait pas joignable depuis la session. Le flux de la camera est une image de
+synthese.
+
+#### Ou reprendre
+
+1. **Verifier sur appareil** le rendu d'Instrument Serif (une seule graisse,
+   etroite) et l'agrandissement systeme du texte : le web ne dit rien du rendu
+   iOS des polices.
+2. **Livrer en deux temps** si les testeurs doivent voir la DA avant le
+   prochain binaire : le premier commit passe en OTA, le second (icone) attend
+   un build (skill `ota`, §0).
+
+### 2026-09-16 — la composition manquante se cherche sur le web
+
+> **Branche non fusionnee** — `claude/mistral-product-references-search-pj8g1h`
+> (PR #15). Reprise ici telle quelle le 2026-11-17 pour que le journal soit
+> complet ; rien de ce qu'elle decrit n'est sur `main`.
+
+Point de depart : deux scans en rayon, deux fois le meme ecran. « Ce produit
+est reference, mais sa liste d'ingredients est absente ou trop courte pour etre
+analysee. » Une pate anti-imperfections L'Oreal Men Expert, un spray solaire
+Garnier. Les deux sont identifies, nommes, photographies — et l'application
+n'en dit rien. C'est l'impasse annoncee en 5.12, rencontree telle quelle.
+
+Ce qui a ete fait (3.9) : un second service, `composition-produit`, qui cherche
+la liste sur le web et la rapporte avec la page ou il l'a lue. Meme forme que
+le premier — la logique separee du point d'entree pour etre testable sans
+reseau, le plafond avant toute depense, la sortie du modele revalidee a
+l'arrivee.
+
+Ce qui a demande le plus de soin n'est pas l'appel au modele, c'est ce qu'on
+refuse d'en accepter. Une recherche qui ne trouve rien est un resultat
+acceptable ; une composition plausible ne l'est pas, parce qu'elle produirait
+trois notes fausses et parfaitement credibles. D'ou trois refus, dont le plus
+important est l'absence de page effectivement ouverte : sans elle, la liste ne
+vient pas du web mais de la memoire du modele. L'adresse rendue est d'ailleurs
+prise dans les references posees par l'outil de recherche, jamais dans ce que
+le modele annonce — une source, pas une citation.
+
+`parseInciList` a rejoint `parseSearchQuery` dans la copie partagee des Edge
+Functions : le seuil de cinq ingredients n'a de sens que si le service et le
+moteur decoupent une liste de la meme maniere. Le test d'integrite couvre
+desormais les trois fichiers.
+
+Reste ouvert, et consigne comme tel : l'exactitude des listes rapportees n'est
+pas mesuree, le cout d'une recherche non plus, et le declenchement automatique
+n'est pas tranche.
 
 ### 2026-09-16 — les deux services mis a l'epreuve reelle
 
